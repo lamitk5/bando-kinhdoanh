@@ -1,12 +1,16 @@
 package vn.bando.spatial.data;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.server.ResponseStatusException;
 
 import vn.bando.spatial.OsmRefs;
 import vn.bando.spatial.api.SpatialModels.CategoryCount;
@@ -23,7 +27,8 @@ public class SpatialRepository {
     private static final List<String> REQUIRED_GIST = List.of(
             "district_geom_gix",
             "poi_geom_gix",
-            "road_geom_gix"
+            "road_geom_gix",
+            "road_arterial_geog_gix"
     );
 
     private final JdbcTemplate jdbc;
@@ -147,6 +152,31 @@ public class SpatialRepository {
                 },
                 limit
         );
+    }
+
+    public String bufferProfile(double lon, double lat, String businessType) {
+        try {
+            return jdbc.queryForObject(
+                    "SELECT buffer_profile(?, ?, ?)::text",
+                    String.class,
+                    lon,
+                    lat,
+                    businessType
+            );
+        } catch (DataAccessException exception) {
+            if (isInvalidInput(exception)) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        exception.getMostSpecificCause().getMessage(),
+                        exception);
+            }
+            throw exception;
+        }
+    }
+
+    private static boolean isInvalidInput(DataAccessException exception) {
+        Throwable cause = exception.getMostSpecificCause();
+        return cause instanceof SQLException sql && "22023".equals(sql.getSQLState());
     }
 
     public HealthResponse health(String redisStatus) {

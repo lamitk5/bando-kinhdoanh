@@ -155,7 +155,13 @@ psql_bando \
     -v study_sha256="$study_sha256" \
     -v extract_strategy="$EXTRACT_STRATEGY" \
     -f "$ROOT/etl/sql/025_features.sql" \
-    -f "$ROOT/etl/sql/030_verify.sql"
+    -f "$ROOT/etl/sql/030_verify.sql" \
+    -f "$ROOT/etl/sql/070_buffer.sql" \
+    -f "$ROOT/etl/sql/060_buffer_checks.sql"
+
+# data_import bị tạo lại nên id có thể trùng lần nạp trước. Xóa cache ngay,
+# trước spotcheck, để một bước sau thất bại cũng không trả JSON của lần nạp cũ.
+redis-cli EVAL "local keys = {}; for _, pattern in ipairs({'spatial:summary:*', 'spatial:buffer:*'}) do for _, key in ipairs(redis.call('keys', pattern)) do table.insert(keys, key) end end; for _, key in ipairs(keys) do redis.call('del', key) end; return #keys" 0 >/dev/null
 
 psql_bando -At -f "$ROOT/etl/sql/050_manifest.sql" > "$ROOT/data/manifest.json"
 psql_bando -f "$ROOT/etl/sql/055_samples.sql"
@@ -176,5 +182,4 @@ json.dump(manifest, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False
 open(sys.argv[1], "a", encoding="utf-8").write("\n")
 PY
 
-redis-cli EVAL "local keys = redis.call('keys', 'spatial:summary:*'); for _, key in ipairs(keys) do redis.call('del', key) end; return #keys" 0 >/dev/null
 log "Nạp xong. Xem data/manifest.json và data/spotcheck.json"

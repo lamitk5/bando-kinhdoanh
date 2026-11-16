@@ -1,6 +1,6 @@
 # Dữ liệu không gian
 
-Hạng mục này nạp bản đồ OpenStreetMap vào PostgreSQL/PostGIS, đánh chỉ mục GIST, và cache bản tóm tắt trên Redis. Chưa tính vùng đệm 200/500/1000 m, chưa chấm điểm AHP, chưa nhận điểm tiện ích do người dùng đóng góp.
+Hạng mục nạp bản đồ đưa OpenStreetMap vào PostgreSQL/PostGIS, đánh chỉ mục GIST và cache bản tóm tắt trên Redis. Vùng đệm 200/500/1000 m được tính riêng, bằng mét. Chưa chấm điểm AHP và chưa nhận điểm tiện ích do người dùng đóng góp.
 
 Số liệu sau mỗi lần chạy nằm ở [manifest.json](../data/manifest.json). File đó do `etl/import_osm.sh` ghi từ câu lệnh SQL, không gõ tay. Nếu file chưa có, lần nạp chưa chạy xong.
 
@@ -60,9 +60,9 @@ Way có `highway` được lưu thành LineString EPSG:4326. Bỏ các giá tr�
 
 ## Chỉ mục và cache
 
-Chỉ mục GIST bắt buộc: `district_geom_gix`, `poi_geom_gix`, `road_geom_gix`. Thêm một chỉ mục geography trên `poi` để phục vụ cờ trùng 30 m.
+Chỉ mục GIST bắt buộc: `district_geom_gix`, `poi_geom_gix`, `road_geom_gix`, và `road_arterial_geog_gix` trên `geom::geography` của các tuyến `arterial`. Thêm một chỉ mục geography trên `poi` để phục vụ cờ trùng 30 m và truy vấn vùng đệm.
 
-Redis không chứa chỉ mục không gian. Redis cache kết quả đọc của `GET /api/spatial/summary`. Khóa là `spatial:summary:v1:{import_id}`, hết hạn sau 6 giờ. Lần đọc đầu trả `cache.hit = false`, lần sau trong hạn trả `true`. Mẫu POI và health không bị cache.
+Redis không chứa chỉ mục không gian. Redis cache kết quả đọc của `GET /api/spatial/summary` với khóa `spatial:summary:v1:{import_id}`. Kết quả `buffer_profile` được cache với khóa `spatial:buffer:v1:{import_id}:{business_type}:{lat6}:{lon6}`. Cả hai hết hạn sau 6 giờ. Lần đọc đầu trả `cache.hit = false`, lần sau trong hạn trả `true`. Mẫu POI và health không bị cache. Lần nạp mới xóa cả hai họ khóa ngay sau khi bảng đã qua kiểm tra SQL, trước bước đối chiếu API OpenStreetMap. `data_import` được tạo lại nên id có thể trùng lần trước; xóa sớm để JSON cũ không còn được trả khi một bước sau đó dừng.
 
 Cache sai hoặc Redis tắt thì API báo lỗi, không trả số liệu giả như thể đã cache.
 
@@ -70,9 +70,25 @@ Cache sai hoặc Redis tắt thì API báo lỗi, không trả số liệu giả
 
 Ứng dụng Spring Boot trong `backend/` đọc bảng đã nạp bằng JDBC. JDBC được dùng vì câu truy vấn là SQL không gian. Spring Data JPA chưa đưa vào hạng mục này.
 
-- `GET /api/spatial/health` trả 200 khi có 4 quận, đủ 3 chỉ mục GIST và Redis trả PONG. Thiếu thì trả 503 cùng nội dung giải thích.
+- `GET /api/spatial/health` trả 200 khi có 4 quận, đủ bốn chỉ mục GIST ở trên và Redis trả PONG. Thiếu thì trả 503 cùng nội dung giải thích.
 - `GET /api/spatial/summary` là bản tóm tắt theo quận.
+- `GET /api/spatial/buffers?lat=&lon=&business_type=` trả ba vòng 200 m, 500 m và 1000 m. `business_type` chỉ nhận `cafe_drink`, `pharmacy`, `convenience`.
 - `GET /api/spatial/samples?limit=15` trả tối đa 50 dòng thật, kèm URL OpenStreetMap.
+
+## Vùng đệm
+
+`buffer_profile(lon, lat, business_type)` trong `etl/sql/070_buffer.sql` đếm bằng `ST_DWithin` trên `geography`. Bán kính cố định 200, 500, 1000 mét. Không có tham số bán kính tính bằng độ.
+
+Tọa độ được làm tròn 6 chữ số thập phân trước khi truy vấn và trước khi lập khóa cache, tương ứng khoảng 0,1 m. Kinh độ ngoài 102–110 hoặc vĩ độ ngoài 8–24 bị từ chối với SQLSTATE 22023, API trả 400.
+
+Mỗi vòng trả:
+
+- `competitor_count`: POI cùng `category` với ngành đang hỏi. Cà phê không đếm nhà thuốc.
+- `attractor_count` và `attractors_by_category`: mọi POI có `role = attractor`.
+- `fraction_inside_study_area`: diện tích phần vòng tròn nằm trong hợp của bốn quận, chia cho diện tích vòng tròn, cả hai tính bằng mét vuông.
+- `counts_complete`: đúng khi phần nằm trong vùng đạt ít nhất 0,999. Dưới ngưỡng này số đếm thiếu điểm ngoài bốn quận, vì bản trích chỉ chứa POI và đường trong vùng nghiên cứu.
+
+POI nằm đúng tại tọa độ hỏi được tính vào số đếm. Khoảng cách tới trục đường là `ST_Distance` trên geography tới tuyến `arterial` gần nhất trong bảng đã nạp, làm tròn 0,1 m, kèm tên, loại highway và URL OpenStreetMap. Đường nằm trọn ngoài bốn quận không có trong bảng, nên với điểm sát mép hoặc ngoài vùng khoảng cách này có thể lớn hơn khoảng cách thật. Tuyến cắt biên được giữ nguyên, nên điểm gần nhất trên tuyến có thể nằm ngoài bốn quận và khoảng cách có thể ngắn hơn khoảng cách tới đoạn nằm trong vùng. Kết quả không phải điểm số AHP.
 
 Mật khẩu `bando` trong `application.yml` chỉ dành cho cơ sở dữ liệu cục bộ của môi trường phát triển.
 
@@ -82,7 +98,9 @@ Mật khẩu `bando` trong `application.yml` chỉ dành cho cơ sở dữ liệ
 
 `etl/sql/040_classify_test.sql` khóa luật phân loại bằng các ca cố định, gồm những thẻ phải bị loại.
 
-`etl/sql/030_verify.sql` dừng lần nạp nếu sai SRID, sai thẻ so với JSON, thiếu hạng mục, thiếu GIST, hoặc không có trục đường. Nó không đối chiếu một số lượng POI gõ sẵn.
+`etl/sql/030_verify.sql` dừng lần nạp nếu sai SRID, sai thẻ so với JSON, thiếu hạng mục, thiếu GIST hình học, hoặc không có trục đường. Nó không đối chiếu một số lượng POI gõ sẵn.
+
+`etl/sql/060_buffer_checks.sql` kiểm tra hàm vùng đệm trên dữ liệu vừa nạp: đúng ba bán kính, số đếm không giảm khi bán kính tăng, khoảng cách trục đường khớp phép đo geography, điểm 105°E 21°N không được đánh dấu đếm đủ, và ngành `restaurant` bị từ chối. Kiểm tra này dừng nếu node OSM 423736651 không còn là `cafe_drink` trong bảng `poi`.
 
 `etl/spotcheck_osm.py` lấy tối đa hai node mỗi hạng mục, gọi API `api.openstreetmap.org`, và chỉ tính là khớp khi node còn tồn tại và lệch không quá 500 m. API trực tiếp có thể mới hơn ảnh PBF. Lệch thẻ sau mốc header không làm lần nạp thất bại. Dưới 5 node khớp thì script dừng.
 
