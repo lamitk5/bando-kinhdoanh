@@ -1,0 +1,81 @@
+district	category	role	osm_type	osm_id	name	osm_key	osm_value	lat	lon	on_boundary	possible_duplicate
+Bắc Từ Liêm	apartments	attractor	W	136247700	K	building	apartments	21.047409	105.784729	f	f
+Bắc Từ Liêm	apartments	attractor	W	136247703	H	building	apartments	21.047414	105.785368	f	f
+Bắc Từ Liêm	cafe_drink	competitor	W	898226383	N06-6 trà chanh hoa lộc	amenity	cafe	21.075949	105.772189	f	f
+Bắc Từ Liêm	cafe_drink	competitor	W	899168696		amenity	cafe	21.067704	105.778297	f	f
+Bắc Từ Liêm	clinic	attractor	W	699065687	Trạm Y tế Cổ Nhuế	amenity	clinic	21.061801	105.780118	f	f
+Bắc Từ Liêm	clinic	attractor	W	699218354		amenity	clinic	21.073200	105.773930	f	f
+Bắc Từ Liêm	convenience	competitor	W	934948241	WinMart+	shop	convenience	21.083372	105.771870	f	f
+Bắc Từ Liêm	convenience	competitor	N	5114569957	WinMart+	shop	convenience	21.064217	105.801115	f	f
+Bắc Từ Liêm	education	attractor	R	21460819	Trường Liên cấp Newton cơ sở 2	amenity	school	21.041933	105.767892	f	f
+Bắc Từ Liêm	education	attractor	W	37770763	Học viện Kĩ thuật Quân sự	amenity	university	21.048379	105.785668	f	f
+Bắc Từ Liêm	hospital	attractor	W	570572630	Bệnh viện Đa khoa Phương Đông	amenity	hospital	21.069922	105.774942	f	f
+Bắc Từ Liêm	hospital	attractor	W	1231849617	Bệnh viện Lão khoa Hà Nội	amenity	hospital	21.064574	105.746943	f	f
+Bắc Từ Liêm	office	attractor	W	822143627	Cục Viễn thám Quốc gia	office	government	21.060479	105.750403	f	f
+Bắc Từ Liêm	office	attractor	W	859743088	Tòa nhà Leadvisors	office	company	21.049895	105.782291	f	f
+Bắc Từ Liêm	pharmacy	competitor	W	898226389	tiệm thuốc phúc hải	amenity	pharmacy	21.075569	105.771983	f	f
+Bắc Từ Liêm	pharmacy	competitor	W	898226397	thuốc tùng anh	amenity	pharmacy	21.075659	105.772135	f	f
+Bắc Từ Liêm	transit_station	attractor	W	335145872	Công ty Cổ phần Xe Điện Hà Nội	amenity	bus_station	21.069529	105.784741	f	f
+Bắc Từ Liêm	transit_station	attractor	N	3567484771	Phú Diễn	railway	station	21.051301	105.764969	f	f
+Bắc Từ Liêm	transit_stop	attractor	R	21461124		public_transport	platform	21.041276	105.762776	f	f
+Bắc Từ Liêm	transit_stop	attractor	N	738813403	Trung tâm kiểm định xe máy quân sự (Cầu Diễn)	highway	bus_stop	21.042487	105.759638	f	f
+Cầu Giấy	apartments	attractor	R	16294565	Hanoi Signature	building	apartments	21.041787	105.798372	f	f
+Cầu Giấy	apartments	attractor	R	16306795	A	building	apartments	21.045706	105.802697	f	f
+Cầu Giấy	cafe_drink	competitor	N	423736651	Cà Phê Kafa	amenity	cafe	21.037861	105.801001	f	f
+Cầu Giấy	cafe_drink	competitor	N	733355066	Cà Phê AnAn	amenity	cafe	21.044636	105.802737	f	f
+Cầu Giấy	clinic	attractor	R	21798142	Phòng khám Đa khoa Yên Hoà	amenity	clinic	21.021993	105.786147	f	f
+Cầu Giấy	clinic	attractor	N	446031980	Trạm y tế Trung Hòa	amenity	clinic	21.008009	105.803530	f	f
+Cầu Giấy	convenience	competitor	N	5455945522	Tạp hóa Minh Châu	shop	convenience	21.030845	105.784175	f	f
+Cầu Giấy	convenience	competitor	N	5485635080	Circle K	shop	convenience	21.036774	105.779273	f	f
+Cầu Giấy	education	attractor	R	16862747	Trường Đại học Sân khấu - Điện ảnh Hà Nội	amenity	university	21.040201	105.774988	f	f
+Cầu Giấy	education	attractor	R	17161287	Trường Đại học Ngoại ngữ	amenity	university	21.040292	105.781970	f	f
+Cầu Giấy	hospital	attractor	R	16842443	Bệnh viện 19-8	amenity	hospital	21.033255	105.777800	f	f
+Cầu Giấy	hospital	attractor	R	21438420	Bệnh viện Đa khoa Y học cổ truyền Hà Nội	amenity	hospital	21.034603	105.779417	f	f
+Cầu Giấy	office	attractor	R	21430099	Nhà máy nước Mai Dịch	office	water_utility	21.031986	105.781004	f	f
+Cầu Giấy	office	attractor	R	21438419	Trung tâm Phát triển Quỹ đất quận Cầu Giấy	office	government	21.033926	105.779524	f	f
+Cầu Giấy	pharmacy	competitor	N	733355005		amenity	pharmacy	21.040335	105.802713	f	f
+Cầu Giấy	pharmacy	competitor	N	3471347685	Nhà thuốc Hương Sen	amenity	pharmacy	21.045308	105.799424	f	f
+Cầu Giấy	transit_station	attractor	N	11079400279	Chùa Hà	railway	station	21.034922	105.794372	f	f
+Cầu Giấy	transit_station	attractor	N	11079400280	Đại học Quốc gia	railway	station	21.036663	105.782693	f	f
+Cầu Giấy	transit_stop	attractor	R	21466980		public_transport	platform	21.034925	105.794631	f	f
+Cầu Giấy	transit_stop	attractor	N	738813535	Tòa nhà Indochina Tower - Đối diện ĐHQG Hà Nội	highway	bus_stop	21.036549	105.782044	f	f
+Thanh Xuân	apartments	attractor	W	136259403	N5D	building	apartments	21.006607	105.802780	f	f
+Thanh Xuân	apartments	attractor	W	136259404	17T9 Trung Hòa Nhân Chính	building	apartments	21.007447	105.803885	f	f
+Thanh Xuân	cafe_drink	competitor	W	892577166	Highlands Coffee	amenity	cafe	21.002970	105.815275	f	f
+Thanh Xuân	cafe_drink	competitor	W	892577224	Ding Tea	amenity	cafe	21.002623	105.816269	f	f
+Thanh Xuân	clinic	attractor	W	947208600	Trạm Y tế phường Khương Mai	amenity	clinic	20.998104	105.825305	f	f
+Thanh Xuân	clinic	attractor	W	1481173148	Điểm Trạm Y tế Phương Liệt	amenity	clinic	20.995684	105.840127	f	f
+Thanh Xuân	convenience	competitor	N	4735592623	yến vân	shop	convenience	20.986953	105.813815	f	f
+Thanh Xuân	convenience	competitor	N	4735592624	vpp cô thuỷ	shop	convenience	20.992332	105.816131	f	f
+Thanh Xuân	education	attractor	R	17666829	Trường Đại học Khoa học Xã hội và Nhân văn	amenity	university	20.995496	105.807139	f	f
+Thanh Xuân	education	attractor	R	20182814	Học viện Quản lý Giáo dục	amenity	university	20.990386	105.838506	f	f
+Thanh Xuân	hospital	attractor	W	591338735	Bệnh viện Đại học Y Dược	amenity	hospital	20.993710	105.797495	f	f
+Thanh Xuân	hospital	attractor	W	848915398	Bệnh viện An Việt	amenity	hospital	20.997139	105.842258	f	f
+Thanh Xuân	office	attractor	W	457903337	Viện Đổi mới sáng tạo Quốc gia	office	research	20.991756	105.801960	f	f
+Thanh Xuân	office	attractor	W	591331193	Bảo hiểm xã hội quận Thanh Xuân	office	government	20.989485	105.799242	f	f
+Thanh Xuân	pharmacy	competitor	N	6617292922		amenity	pharmacy	21.000464	105.828102	f	f
+Thanh Xuân	pharmacy	competitor	N	6617524041		amenity	pharmacy	20.993912	105.830823	f	f
+Thanh Xuân	transit_station	attractor	N	11176220553	Thượng Đình	railway	station	20.997681	105.812249	f	f
+Thanh Xuân	transit_station	attractor	N	11176220554	Vành Đai 3	railway	station	20.992299	105.804421	f	f
+Thanh Xuân	transit_stop	attractor	N	444394752	Tòa nhà King Palace - 108 Nguyễn Trãi	highway	bus_stop	20.999853	105.815113	f	f
+Thanh Xuân	transit_stop	attractor	N	444394790	Trước số 277 Nguyễn Trãi - Bách hóa giày Thượng Đình	highway	bus_stop	20.993199	105.806090	f	f
+Đống Đa	apartments	attractor	R	12380006		building	apartments	20.998697	105.839579	f	f
+Đống Đa	apartments	attractor	R	17995241	D3	building	apartments	21.002471	105.835955	f	f
+Đống Đa	cafe_drink	competitor	W	596222868		amenity	cafe	21.021812	105.805689	f	f
+Đống Đa	cafe_drink	competitor	W	904135121	Aha Cafe	amenity	cafe	21.012662	105.832287	f	f
+Đống Đa	clinic	attractor	W	817570463	Phòng khám Đa khoa Kim Liên	amenity	clinic	21.006208	105.834264	f	f
+Đống Đa	clinic	attractor	W	860294723	Trạm Y tế phường Văn Chương	amenity	clinic	21.022416	105.836472	f	f
+Đống Đa	convenience	competitor	W	966677778	Circle K	shop	convenience	21.016631	105.811090	f	t
+Đống Đa	convenience	competitor	W	1046053646	Circle K	shop	convenience	21.022995	105.807732	f	f
+Đống Đa	education	attractor	R	16802530	Trường Đại học Y Hà Nội	amenity	university	21.002228	105.831317	f	f
+Đống Đa	education	attractor	R	17666269	Trường Đại học Công đoàn	amenity	university	21.009684	105.826168	f	f
+Đống Đa	hospital	attractor	W	136258986	Bệnh viện Bệnh Nhiệt đới Trung ương	amenity	hospital	21.002124	105.838842	f	f
+Đống Đa	hospital	attractor	W	136259226	Bệnh viện Nội tiết Trung ương	amenity	hospital	21.012308	105.815076	f	f
+Đống Đa	office	attractor	R	15261702	Viện Nghiên cứu cao cấp về Toán	office	research	21.022384	105.803345	f	f
+Đống Đa	office	attractor	W	136259020	Ban Quản lý dự án Đường Hồ Chí Minh	office	government	21.009599	105.819533	f	f
+Đống Đa	pharmacy	competitor	W	944796967	Nhà thuốc tư nhân	shop	chemist	21.028488	105.836481	f	f
+Đống Đa	pharmacy	competitor	W	944839015	Nhà thuốc Phượng	shop	chemist	21.027779	105.836209	f	f
+Đống Đa	transit_station	attractor	N	10591743723	Hà Nội	railway	station	21.024234	105.841007	f	f
+Đống Đa	transit_station	attractor	N	11176220549	Cát Linh	railway	station	21.028380	105.827277	f	f
+Đống Đa	transit_stop	attractor	R	16381313		public_transport	platform	21.024558	105.840982	f	f
+Đống Đa	transit_stop	attractor	R	16381314		public_transport	platform	21.024515	105.840787	f	f

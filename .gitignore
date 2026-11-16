@@ -1,0 +1,6 @@
+data/raw/
+data/work/
+*.pbf
+backend/target/
+.idea/
+*.class

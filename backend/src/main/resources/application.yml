@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: bando-spatial
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/bando
+    username: bando
+    password: bando
+    hikari:
+      connection-init-sql: SET TIME ZONE 'UTC'
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+server:
+  port: 8080

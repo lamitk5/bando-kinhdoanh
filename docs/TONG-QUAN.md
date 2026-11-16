@@ -58,7 +58,7 @@ flowchart LR
 
 ### 1. Quản lý và xử lý dữ liệu không gian (Spatial Engine)
 
-- Tiền xử lý và nạp dữ liệu bản đồ `.osm.pbf` vào PostgreSQL/PostGIS.
+- Tiền xử lý và nạp dữ liệu bản đồ `.osm.pbf` vào PostgreSQL/PostGIS. Cách làm của hạng mục này nằm ở [DU-LIEU.md](DU-LIEU.md).
 - Đánh chỉ mục không gian GIST.
 - Cache không gian trên Redis.
 - Truy vấn đa vùng đệm 200 m, 500 m và 1000 m: mật độ điểm hút khách, mức độ bão hòa đối thủ, khoảng cách tới trục đường chính.
@@ -107,6 +107,6 @@ Kiểm chứng ngược (back-testing): thu thập tọa độ và ảnh thực 
 
 ## Trạng thái kho mã
 
-Kho mã mới khởi tạo. Hiện chỉ có tài liệu tổng quan, sổ tiến độ và quy tắc duyệt. Chưa có chức năng chạy được.
+Hạng mục nạp dữ liệu không gian đã được dựng và đang chờ duyệt trong [TIEN-DO.md](TIEN-DO.md). Các hạng mục chấm điểm, ảnh mặt tiền, bản đồ và báo cáo chưa làm.
 
 Khi một hạng mục được triển khai, trạng thái trong [TIEN-DO.md](TIEN-DO.md) chuyển thành `chờ duyệt`. Hạng mục chỉ thành `thành công` sau khi người phụ trách xác nhận đã xem và chức năng ổn.

@@ -23,11 +23,11 @@ Câu xác nhận hợp lệ gồm các ý như: "ok", "duyệt", "chức năng n
 
 ## Hạng mục
 
-Chín hạng mục dưới đây bám bốn phân hệ của đề tài. Toàn bộ đang `chưa làm`. Chưa có mục nào `thành công`.
+Chín hạng mục dưới đây bám bốn phân hệ của đề tài. Chưa có mục nào `thành công`.
 
 | # | Phân hệ | Hạng mục | Trạng thái |
 | --- | --- | --- | --- |
-| 1 | Spatial Engine | Nạp OSM vào PostGIS, chỉ mục GIST, cache Redis | `chưa làm` |
+| 1 | Spatial Engine | Nạp OSM vào PostGIS, chỉ mục GIST, cache Redis | `chờ duyệt` |
 | 2 | Spatial Engine | Truy vấn vùng đệm 200 / 500 / 1000 m (điểm hút khách, đối thủ, trục đường) | `chưa làm` |
 | 3 | Spatial Engine | Đóng góp POI có kiểm duyệt | `chưa làm` |
 | 4 | AHP Scoring Core | Ma trận AHP theo từng ngành, CR dưới 0.1, thang điểm 0–100, chỉ số hiệu quả theo giá thuê | `chưa làm` |
@@ -43,4 +43,5 @@ Ghi từ trên xuống dưới, mục mới nhất ở đầu. Tài liệu tổn
 
 | Thời điểm (UTC+7) | Hạng mục | Trạng thái | Cách kiểm tra |
 | --- | --- | --- | --- |
+| 2026-11-16 19:16 | Nạp OSM vào PostGIS, chỉ mục GIST, cache Redis | `chờ duyệt` | Đọc [DU-LIEU.md](DU-LIEU.md). Bốn quận lấy từ relation `boundary=historic` vì ảnh Geofabrik 2026-11-15 không còn ranh quận hành chính hiện hành. Mở [manifest.json](../data/manifest.json) và [spotcheck.json](../data/spotcheck.json): 20/20 node mẫu khớp API OpenStreetMap trong 500 m. Chạy API, `GET /api/spatial/health` phải 200; gọi `/api/spatial/summary` hai lần, lần hai có `cache.hit=true`. Đối chiếu một điểm, ví dụ [Cà Phê Kafa](https://www.openstreetmap.org/node/423736651). |
 | 2026-11-16 18:07 | Viết tổng quan dự án, sổ tiến độ và quy tắc duyệt | `chờ duyệt` | Đọc [TONG-QUAN.md](TONG-QUAN.md), sổ này và `.cursor/rules/tien-do.mdc`. Xác nhận nội dung đúng đề cương và cổng duyệt rõ ràng. |
