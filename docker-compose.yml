@@ -1,0 +1,15 @@
+# Cách chạy tương đương cho máy có Docker.
+# Phiên làm việc này không có Docker, nên file này chưa được thực thi ở đây.
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: bando
+      POSTGRES_USER: bando
+      POSTGRES_PASSWORD: bando
+    ports:
+      - "5432:5432"
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="bando-lua-smoke-fixture">
+  <node id="1" lat="21.0285" lon="105.8412" version="1" timestamp="2026-01-01T00:00:00Z" changeset="1" uid="1" user="fixture"/>
+  <node id="2" lat="21.0290" lon="105.8412" version="1" timestamp="2026-01-01T00:00:00Z" changeset="1" uid="1" user="fixture"/>
+  <node id="3" lat="21.0290" lon="105.8420" version="1" timestamp="2026-01-01T00:00:00Z" changeset="1" uid="1" user="fixture"/>
+  <node id="4" lat="21.0285" lon="105.8420" version="1" timestamp="2026-01-01T00:00:00Z" changeset="1" uid="1" user="fixture"/>
+  <node id="5" lat="21.0300" lon="105.8400" version="1" timestamp="2026-01-01T00:00:00Z" changeset="1" uid="1" user="fixture">
+    <tag k="amenity" v="cafe"/>
+    <tag k="name" v="FIXTURE_CAFE"/>
+  </node>
+  <way id="10" version="1" timestamp="2026-01-01T00:00:00Z" changeset="1" uid="1" user="fixture">
+    <nd ref="1"/>
+    <nd ref="2"/>
+    <nd ref="3"/>
+    <nd ref="4"/>
+    <nd ref="1"/>
+    <tag k="building" v="apartments"/>
+    <tag k="name" v="FIXTURE_APARTMENT"/>
+  </way>
+  <way id="11" version="1" timestamp="2026-01-01T00:00:00Z" changeset="1" uid="1" user="fixture">
+    <nd ref="1"/>
+    <nd ref="2"/>
+    <tag k="highway" v="primary"/>
+    <tag k="name" v="FIXTURE_ROAD"/>
+  </way>
+  <relation id="100" version="1" timestamp="2026-01-01T00:00:00Z" changeset="1" uid="1" user="fixture">
+    <member type="way" ref="10" role="outer"/>
+    <tag k="type" v="boundary"/>
+    <tag k="boundary" v="administrative"/>
+    <tag k="admin_level" v="6"/>
+    <tag k="name" v="Đống Đa"/>
+    <tag k="name:vi" v="Đống Đa"/>
+  </relation>
+</osm>

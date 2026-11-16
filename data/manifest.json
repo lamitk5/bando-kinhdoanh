@@ -1,0 +1,364 @@
+{
+  "note": "Số liệu sinh từ PostGIS sau lần nạp, không gõ tay.",
+  "roads": [
+    {
+      "district": "Bắc Từ Liêm",
+      "length_km": 788.504,
+      "segment_count": 6841,
+      "arterial_length_km": 105.521,
+      "arterial_segment_count": 453
+    },
+    {
+      "district": "Cầu Giấy",
+      "length_km": 521.8,
+      "segment_count": 7259,
+      "arterial_length_km": 70.306,
+      "arterial_segment_count": 837
+    },
+    {
+      "district": "Thanh Xuân",
+      "length_km": 330.793,
+      "segment_count": 3868,
+      "arterial_length_km": 47.278,
+      "arterial_segment_count": 354
+    },
+    {
+      "district": "Đống Đa",
+      "length_km": 396.669,
+      "segment_count": 5271,
+      "arterial_length_km": 58.087,
+      "arterial_segment_count": 717
+    }
+  ],
+  "import": {
+    "md5_ok": true,
+    "sha256": "d4393b01f70730d94b98e69c2db086e8cf46f3b928b6d508a22178749416d350",
+    "byte_size": 332686018,
+    "created_at": "2026-11-16T12:15:29.462689+00:00",
+    "source_url": "https://download.geofabrik.de/asia/vietnam-latest.osm.pbf",
+    "attribution": "OpenStreetMap contributors, ODbL. Source: Geofabrik Vietnam extract.",
+    "poi_inserted": 3290,
+    "resolved_url": "https://download.geofabrik.de/asia/vietnam-261115.osm.pbf",
+    "retrieved_at": "2026-11-16T12:15:10+00:00",
+    "md5_geofabrik": "19128868c76ac4d7dba2a9a677a37ad4",
+    "raw_poi_count": 7385,
+    "road_inserted": 23063,
+    "osmium_version": "1.16.0",
+    "raw_road_count": 23063,
+    "poi_on_boundary": 0,
+    "postgis_version": "3.4 USE_GEOS=1 USE_PROJ=1 USE_STATS=1",
+    "extract_strategy": "smart",
+    "study_pbf_sha256": "84b3c915ce87315a41a34e8c54f318669d602ce39bcf3326c57fe14dd1893331",
+    "osm2pgsql_version": "osm2pgsql 1.11.0",
+    "poi_outside_count": 32,
+    "http_last_modified": "2026-11-15T23:57:30+00:00",
+    "classified_poi_count": 3322,
+    "osm_header_timestamp": "2026-11-15T21:22:28+00:00",
+    "poi_possible_duplicate": 65
+  },
+  "districts": [
+    {
+      "name": "Bắc Từ Liêm",
+      "osm_id": 9421138,
+      "name_en": "Bắc Từ Liêm District",
+      "name_vi": null,
+      "area_km2": 45.24072982107685,
+      "boundary": "historic",
+      "osm_name": "Quận Bắc Từ Liêm",
+      "osm_type": "R",
+      "official_name": null
+    },
+    {
+      "name": "Cầu Giấy",
+      "osm_id": 9421132,
+      "name_en": "Cầu Giấy District",
+      "name_vi": null,
+      "area_km2": 12.420675517962879,
+      "boundary": "historic",
+      "osm_name": "Quận Cầu Giấy",
+      "osm_type": "R",
+      "official_name": null
+    },
+    {
+      "name": "Thanh Xuân",
+      "osm_id": 9421130,
+      "name_en": "Thanh Xuân District",
+      "name_vi": null,
+      "area_km2": 9.328978579525481,
+      "boundary": "historic",
+      "osm_name": "Quận Thanh Xuân",
+      "osm_type": "R",
+      "official_name": null
+    },
+    {
+      "name": "Đống Đa",
+      "osm_id": 9421135,
+      "name_en": "Đống Đa District",
+      "name_vi": null,
+      "area_km2": 9.932733393946926,
+      "boundary": "historic",
+      "osm_name": "Quận Đống Đa",
+      "osm_type": "R",
+      "official_name": null
+    }
+  ],
+  "poi_counts": [
+    {
+      "role": "attractor",
+      "count": 178,
+      "category": "apartments",
+      "district": "Bắc Từ Liêm"
+    },
+    {
+      "role": "competitor",
+      "count": 105,
+      "category": "cafe_drink",
+      "district": "Bắc Từ Liêm"
+    },
+    {
+      "role": "attractor",
+      "count": 7,
+      "category": "clinic",
+      "district": "Bắc Từ Liêm"
+    },
+    {
+      "role": "competitor",
+      "count": 80,
+      "category": "convenience",
+      "district": "Bắc Từ Liêm"
+    },
+    {
+      "role": "attractor",
+      "count": 127,
+      "category": "education",
+      "district": "Bắc Từ Liêm"
+    },
+    {
+      "role": "attractor",
+      "count": 10,
+      "category": "hospital",
+      "district": "Bắc Từ Liêm"
+    },
+    {
+      "role": "attractor",
+      "count": 111,
+      "category": "office",
+      "district": "Bắc Từ Liêm"
+    },
+    {
+      "role": "competitor",
+      "count": 39,
+      "category": "pharmacy",
+      "district": "Bắc Từ Liêm"
+    },
+    {
+      "role": "attractor",
+      "count": 12,
+      "category": "transit_station",
+      "district": "Bắc Từ Liêm"
+    },
+    {
+      "role": "attractor",
+      "count": 173,
+      "category": "transit_stop",
+      "district": "Bắc Từ Liêm"
+    },
+    {
+      "role": "attractor",
+      "count": 204,
+      "category": "apartments",
+      "district": "Cầu Giấy"
+    },
+    {
+      "role": "competitor",
+      "count": 169,
+      "category": "cafe_drink",
+      "district": "Cầu Giấy"
+    },
+    {
+      "role": "attractor",
+      "count": 9,
+      "category": "clinic",
+      "district": "Cầu Giấy"
+    },
+    {
+      "role": "competitor",
+      "count": 95,
+      "category": "convenience",
+      "district": "Cầu Giấy"
+    },
+    {
+      "role": "attractor",
+      "count": 132,
+      "category": "education",
+      "district": "Cầu Giấy"
+    },
+    {
+      "role": "attractor",
+      "count": 9,
+      "category": "hospital",
+      "district": "Cầu Giấy"
+    },
+    {
+      "role": "attractor",
+      "count": 168,
+      "category": "office",
+      "district": "Cầu Giấy"
+    },
+    {
+      "role": "competitor",
+      "count": 22,
+      "category": "pharmacy",
+      "district": "Cầu Giấy"
+    },
+    {
+      "role": "attractor",
+      "count": 11,
+      "category": "transit_station",
+      "district": "Cầu Giấy"
+    },
+    {
+      "role": "attractor",
+      "count": 161,
+      "category": "transit_stop",
+      "district": "Cầu Giấy"
+    },
+    {
+      "role": "attractor",
+      "count": 173,
+      "category": "apartments",
+      "district": "Thanh Xuân"
+    },
+    {
+      "role": "competitor",
+      "count": 31,
+      "category": "cafe_drink",
+      "district": "Thanh Xuân"
+    },
+    {
+      "role": "attractor",
+      "count": 3,
+      "category": "clinic",
+      "district": "Thanh Xuân"
+    },
+    {
+      "role": "competitor",
+      "count": 88,
+      "category": "convenience",
+      "district": "Thanh Xuân"
+    },
+    {
+      "role": "attractor",
+      "count": 78,
+      "category": "education",
+      "district": "Thanh Xuân"
+    },
+    {
+      "role": "attractor",
+      "count": 10,
+      "category": "hospital",
+      "district": "Thanh Xuân"
+    },
+    {
+      "role": "attractor",
+      "count": 53,
+      "category": "office",
+      "district": "Thanh Xuân"
+    },
+    {
+      "role": "competitor",
+      "count": 11,
+      "category": "pharmacy",
+      "district": "Thanh Xuân"
+    },
+    {
+      "role": "attractor",
+      "count": 7,
+      "category": "transit_station",
+      "district": "Thanh Xuân"
+    },
+    {
+      "role": "attractor",
+      "count": 92,
+      "category": "transit_stop",
+      "district": "Thanh Xuân"
+    },
+    {
+      "role": "attractor",
+      "count": 281,
+      "category": "apartments",
+      "district": "Đống Đa"
+    },
+    {
+      "role": "competitor",
+      "count": 127,
+      "category": "cafe_drink",
+      "district": "Đống Đa"
+    },
+    {
+      "role": "attractor",
+      "count": 9,
+      "category": "clinic",
+      "district": "Đống Đa"
+    },
+    {
+      "role": "competitor",
+      "count": 63,
+      "category": "convenience",
+      "district": "Đống Đa"
+    },
+    {
+      "role": "attractor",
+      "count": 101,
+      "category": "education",
+      "district": "Đống Đa"
+    },
+    {
+      "role": "attractor",
+      "count": 25,
+      "category": "hospital",
+      "district": "Đống Đa"
+    },
+    {
+      "role": "attractor",
+      "count": 109,
+      "category": "office",
+      "district": "Đống Đa"
+    },
+    {
+      "role": "competitor",
+      "count": 29,
+      "category": "pharmacy",
+      "district": "Đống Đa"
+    },
+    {
+      "role": "attractor",
+      "count": 8,
+      "category": "transit_station",
+      "district": "Đống Đa"
+    },
+    {
+      "role": "attractor",
+      "count": 170,
+      "category": "transit_stop",
+      "district": "Đống Đa"
+    }
+  ],
+  "generated_by": "etl/import_osm.sh",
+  "gist_indexes": [
+    "district_geom_gix",
+    "poi_geog_gix",
+    "poi_geom_gix",
+    "raw_admin_geom_idx",
+    "raw_historic_district_geom_idx",
+    "raw_poi_geom_idx",
+    "raw_road_geom_idx",
+    "road_geom_gix"
+  ],
+  "spotcheck": {
+    "checked": 20,
+    "confirmed_within_500m": 20,
+    "missing_on_live": 0,
+    "moved_over_500m": 0
+  }
+}
