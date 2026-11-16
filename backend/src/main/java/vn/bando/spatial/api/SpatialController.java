@@ -1,5 +1,7 @@
 package vn.bando.spatial.api;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,6 +35,14 @@ public class SpatialController {
     @GetMapping("/summary")
     public SummaryResponse summary() {
         return service.summary();
+    }
+
+    @GetMapping("/buffers")
+    public ObjectNode buffers(
+            @RequestParam("lat") double lat,
+            @RequestParam("lon") double lon,
+            @RequestParam("business_type") String businessType) {
+        return service.buffer(lat, lon, businessType);
     }
 
     @GetMapping("/samples")

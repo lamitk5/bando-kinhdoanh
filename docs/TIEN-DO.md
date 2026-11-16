@@ -28,7 +28,7 @@ Chín hạng mục dưới đây bám bốn phân hệ của đề tài. Chưa c
 | # | Phân hệ | Hạng mục | Trạng thái |
 | --- | --- | --- | --- |
 | 1 | Spatial Engine | Nạp OSM vào PostGIS, chỉ mục GIST, cache Redis | `chờ duyệt` |
-| 2 | Spatial Engine | Truy vấn vùng đệm 200 / 500 / 1000 m (điểm hút khách, đối thủ, trục đường) | `chưa làm` |
+| 2 | Spatial Engine | Truy vấn vùng đệm 200 / 500 / 1000 m (điểm hút khách, đối thủ, trục đường) | `chờ duyệt` |
 | 3 | Spatial Engine | Đóng góp POI có kiểm duyệt | `chưa làm` |
 | 4 | AHP Scoring Core | Ma trận AHP theo từng ngành, CR dưới 0.1, thang điểm 0–100, chỉ số hiệu quả theo giá thuê | `chưa làm` |
 | 5 | Multimodal AI | Hàng đợi Redis và WebSocket cho pipeline ảnh | `chưa làm` |
@@ -43,5 +43,6 @@ Ghi từ trên xuống dưới, mục mới nhất ở đầu. Tài liệu tổn
 
 | Thời điểm (UTC+7) | Hạng mục | Trạng thái | Cách kiểm tra |
 | --- | --- | --- | --- |
+| 2026-11-16 20:33 | Truy vấn vùng đệm 200 / 500 / 1000 m | `chờ duyệt` | Đọc mục vùng đệm trong [DU-LIEU.md](DU-LIEU.md). Gọi `GET /api/spatial/buffers?lat=21.0378611&lon=105.8010007&business_type=cafe_drink` (node [Cà Phê Kafa](https://www.openstreetmap.org/node/423736651)). Lần kiểm tra này đếm đối thủ cà phê 6 / 12 / 35 và điểm hút khách 4 / 24 / 127; vòng 200 m và 500 m có `counts_complete=true`, vòng 1000 m còn 0,7645 diện tích trong bốn quận nên `counts_complete=false` (mép Cầu Giấy cách điểm khoảng 530 m). Trục đường gần nhất là [Nguyễn Khánh Toàn](https://www.openstreetmap.org/way/180131788), 10,2 m. Gọi lại cùng tọa độ, lần hai phải có `cache.hit=true`. Cùng điểm với `pharmacy` phải ra số đối thủ khác. `business_type=restaurant` và tọa độ 0,0 phải trả 400. Đây chưa phải điểm số. |
 | 2026-11-16 19:16 | Nạp OSM vào PostGIS, chỉ mục GIST, cache Redis | `chờ duyệt` | Đọc [DU-LIEU.md](DU-LIEU.md). Bốn quận lấy từ relation `boundary=historic` vì ảnh Geofabrik 2026-11-15 không còn ranh quận hành chính hiện hành. Mở [manifest.json](../data/manifest.json) và [spotcheck.json](../data/spotcheck.json): 20/20 node mẫu khớp API OpenStreetMap trong 500 m. Chạy API, `GET /api/spatial/health` phải 200; gọi `/api/spatial/summary` hai lần, lần hai có `cache.hit=true`. Đối chiếu một điểm, ví dụ [Cà Phê Kafa](https://www.openstreetmap.org/node/423736651). |
 | 2026-11-16 18:07 | Viết tổng quan dự án, sổ tiến độ và quy tắc duyệt | `chờ duyệt` | Đọc [TONG-QUAN.md](TONG-QUAN.md), sổ này và `.cursor/rules/tien-do.mdc`. Xác nhận nội dung đúng đề cương và cổng duyệt rõ ràng. |

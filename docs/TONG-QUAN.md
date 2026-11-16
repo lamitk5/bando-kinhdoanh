@@ -107,6 +107,6 @@ Kiểm chứng ngược (back-testing): thu thập tọa độ và ảnh thực 
 
 ## Trạng thái kho mã
 
-Hạng mục nạp dữ liệu không gian đã được dựng và đang chờ duyệt trong [TIEN-DO.md](TIEN-DO.md). Các hạng mục chấm điểm, ảnh mặt tiền, bản đồ và báo cáo chưa làm.
+Hạng mục nạp dữ liệu không gian và truy vấn vùng đệm 200/500/1000 m đã được dựng, cả hai đang chờ duyệt trong [TIEN-DO.md](TIEN-DO.md). Các hạng mục chấm điểm, ảnh mặt tiền, bản đồ và báo cáo chưa làm.
 
 Khi một hạng mục được triển khai, trạng thái trong [TIEN-DO.md](TIEN-DO.md) chuyển thành `chờ duyệt`. Hạng mục chỉ thành `thành công` sau khi người phụ trách xác nhận đã xem và chức năng ổn.

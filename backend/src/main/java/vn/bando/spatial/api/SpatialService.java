@@ -3,7 +3,9 @@ package vn.bando.spatial.api;
 import java.time.Duration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -11,7 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import vn.bando.spatial.BufferRequest;
 import vn.bando.spatial.CacheKeys;
+import vn.bando.spatial.OsmRefs;
 import vn.bando.spatial.api.SpatialModels.CacheInfo;
 import vn.bando.spatial.api.SpatialModels.HealthResponse;
 import vn.bando.spatial.api.SpatialModels.ImportInfo;
@@ -45,6 +49,28 @@ public class SpatialService {
         SummaryBody body = repository.loadBody(dataImport);
         redis.opsForValue().set(key, writeBody(body), SUMMARY_TTL);
         return new SummaryResponse(body, new CacheInfo(false, key, SUMMARY_TTL.toSeconds()));
+    }
+
+    public ObjectNode buffer(double lat, double lon, String businessType) {
+        BufferRequest.Normalized normalized;
+        try {
+            normalized = BufferRequest.normalize(lat, lon, businessType);
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
+        }
+        ImportInfo dataImport = requireImport();
+        String key = CacheKeys.buffer(dataImport.id(), normalized.businessType(), normalized.lat(), normalized.lon());
+        String cached = redis.opsForValue().get(key);
+        boolean hit = cached != null;
+        String profileJson = hit ? cached : repository.bufferProfile(normalized.lon(), normalized.lat(), normalized.businessType());
+        if (!hit) {
+            redis.opsForValue().set(key, profileJson, SUMMARY_TTL);
+        }
+        ObjectNode response = objectMapper.createObjectNode();
+        response.put("import_id", dataImport.id());
+        response.set("profile", withArterialUrl(readTree(profileJson)));
+        response.set("cache", objectMapper.valueToTree(new CacheInfo(hit, key, hit ? ttl(key) : SUMMARY_TTL.toSeconds())));
+        return response;
     }
 
     public ListOfSamples samples(int requestedLimit) {
@@ -82,6 +108,25 @@ public class SpatialService {
     private long ttl(String key) {
         Long seconds = redis.getExpire(key);
         return seconds == null ? -1 : seconds;
+    }
+
+    private JsonNode withArterialUrl(JsonNode profile) {
+        if (!(profile instanceof ObjectNode objectProfile)) {
+            return profile;
+        }
+        JsonNode arterial = objectProfile.get("nearest_arterial");
+        if (arterial instanceof ObjectNode objectArterial && objectArterial.hasNonNull("osm_id")) {
+            objectArterial.put("osm_url", OsmRefs.url(objectArterial.path("osm_type").asText("W"), objectArterial.path("osm_id").asLong()));
+        }
+        return objectProfile;
+    }
+
+    private JsonNode readTree(String json) {
+        try {
+            return objectMapper.readTree(json);
+        } catch (JsonProcessingException exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Kết quả vùng đệm không đọc được", exception);
+        }
     }
 
     private SummaryBody readBody(String json) {
