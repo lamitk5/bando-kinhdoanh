@@ -1,0 +1,24 @@
+---
+description: Ghi tiến độ đề tài — chỉ người dùng duyệt thì mới đánh dấu thành công
+alwaysApply: true
+---
+
+# Tiến độ có duyệt
+
+Đọc [docs/TONG-QUAN.md](docs/TONG-QUAN.md) để nắm đề tài. Mọi cập nhật tiến độ ghi vào [docs/TIEN-DO.md](docs/TIEN-DO.md).
+
+Khi xong một hạng mục:
+
+- Cập nhật bảng hạng mục và thêm một dòng nhật ký ở đầu mục Nhật ký.
+- Ghi thời điểm theo giờ Việt Nam (UTC+7), tên hạng mục, trạng thái `chờ duyệt`, và cách người dùng kiểm tra.
+- Dừng ở `chờ duyệt`. Không đổi thành `thành công` trong cùng lượt làm việc.
+
+Chỉ ghi `thành công` khi người dùng đã xác nhận chức năng đó ổn, bằng lời như "ok", "duyệt", "chức năng này được", hoặc câu nói rõ hạng mục nào đã ổn. Xác nhận phải chỉ đúng hạng mục vừa xem. Không suy diễn từ việc người dùng im lặng, từ việc kiểm thử nội bộ đã qua, hoặc từ việc chuyển sang việc khác.
+
+Nếu người dùng yêu cầu sửa:
+
+- Đổi hạng mục đó sang `cần sửa`.
+- Sau khi sửa xong, đưa về `chờ duyệt` và ghi nhật ký mới.
+- Hạng mục đã `thành công` mà bị yêu cầu sửa thì cũng về `cần sửa` cho đến khi được duyệt lại.
+
+Không đánh dấu thành công hộ. Không xóa các dòng nhật ký cũ.
