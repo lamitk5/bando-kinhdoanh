@@ -71,7 +71,7 @@ flowchart LR
 - Ma trận so sánh cặp chuẩn AHP cho từng loại hình kinh doanh.
 - Tỷ số nhất quán CR nhỏ hơn 0.1.
 - Chuẩn hóa các chỉ số không gian về thang điểm từ 0 đến 100.
-- Tham số giá thuê dự kiến để tính chỉ số hiệu quả đầu tư (ROI Index).
+- Tham số giá thuê dự kiến để tính chỉ số hiệu quả đầu tư (ROI Index). Bản đang chạy chưa có doanh thu nên chưa tính ROI. Chỉ số hiện có là điểm không gian trên mỗi triệu đồng tiền thuê một tháng, ghi ở [CHAM-DIEM.md](CHAM-DIEM.md).
 
 Trọng số tiêu chí theo quy trình phân tích thứ bậc của Thomas L. Saaty, tách riêng cho cà phê / đồ uống, nhà thuốc và cửa hàng tiện lợi vì mỗi ngành ưu tiên không gian khác nhau.
 
@@ -107,6 +107,6 @@ Kiểm chứng ngược (back-testing): thu thập tọa độ và ảnh thực 
 
 ## Trạng thái kho mã
 
-Hạng mục nạp dữ liệu không gian và truy vấn vùng đệm 200/500/1000 m đã được ba giám khảo chấm trên 90 và ghi `thành công` trong [TIEN-DO.md](TIEN-DO.md). Đóng góp điểm tiện ích có kiểm duyệt đang chờ duyệt. Các hạng mục chấm điểm, ảnh mặt tiền, bản đồ và báo cáo chưa làm. Chưa có tài khoản người duyệt.
+Hạng mục nạp dữ liệu không gian, truy vấn vùng đệm 200/500/1000 m, chấm điểm AHP và hàng đợi ảnh đã được ba giám khảo chấm trên 90 và ghi `thành công` trong [TIEN-DO.md](TIEN-DO.md). Đóng góp điểm tiện ích và Vision JSON đang chờ duyệt: ảnh vẫn kết thúc `failed` vì API chưa gọi mô hình. Công thức và số đã đo nằm ở [CHAM-DIEM.md](CHAM-DIEM.md). Bản đồ, báo cáo và back-test chưa làm. Chưa có tài khoản người duyệt. Hai file trọng số Qwen2.5-VL-3B-Instruct đã tải về máy này, chưa huấn luyện và chưa gắn vào API.
 
 Khi một hạng mục được triển khai, trạng thái trong [TIEN-DO.md](TIEN-DO.md) chuyển thành `chờ duyệt`. Hạng mục chỉ thành `thành công` sau khi người phụ trách xác nhận đã xem và chức năng ổn.
