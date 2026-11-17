@@ -80,10 +80,30 @@
     });
     let chart;
 
+    function geodesicCircle(lon, lat, meters) {
+      const earth = 6378137;
+      const step = meters / earth;
+      const lat1 = lat * Math.PI / 180;
+      const lon1 = lon * Math.PI / 180;
+      const coords = [];
+      for (let i = 0; i <= 64; i++) {
+        const bearing = 2 * Math.PI * i / 64;
+        const lat2 = Math.asin(Math.sin(lat1) * Math.cos(step) + Math.cos(lat1) * Math.sin(step) * Math.cos(bearing));
+        const lon2 = lon1 + Math.atan2(
+          Math.sin(bearing) * Math.sin(step) * Math.cos(lat1),
+          Math.cos(step) - Math.sin(lat1) * Math.sin(lat2)
+        );
+        coords.push(ol.proj.fromLonLat([lon2 * 180 / Math.PI, lat2 * 180 / Math.PI]));
+      }
+      return new ol.geom.LineString(coords);
+    }
+
     function ring(lon, lat, meters, color) {
-      return new ol.Feature({
-        geometry: new ol.geom.Circle(ol.proj.fromLonLat([lon, lat]), meters)
-      });
+      const feature = new ol.Feature({ geometry: geodesicCircle(lon, lat, meters) });
+      feature.setStyle(new ol.style.Style({
+        stroke: new ol.style.Stroke({ color: color, width: 2 })
+      }));
+      return feature;
     }
 
     function drawSites() {
@@ -185,7 +205,7 @@
         });
         document.querySelector("#compare-note").textContent = body.radar_note + " Tiền thuê 25.000.000 đồng/tháng là mốc chung, không phải giá quan sát.";
       } catch (error) {
-        document.querySelector("#compare-note").textContent = error.message;
+        document.querySelector("#compare-note").textContent = error.message || "Không so sánh được";
       }
     };
 

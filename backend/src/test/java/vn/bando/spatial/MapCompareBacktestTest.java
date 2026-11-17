@@ -77,6 +77,15 @@ class MapCompareBacktestTest {
         assertEquals(400, postRaw("/api/scoring/compare", """
                 {"business_type":"cafe_drink","rent_vnd_per_month":25000000,"sites":[{"label":"Một","lat":21.03,"lon":105.80}]}
                 """).getStatusCode().value());
+        ResponseEntity<String> outside = postRaw("/api/scoring/compare", """
+                {"business_type":"cafe_drink","rent_vnd_per_month":25000000,"sites":[
+                  {"label":"Trong","lat":21.037861,"lon":105.801001},
+                  {"label":"Ngoài","lat":21.028,"lon":105.900}
+                ]}
+                """);
+        assertEquals(400, outside.getStatusCode().value());
+        assertTrue(outside.getBody().contains("bốn quận"));
+        assertTrue(!outside.getBody().contains("PL/pgSQL"));
     }
 
     @Test
