@@ -1,6 +1,7 @@
 data/raw/
 data/work/
 data/models/
+__pycache__/
 *.pbf
 backend/target/
 .idea/
