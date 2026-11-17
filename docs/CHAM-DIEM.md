@@ -77,6 +77,20 @@ Thang thứ tự, là quy ước chứ không phải số đo mét: vỉa hè 0 
 
 `vision_job_id` bỏ trống thì điểm không gian đứng một mình và `vision_applied` là false. Việc chưa xong, thất bại, hoặc `poor_quality` làm lời gọi chấm trả 409, điểm không gian không bị sửa. `composite_score` chỉ có khi người gọi gửi `blend_weight` trong khoảng 0 đến 1: `blend * điểm không gian + (1 - blend) * điểm ảnh`. Hệ thống không tự đặt tỷ lệ 70/30.
 
+## Bề rộng vỉa hè đã học
+
+Mô hình này dự đoán bề rộng bằng mét. Nó không phải bản tinh chỉnh của Qwen2.5-VL, không có nhãn tầm nhìn, và không được pipeline ảnh gọi để điền `sidewalk_capacity`.
+
+Nguồn nhãn là Seoul Sidewalk Accessibility Image Dataset, DOI `10.5281/zenodo.22908353`, giấy phép CC0. 514 ảnh, bề rộng đo tại hiện trường từ 0,92 m đến 10,15 m. Cột `filename` ghi đuôi HEIC; file trong ba zip là JPG cùng tên gốc. Ba zip đã khớp MD5 công bố trên Zenodo. Ảnh không được đưa vào git.
+
+Tách mẫu bằng SHA-256 của đúng chuỗi trong cột `filename`, chốt trước khi xem sai số: đuôi 0–1 là kiểm tra, đuôi 2 là chọn mô hình, đuôi 3–9 là học. Ra 349 / 53 / 112 ảnh. Ảnh đưa vào mô hình là xám 32×24 điểm, bilinear, đã xoay theo EXIF.
+
+Hai họ được chốt trước. Hồi quy ridge với hệ số phạt chọn trong 0,1 / 1 / 10 / 100 / 1.000 / 10.000. Mạng một lớp ẩn 16 nút, Adam, tốc độ học 0,05, tối đa 300 vòng, giữ vòng có sai số chọn thấp nhất, seed 0. Họ nào sai số chọn thấp hơn thì được giữ. Tập kiểm tra không tham gia lựa chọn.
+
+Ridge với phạt 1.000 thắng, sai số chọn 0,778 m so với 0,788 m của mạng. Sai số tuyệt đối trung bình trên tập kiểm tra là 0,847 m. Dự đoán bằng trung bình tập học thì sai 1,270 m trên cùng tập kiểm tra. Sai số học là 0,688 m. Trung bình bề rộng tập học là 2,928 m.
+
+0,847 m vẫn là một khoảng rộng so với quyết định mặt bằng. Ảnh học ở Seoul, không phải mặt tiền bốn quận Hà Nội. Pipeline ảnh vẫn kết thúc `failed` khi không có khóa, và không điền bốn mức vỉa hè từ số mét này.
+
 ## Việc chưa làm
 
-Chưa có phiếu chuyên gia, chưa có doanh thu để thành ROI, chưa có tài khoản người duyệt, và chưa có lần gọi mô hình thật vì môi trường này chưa giữ khóa. Back-test 10–15 cửa hàng vẫn là hạng mục riêng.
+Chưa có phiếu chuyên gia, chưa có doanh thu để thành ROI, chưa có tài khoản người duyệt, và pipeline ảnh vẫn chưa gọi mô hình đa phương thức vì môi trường này chưa giữ khóa. Back-test 10–15 cửa hàng vẫn là hạng mục riêng.

@@ -107,6 +107,6 @@ Kiểm chứng ngược (back-testing): thu thập tọa độ và ảnh thực 
 
 ## Trạng thái kho mã
 
-Hạng mục nạp dữ liệu không gian, truy vấn vùng đệm 200/500/1000 m, chấm điểm AHP và hàng đợi ảnh đã được ba giám khảo chấm trên 90 và ghi `thành công` trong [TIEN-DO.md](TIEN-DO.md). Đóng góp điểm tiện ích và Vision JSON đang chờ duyệt: ảnh vẫn kết thúc `failed` vì API chưa gọi mô hình. Công thức và số đã đo nằm ở [CHAM-DIEM.md](CHAM-DIEM.md). Bản đồ, báo cáo và back-test chưa làm. Chưa có tài khoản người duyệt. Hai file trọng số Qwen2.5-VL-3B-Instruct đã tải về máy này, chưa huấn luyện và chưa gắn vào API.
+Hạng mục nạp dữ liệu không gian, truy vấn vùng đệm 200/500/1000 m, chấm điểm AHP và hàng đợi ảnh đã được ba giám khảo chấm trên 90 và ghi `thành công` trong [TIEN-DO.md](TIEN-DO.md). Đóng góp điểm tiện ích và Vision JSON đang chờ duyệt: ảnh vẫn kết thúc `failed` vì API chưa gọi mô hình. Công thức và số đã đo nằm ở [CHAM-DIEM.md](CHAM-DIEM.md). Bản đồ, báo cáo và back-test chưa làm. Chưa có tài khoản người duyệt. Hai file trọng số Qwen2.5-VL-3B-Instruct đã tải về máy này và không được tinh chỉnh. Một mô hình riêng học bề rộng vỉa hè từ 514 số đo tại Seoul, sai số kiểm tra 0,847 m, và không được pipeline ảnh gọi. Ba giám khảo chấm mục này 86 điểm, vẫn dưới 90.
 
 Khi một hạng mục được triển khai, trạng thái trong [TIEN-DO.md](TIEN-DO.md) chuyển thành `chờ duyệt`. Hạng mục chỉ thành `thành công` sau khi người phụ trách xác nhận đã xem và chức năng ổn.
