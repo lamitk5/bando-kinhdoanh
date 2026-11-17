@@ -30,7 +30,8 @@ public final class VisionAssessmentParser {
             String visibility,
             String recommendation,
             Integer sidewalkScore,
-            Integer visibilityScore) {
+            Integer visibilityScore,
+            Double widthMeters) {
     }
 
     public static Assessment parse(String raw) {
@@ -56,14 +57,27 @@ public final class VisionAssessmentParser {
             if (present(node, "sidewalk_capacity") || present(node, "visibility")) {
                 throw new IllegalArgumentException("Ảnh poor không được kèm nhận định vỉa hè hoặc tầm nhìn");
             }
-            return new Assessment(false, reasons, null, null, recommendation, null, null);
+            return new Assessment(false, reasons, null, null, recommendation, null, null, null);
         }
         if (!"ok".equals(quality)) {
             throw new IllegalArgumentException("image_quality phải là ok hoặc poor");
         }
         String sidewalk = requiredText(node, "sidewalk_capacity");
+        if (!SIDEWALK.containsKey(sidewalk)) {
+            throw new IllegalArgumentException("sidewalk_capacity hoặc visibility không thuộc thang đã quy ước");
+        }
+        Double width = widthMeters(node, sidewalk);
+        if (node.path("visibility_measured").isBoolean() && !node.path("visibility_measured").asBoolean()) {
+            if (present(node, "visibility")) {
+                throw new IllegalArgumentException("Khi chưa đo tầm nhìn thì visibility phải là null");
+            }
+            if (width == null) {
+                throw new IllegalArgumentException("Thiếu sidewalk_width_m");
+            }
+            return new Assessment(false, reasons, sidewalk, null, recommendation, SIDEWALK.get(sidewalk), null, width);
+        }
         String visibility = requiredText(node, "visibility");
-        if (!SIDEWALK.containsKey(sidewalk) || !VISIBILITY.containsKey(visibility)) {
+        if (!VISIBILITY.containsKey(visibility)) {
             throw new IllegalArgumentException("sidewalk_capacity hoặc visibility không thuộc thang đã quy ước");
         }
         return new Assessment(
@@ -73,7 +87,22 @@ public final class VisionAssessmentParser {
                 visibility,
                 recommendation,
                 SIDEWALK.get(sidewalk),
-                VISIBILITY.get(visibility));
+                VISIBILITY.get(visibility),
+                width);
+    }
+
+    private static Double widthMeters(JsonNode node, String sidewalk) {
+        if (!node.has("sidewalk_width_m") || node.get("sidewalk_width_m").isNull()) {
+            return null;
+        }
+        if (!node.get("sidewalk_width_m").isNumber()) {
+            throw new IllegalArgumentException("sidewalk_width_m phải là số mét");
+        }
+        double meters = node.get("sidewalk_width_m").asDouble();
+        if (!WidthBand.of(meters).equals(sidewalk)) {
+            throw new IllegalArgumentException("Mức vỉa hè không khớp số mét theo quy ước đã chốt");
+        }
+        return meters;
     }
 
     private static List<String> reasons(JsonNode node) {

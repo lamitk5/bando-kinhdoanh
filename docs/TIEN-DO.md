@@ -23,7 +23,7 @@ Câu xác nhận hợp lệ gồm các ý như: "ok", "duyệt", "chức năng n
 
 ## Hạng mục
 
-Chín hạng mục dưới đây bám bốn phân hệ của đề tài. Bốn mục đã `thành công` vì người phụ trách yêu cầu ba giám khảo chấm thang 100 và tự gán khi điểm trung bình trên 90.
+Chín hạng mục dưới đây bám bốn phân hệ của đề tài. Năm mục đã `thành công` vì người phụ trách yêu cầu ba giám khảo chấm thang 100 và tự gán khi điểm trung bình đạt mức đã yêu cầu. Mức của mục 6 là 93.
 
 | # | Phân hệ | Hạng mục | Trạng thái |
 | --- | --- | --- | --- |
@@ -32,7 +32,7 @@ Chín hạng mục dưới đây bám bốn phân hệ của đề tài. Bốn m
 | 3 | Spatial Engine | Đóng góp POI có kiểm duyệt | `chờ duyệt` |
 | 4 | AHP Scoring Core | Ma trận AHP theo từng ngành, CR dưới 0.1, thang điểm 0–100, chỉ số hiệu quả theo giá thuê | `thành công` |
 | 5 | Multimodal AI | Hàng đợi Redis và WebSocket cho pipeline ảnh | `thành công` |
-| 6 | Multimodal AI | Vision AI: vỉa hè, tầm nhìn, cảnh báo ảnh kém, báo cáo khuyến nghị dạng JSON | `chờ duyệt` |
+| 6 | Multimodal AI | Vision AI: vỉa hè, tầm nhìn, cảnh báo ảnh kém, báo cáo khuyến nghị dạng JSON | `thành công` |
 | 7 | Web GIS | Bản đồ OpenLayers: bán kính, phân loại đối thủ / khách tiềm năng, heatmap | `chưa làm` |
 | 8 | Web GIS | So sánh 2–3 mặt bằng (radar) và xuất PDF | `chưa làm` |
 | 9 | Kiểm chứng | Back-test 10–15 địa điểm thực tế tại Hà Nội | `chưa làm` |
@@ -43,6 +43,9 @@ Ghi từ trên xuống dưới, mục mới nhất ở đầu. Tài liệu tổn
 
 | Thời điểm (UTC+7) | Hạng mục | Trạng thái | Cách kiểm tra |
 | --- | --- | --- | --- |
+| 2026-11-17 21:06 | Đổi cách học sang dải và biên, rồi ba giám khảo chấm lại mục 6 | `thành công` | Đọc mục bề rộng trong [CHAM-DIEM.md](CHAM-DIEM.md) và [geometry_selection.json](../etl/vision/geometry_selection.json). Trung bình 5 láng giềng thắng vì sai số chọn 0,544 m, thấp hơn 0,719 m của mạng trước. Sai số kiểm tra 0,568 m, so với 1,270 m của trung bình tập học. Khớp mức quy ước 78,6%, mức đa số khớp 53,6%. Sai số học 0,473 m bị lạc quan vì ảnh học nằm trong nhóm của chính nó. PNG 1×1 thành `poor_quality`. Ảnh đủ biến thiên thành `completed` với số mét và `visibility` null. Ba ngành nhận số mét, `vision_applied` false, không có điểm ảnh. Gửi `blend_weight` thì 409. Ba giám khảo: 92, 100 và 100, trung bình 97,3. Giám khảo 1 trừ vì chưa có tầm nhìn. Hai giám khảo kia không trừ. Trung bình đạt mức 93 nên ghi `thành công`. Tầm nhìn vẫn chưa được đo. |
+| 2026-11-17 18:37 | Nối mô hình bề rộng vào pipeline và chấm lại mục 6 | `chờ duyệt` | Đọc mục bề rộng trong [CHAM-DIEM.md](CHAM-DIEM.md). Mạng 48×36 được chọn vì sai số tập chọn 0,719 m. Sai số kiểm tra 0,896 m, so với 1,270 m của trung bình tập học và 0,847 m của ridge lần trước. Độ khớp mức quy ước 58,9%, mức đa số khớp 53,6%. PNG 1×1 thành `poor_quality`. Ảnh đủ biến thiên thành `completed`, có số mét, `visibility` null, `assessed` false. Ba giám khảo: 85, 90 và 91, trung bình 88,7. Dưới 93 nên vẫn `chờ duyệt`. |
+| 2026-11-17 15:44 | Huấn luyện bề rộng vỉa hè, rồi ba giám khảo chấm lại mục 6 | `chờ duyệt` | Đọc mục bề rộng trong [CHAM-DIEM.md](CHAM-DIEM.md). 514 ảnh Seoul, DOI 10.5281/zenodo.22908353, bề rộng đo tại chỗ. Tách 349/53/112. Ridge phạt 1.000 được chọn trên tập chọn. Sai số kiểm tra 0,847 m, so với 1,270 m nếu đoán bằng trung bình tập học. Không tinh chỉnh Qwen. Không có nhãn tầm nhìn. Pipeline ảnh không gọi mô hình này. Ba giám khảo chấm mục 6: 84, 86 và 88, trung bình 86. Dưới 90 nên vẫn `chờ duyệt`. |
 | 2026-11-17 14:44 | Ba giám khảo chấm AHP, hàng đợi ảnh và Vision JSON | `thành công` cho mục 4 và 5; mục 6 vẫn `chờ duyệt` | Người phụ trách yêu cầu chấm lại thang 100 sau khi tải mô hình. Không huấn luyện: chưa có ảnh vỉa hè gán nhãn và máy không có GPU, nên không có số chính xác mới để ghi. Hai file GGUF Qwen2.5-VL-3B-Instruct trên máy đã đối chiếu SHA-256 nhưng API chưa gọi. Ba giám khảo đo lại độc lập. Mục 4: 100, 98 và 100, trung bình 99,3. Mục 5: 100, 94 và 100, trung bình 98. Mục 6: 94, 69 và 72, trung bình 78,3. Điểm trừ lớn của mục 6 là ảnh thật chỉ kết thúc `failed`, chưa có kết quả vỉa hè hay tầm nhìn. |
 | 2026-11-17 09:36 | Vision AI: JSON có cấu trúc, ảnh kém không thành điểm 0 | `chờ duyệt` | Đọc [CHAM-DIEM.md](CHAM-DIEM.md). Bộ phân tích nhận JSON `ok` với vỉa hè `enough` và tầm nhìn `clear`, và nhận JSON `poor` có hai trường đo để null. JSON `poor` mà vẫn ghi vỉa hè bị từ chối. Gửi một PNG 1×1 khi không có `GEMINI_API_KEY` và `GROQ_API_KEY`: `GET /api/vision/jobs/{id}` kết thúc `failed`, `result` null, thông báo nói chưa có khóa và không bịa kết quả. Ảnh không phải JPEG, PNG hoặc WebP trả 400. Chưa có lần gọi mô hình thật. |
 | 2026-11-17 09:36 | Hàng đợi Redis và WebSocket STOMP | `chờ duyệt` | Cùng ảnh PNG 1×1: phản hồi tạo việc là `queued`, không kèm byte ảnh. Đăng ký STOMP `/topic/vision/{id}` rồi thấy một khung `failed`. `vision_job` không bị lệnh nạp xóa. Chỉ chạy một tiến trình API vì hai tiến trình tranh cùng list `vision:queue`. Socket `/ws` đang mở mọi origin và chưa có đăng nhập. |

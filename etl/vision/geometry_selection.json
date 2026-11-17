@@ -1,0 +1,72 @@
+{
+  "current_val_mae_m": 0.7190039108932567,
+  "candidates": [
+    {
+      "kind": "band-edge-v3",
+      "family": "ridge",
+      "space": "meters",
+      "alpha": 100.0,
+      "k": null,
+      "train_mae_m": 0.6641,
+      "val_mae_m": 0.7027,
+      "stable": true
+    },
+    {
+      "kind": "band-edge-v3",
+      "family": "ridge",
+      "space": "log",
+      "alpha": 100.0,
+      "k": null,
+      "train_mae_m": 0.6599,
+      "val_mae_m": 0.7149,
+      "stable": true
+    },
+    {
+      "kind": "histogram-v3",
+      "family": "ridge",
+      "space": "meters",
+      "alpha": 100.0,
+      "k": null,
+      "train_mae_m": 0.8915,
+      "val_mae_m": 0.821,
+      "stable": true
+    },
+    {
+      "kind": "band-edge-v3",
+      "family": "knn",
+      "space": "meters",
+      "alpha": null,
+      "k": 5,
+      "train_mae_m": 0.4729,
+      "val_mae_m": 0.5436,
+      "stable": true
+    },
+    {
+      "kind": "band-edge-v3",
+      "family": "knn",
+      "space": "meters",
+      "alpha": null,
+      "k": 11,
+      "train_mae_m": 0.5936,
+      "val_mae_m": 0.6137,
+      "stable": true
+    },
+    {
+      "kind": "band-edge-v3",
+      "family": "knn",
+      "space": "meters",
+      "alpha": null,
+      "k": 21,
+      "train_mae_m": 0.6958,
+      "val_mae_m": 0.675,
+      "stable": true
+    }
+  ],
+  "replaced": true,
+  "selected": "knn",
+  "test_mae_m": 0.5679642857142857,
+  "baseline_test_mae_m": 1.2699672533769955,
+  "test_band_accuracy": 0.7857142857142857,
+  "train_mae_m": 0.4728767908309455,
+  "val_mae_m": 0.5435849056603773
+}

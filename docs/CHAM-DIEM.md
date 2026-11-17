@@ -1,6 +1,6 @@
 # Chấm điểm và thẩm định ảnh
 
-Ba hạng mục này đọc cùng dữ liệu không gian đã nạp. Điểm không gian là số tính được. Kết quả ảnh chỉ có khi một mô hình thị giác trả JSON và bộ phân tích chấp nhận. Không có khóa API thì việc ảnh kết thúc `failed`, không sinh nhận định vỉa hè.
+Ba hạng mục này đọc cùng dữ liệu không gian đã nạp. Điểm không gian là số tính được. Kết quả ảnh chỉ có khi một mô hình thị giác trả JSON và bộ phân tích chấp nhận. Không có khóa API thì pipeline dùng mô hình bề rộng đã học; ảnh không đọc được mới thành `failed`.
 
 ## Vòng được chấm
 
@@ -69,7 +69,7 @@ Mỗi lần đổi trạng thái, máy chủ gửi JSON việc đó tới `/topi
 
 ## Thẩm định thị giác
 
-Nếu có `GEMINI_API_KEY` thì gọi Gemini `generateContent`. Nếu không, nhưng có `GROQ_API_KEY`, thì gọi Groq `chat/completions`. Tên mô hình bắt buộc nằm ở `GEMINI_MODEL` hoặc `GROQ_MODEL`. Khóa không được ghi log. Không có khóa thì client ném lỗi tiếng Việt và việc thành `failed`. Lần kiểm tra bằng một PNG 1×1 đã kết thúc đúng như vậy.
+Nếu có `GEMINI_API_KEY` thì gọi Gemini `generateContent`. Nếu không, nhưng có `GROQ_API_KEY`, thì gọi Groq `chat/completions`. Tên mô hình bắt buộc nằm ở `GEMINI_MODEL` hoặc `GROQ_MODEL`. Khóa không được ghi log. Không có khóa thì dùng mô hình bề rộng ở mục dưới. Một PNG 1×1 kết thúc `poor_quality`, không có bề rộng.
 
 Bộ phân tích chỉ nhận JSON có `image_quality` là `ok` hoặc `poor`, `quality_reasons`, `recommendation` không quá 500 ký tự, và khi ảnh dùng được thì `sidewalk_capacity` thuộc `none`, `narrow`, `enough`, `wide` còn `visibility` thuộc `blocked`, `partial`, `clear`. Ảnh `poor` mà vẫn kèm nhận định vỉa hè hoặc tầm nhìn bị từ chối. Ảnh `poor` thành trạng thái `poor_quality`, không được chấm như điểm 0: ảnh hỏng không phải mặt bằng xấu.
 
@@ -77,6 +77,22 @@ Thang thứ tự, là quy ước chứ không phải số đo mét: vỉa hè 0 
 
 `vision_job_id` bỏ trống thì điểm không gian đứng một mình và `vision_applied` là false. Việc chưa xong, thất bại, hoặc `poor_quality` làm lời gọi chấm trả 409, điểm không gian không bị sửa. `composite_score` chỉ có khi người gọi gửi `blend_weight` trong khoảng 0 đến 1: `blend * điểm không gian + (1 - blend) * điểm ảnh`. Hệ thống không tự đặt tỷ lệ 70/30.
 
+## Bề rộng vỉa hè đã học
+
+Mô hình này dự đoán bề rộng bằng mét rồi đổi sang bốn mức theo quy ước mét đã chốt: dưới 0,90 là `none`, dưới 1,50 là `narrow`, dưới 3,00 là `enough`, còn lại là `wide`. Quy ước này không phải nhãn do người chấm. Mô hình không phải bản tinh chỉnh của Qwen2.5-VL và không có nhãn tầm nhìn.
+
+Nguồn nhãn là Seoul Sidewalk Accessibility Image Dataset, DOI `10.5281/zenodo.22908353`, giấy phép CC0. 514 ảnh, bề rộng đo tại hiện trường từ 0,92 m đến 10,15 m. Cột `filename` ghi đuôi HEIC; file trong ba zip là JPG cùng tên gốc. Ba zip đã khớp MD5 công bố trên Zenodo. Ảnh không được đưa vào git. Cả 514 ảnh đều có EXIF orientation bằng 1.
+
+Tách mẫu bằng SHA-256 của đúng chuỗi trong cột `filename`, chốt trước khi xem sai số: đuôi 0–1 là kiểm tra, đuôi 2 là chọn mô hình, đuôi 3–9 là học. Ra 349 / 53 / 112 ảnh. Đặc trưng là trung bình từng ô của ảnh xám `(299R + 587G + 114B) / 1000`, rồi chia 255. Hai cỡ ô 32×24 và 48×36, mỗi cỡ có ridge và mạng một lớp ẩn 16 nút, được chốt trước. Ứng viên nào sai số trên tập chọn thấp hơn thì được giữ. Tập kiểm tra không tham gia lựa chọn.
+
+Lần đầu, ridge trên ảnh bilinear 32×24 có sai số kiểm tra 0,847 m. Lần chọn trên đặc trưng ô, mạng 48×36 có sai số chọn 0,719 m nhưng sai số kiểm tra 0,896 m.
+
+Cách học đang dùng đổi sang đặc trưng dải và biên trên lưới 128×96: tám dải ngang, mỗi dải có trung bình, độ lệch, ba phần trái giữa phải và bão hòa màu; mười sáu hàng có tâm biên, độ rộng biên và mép trái. Các ứng viên chốt trước là ridge trên mét, ridge trên log, histogram, và trung bình 5, 11 hoặc 21 láng giềng. Ứng viên có sai số học nhỏ hơn một nửa sai số chọn thì bị loại. Trung bình 5 láng giềng có sai số chọn 0,544 m, thấp nhất và thấp hơn 0,719 m, nên thay mô hình cũ. Sai số kiểm tra, tính một lần sau khi chọn, là 0,568 m. Sai số học 0,473 m bị lạc quan vì mỗi ảnh học nằm trong chính nhóm láng giềng của nó. Dự đoán bằng trung bình tập học thì sai 1,270 m trên cùng 112 ảnh.
+
+Trên tập kiểm tra, mức theo quy ước mét khớp 78,6%. Nếu luôn đoán mức chiếm đa số trong tập học, là `wide`, thì khớp 53,6%. Tập không có mẫu `none`.
+
+Không có khóa Gemini hoặc Groq thì pipeline gọi mô hình này. Ảnh có cạnh ngắn dưới 64 điểm, độ xám trung bình dưới 20 hoặc trên 240, hoặc phương sai dưới 50 thì thành `poor_quality` và không có bề rộng. Ngưỡng này nằm dưới phân bố 40 ảnh học đã xem trước, nơi độ xám trung bình khoảng 76–143 và phương sai trên 3000. Ảnh dùng được trả `completed` với số mét, mức quy ước, `visibility` null và `assessed` false. Khi chấm một điểm cho cà phê, nhà thuốc hoặc tiện lợi, số mét được gắn vào kết quả nhưng không thành điểm ảnh và không trộn vào điểm tổng, vì chưa có tầm nhìn. Gửi kèm `blend_weight` với ảnh này thì bị từ chối. Ảnh học ở Seoul, không phải mặt tiền bốn quận Hà Nội.
+
 ## Việc chưa làm
 
-Chưa có phiếu chuyên gia, chưa có doanh thu để thành ROI, chưa có tài khoản người duyệt, và chưa có lần gọi mô hình thật vì môi trường này chưa giữ khóa. Back-test 10–15 cửa hàng vẫn là hạng mục riêng.
+Chưa có phiếu chuyên gia, chưa có doanh thu để thành ROI, chưa có tài khoản người duyệt, và chưa có nhãn tầm nhìn hay ảnh mặt tiền Hà Nội đã gán mức. Back-test 10–15 cửa hàng vẫn là hạng mục riêng.

@@ -41,6 +41,25 @@ class VisionAssessmentParserTest {
     }
 
     @Test
+    void parsesAWidthEstimateWithoutVisibility() {
+        VisionAssessmentParser.Assessment assessment = VisionAssessmentParser.parse("""
+                {"image_quality":"ok","quality_reasons":[],"sidewalk_capacity":"enough","sidewalk_width_m":2.2,"visibility":null,"visibility_measured":false,"recommendation":"Chỉ có bề rộng đo được."}
+                """);
+        assertFalse(assessment.assessed());
+        assertEquals("enough", assessment.sidewalkCapacity());
+        assertEquals(70, assessment.sidewalkScore());
+        assertNull(assessment.visibility());
+        assertEquals(2.2, assessment.widthMeters());
+    }
+
+    @Test
+    void rejectsAWidthThatDisagreesWithTheBand() {
+        assertThrows(IllegalArgumentException.class, () -> VisionAssessmentParser.parse("""
+                {"image_quality":"ok","quality_reasons":[],"sidewalk_capacity":"wide","sidewalk_width_m":1.2,"visibility":null,"visibility_measured":false,"recommendation":"Lệch mức."}
+                """));
+    }
+
+    @Test
     void rejectsAnOkPhotoMissingVisibility() {
         assertThrows(IllegalArgumentException.class, () -> VisionAssessmentParser.parse("""
                 {"image_quality":"ok","quality_reasons":[],"sidewalk_capacity":"narrow","recommendation":"Thiếu tầm nhìn."}
