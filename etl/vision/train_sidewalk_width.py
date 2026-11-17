@@ -10,10 +10,14 @@ Tách mẫu theo SHA-256 của đúng chuỗi trong cột filename, trước khi
 - đuôi 2: chọn mô hình
 - đuôi 3 đến 9: học
 
-Hai họ mô hình được chốt trước: hồi quy ridge trên ảnh xám 32×24, và mạng một lớp ẩn 16 nút.
-Họ nào có sai số tuyệt đối trung bình thấp hơn trên tập chọn thì được giữ.
+Đặc trưng là trung bình từng ô của ảnh xám. Xám = (299R + 587G + 114B) / 1000.
+Hai cỡ ô được chốt trước: 32×24 và 48×36. Mỗi cỡ có hồi quy ridge và mạng một lớp ẩn 16 nút.
+Ứng viên nào có sai số tuyệt đối trung bình thấp hơn trên tập chọn thì được giữ.
 Tập kiểm tra chỉ được tính một lần sau khi đã chọn. Trọng số Qwen không đổi.
 Tập này không có nhãn tầm nhìn.
+
+Mức thứ tự là quy ước mét, không phải nhãn người chấm: dưới 0,90 là none, dưới 1,50 là narrow,
+dưới 3,00 là enough, còn lại là wide. Độ khớp mức chỉ được tính sau khi mô hình đã chọn.
 """
 
 from __future__ import annotations
@@ -34,8 +38,8 @@ register_heif_opener()
 ROOT = Path("/workspace/data/raw/sidewalk-seoul")
 CSV_PATH = ROOT / "summary_attributes.csv"
 OUT_PATH = Path("/workspace/backend/src/main/resources/vision/sidewalk_width_model.json")
-WIDTH = 32
-HEIGHT = 24
+GRIDS = ((32, 24), (48, 36))
+BANDS = (0.90, 1.50, 3.00)
 ALPHAS = (0.1, 1.0, 10.0, 100.0, 1000.0, 10000.0)
 HIDDEN = 16
 MLP_EPOCHS = 300
@@ -105,11 +109,35 @@ def index_files() -> dict[str, Path]:
     return found
 
 
-def pixels(path: Path) -> np.ndarray:
+def block_gray(path: Path, grids: tuple[tuple[int, int], ...]) -> list[np.ndarray]:
     with Image.open(path) as image:
-        gray = ImageOps.exif_transpose(image).convert("L")
-        small = gray.resize((WIDTH, HEIGHT), Image.Resampling.BILINEAR)
-        return np.asarray(small, dtype=np.float64).reshape(-1) / 255.0
+        rgb = np.asarray(ImageOps.exif_transpose(image).convert("RGB"), dtype=np.float64)
+    gray = (299.0 * rgb[:, :, 0] + 587.0 * rgb[:, :, 1] + 114.0 * rgb[:, :, 2]) / 1000.0
+    height, width = gray.shape
+    features = []
+    for grid_width, grid_height in grids:
+        out = np.empty(grid_height * grid_width, dtype=np.float64)
+        index = 0
+        for y in range(grid_height):
+            y0 = y * height // grid_height
+            y1 = max(y0 + 1, (y + 1) * height // grid_height)
+            for x in range(grid_width):
+                x0 = x * width // grid_width
+                x1 = max(x0 + 1, (x + 1) * width // grid_width)
+                out[index] = gray[y0:y1, x0:x1].mean() / 255.0
+                index += 1
+        features.append(out)
+    return features
+
+
+def band(width: float) -> str:
+    if width < BANDS[0]:
+        return "none"
+    if width < BANDS[1]:
+        return "narrow"
+    if width < BANDS[2]:
+        return "enough"
+    return "wide"
 
 
 def standardize(train: np.ndarray, other: list[np.ndarray]) -> tuple[np.ndarray, list[np.ndarray], np.ndarray, np.ndarray]:
@@ -196,55 +224,84 @@ def predict_mlp(x: np.ndarray, model: dict, center: float) -> np.ndarray:
 
 def main() -> None:
     labels = load_labels()
-    extract_images()
     files = index_files()
+    if any(Path(name).stem not in files for name, _ in labels):
+        extract_images()
+        files = index_files()
     missing = [name for name, _ in labels if Path(name).stem not in files]
     if missing:
         raise SystemExit(f"Thiếu {len(missing)} ảnh, ví dụ {missing[:3]}")
-    names, targets, features = [], [], []
+    names, targets = [], []
+    grids = [[] for _ in GRIDS]
     for name, width in labels:
         names.append(name)
         targets.append(width)
-        features.append(pixels(files[Path(name).stem]))
+        for index, features in enumerate(block_gray(files[Path(name).stem], GRIDS)):
+            grids[index].append(features)
     y = np.array(targets, dtype=np.float64)
-    x = np.vstack(features)
     groups = np.array([split_of(name) for name in names])
     train = groups == "train"
     val = groups == "val"
     test = groups == "test"
-    x_train, (x_val, x_test), mean, std = standardize(x[train], [x[val], x[test]])
     y_center = float(y[train].mean())
     y_train = y[train] - y_center
     y_val = y[val] - y_center
-    y_test = y[test] - y_center
 
-    ridge_choice = None
-    for alpha in ALPHAS:
-        weights = fit_ridge(x_train, y_train, alpha)
-        score = mae(predict_ridge(x_val, weights, 0), y_val)
-        if ridge_choice is None or score < ridge_choice["val_mae_m"]:
-            ridge_choice = {"alpha": alpha, "weights": weights, "val_mae_m": score}
-
-    mlp_choice = train_mlp(x_train, y_train, x_val, y_val)
+    candidates = []
+    for grid, rows in zip(GRIDS, grids, strict=True):
+        x = np.vstack(rows)
+        x_train, (x_val, x_test), mean, std = standardize(x[train], [x[val], x[test]])
+        ridge_choice = None
+        for alpha in ALPHAS:
+            weights = fit_ridge(x_train, y_train, alpha)
+            score = mae(predict_ridge(x_val, weights, 0), y_val)
+            if ridge_choice is None or score < ridge_choice["val_mae_m"]:
+                ridge_choice = {"alpha": alpha, "weights": weights, "val_mae_m": score}
+        mlp_choice = train_mlp(x_train, y_train, x_val, y_val)
+        candidates.append({
+            "grid": grid,
+            "x_train": x_train,
+            "x_val": x_val,
+            "x_test": x_test,
+            "mean": mean,
+            "std": std,
+            "ridge": ridge_choice,
+            "mlp": mlp_choice,
+        })
+    chosen = min(
+        candidates,
+        key=lambda item: min(item["ridge"]["val_mae_m"], item["mlp"]["val_mae_m"]),
+    )
+    ridge_choice = chosen["ridge"]
+    mlp_choice = chosen["mlp"]
     selected = "ridge" if ridge_choice["val_mae_m"] <= mlp_choice["val_mae_m"] else "mlp"
     if selected == "ridge":
-        train_pred = predict_ridge(x_train, ridge_choice["weights"], y_center)
-        val_pred = predict_ridge(x_val, ridge_choice["weights"], y_center)
-        test_pred = predict_ridge(x_test, ridge_choice["weights"], y_center)
+        train_pred = predict_ridge(chosen["x_train"], ridge_choice["weights"], y_center)
+        val_pred = predict_ridge(chosen["x_val"], ridge_choice["weights"], y_center)
+        test_pred = predict_ridge(chosen["x_test"], ridge_choice["weights"], y_center)
     else:
-        train_pred = predict_mlp(x_train, mlp_choice, y_center)
-        val_pred = predict_mlp(x_val, mlp_choice, y_center)
-        test_pred = predict_mlp(x_test, mlp_choice, y_center)
+        train_pred = predict_mlp(chosen["x_train"], mlp_choice, y_center)
+        val_pred = predict_mlp(chosen["x_val"], mlp_choice, y_center)
+        test_pred = predict_mlp(chosen["x_test"], mlp_choice, y_center)
+    mean = chosen["mean"]
+    std = chosen["std"]
     baseline = np.full(test.sum(), y_center)
     test_mae = mae(test_pred, y[test])
     baseline_mae = mae(baseline, y[test])
+    true_bands = [band(value) for value in y[test]]
+    pred_bands = [band(value) for value in test_pred]
+    band_hits = sum(left == right for left, right in zip(true_bands, pred_bands, strict=True))
     payload = {
-        "format": 1,
+        "format": 2,
         "dataset": "Seoul Sidewalk Accessibility Image Dataset",
         "doi": "10.5281/zenodo.22908353",
         "license": "CC0-1.0",
         "target": "width_m field-measured",
-        "resize": [WIDTH, HEIGHT],
+        "features": "block-average gray, (299R+587G+114B)/1000, then /255",
+        "resize": [chosen["grid"][0], chosen["grid"][1]],
+        "band_cuts_m": list(BANDS),
+        "band_rule": "Quy ước mét: dưới 0,90 none, dưới 1,50 narrow, dưới 3,00 enough, còn lại wide. Không phải nhãn người chấm.",
+        "test_band_accuracy": band_hits / int(test.sum()),
         "selected": selected,
         "train_count": int(train.sum()),
         "val_count": int(val.sum()),
@@ -289,11 +346,21 @@ def main() -> None:
                 "test": payload["test_count"],
                 "train_mae_m": round(payload["train_mae_m"], 4),
                 "val_mae_m": round(payload["val_mae_m"], 4),
+                "resize": payload["resize"],
                 "test_mae_m": round(payload["test_mae_m"], 4),
                 "baseline_test_mae_m": round(baseline_mae, 4),
+                "test_band_accuracy": round(payload["test_band_accuracy"], 4),
                 "beats_baseline": payload["beats_baseline"],
                 "ridge_val_mae_m": round(ridge_choice["val_mae_m"], 4),
                 "mlp_val_mae_m": round(mlp_choice["val_mae_m"], 4),
+                "candidates": [
+                    {
+                        "resize": [item["grid"][0], item["grid"][1]],
+                        "ridge_val_mae_m": round(item["ridge"]["val_mae_m"], 4),
+                        "mlp_val_mae_m": round(item["mlp"]["val_mae_m"], 4),
+                    }
+                    for item in candidates
+                ],
             },
             ensure_ascii=False,
         )

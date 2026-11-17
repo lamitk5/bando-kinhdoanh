@@ -113,7 +113,7 @@ class ScoringAndVisionTest {
     }
 
     @Test
-    void tinyPngFailsWithoutAKeyAndTheSocketSeesIt() throws Exception {
+    void tinyPngIsPoorAndTheSocketSeesIt() throws Exception {
         CountDownLatch gate = new CountDownLatch(1);
         VisionService.assessmentGate = gate;
         JsonNode created = upload(ONE_PIXEL_PNG);
@@ -152,12 +152,14 @@ class ScoringAndVisionTest {
 
         Object frame = frames.poll(8, TimeUnit.SECONDS);
         JsonNode job = rest.getForObject("/api/vision/jobs/" + createdJobId, JsonNode.class);
-        assertTrue(frame instanceof Map<?, ?> map && "failed".equals(map.get("status")), "frame " + frame + " job " + job);
+        assertTrue(frame instanceof Map<?, ?> map && "poor_quality".equals(map.get("status")), "frame " + frame + " job " + job);
         session.disconnect();
 
-        assertEquals("failed", job.path("status").asText());
-        assertTrue(job.path("result").isNull());
-        assertTrue(job.path("error_message").asText().contains("Chưa có khóa API thị giác"));
+        assertEquals("poor_quality", job.path("status").asText());
+        assertEquals("poor", job.path("result").path("image_quality").asText());
+        assertTrue(job.path("result").path("sidewalk_capacity").isNull());
+        assertTrue(job.path("result").path("visibility").isNull());
+        assertTrue(job.path("error_message").isNull());
         assertFalse(job.has("image"));
     }
 
@@ -180,6 +182,13 @@ class ScoringAndVisionTest {
         assertEquals(409, post("""
                 {"lat":21.0378611,"lon":105.8010007,"business_type":"cafe_drink","rent_vnd_per_month":25000000,"vision_job_id":"%s","blend_weight":1}
                 """.formatted(poor)).getStatusCode().value());
+
+        String widthOnly = insertJob("completed", """
+                {"assessed":false,"image_quality":"ok","quality_reasons":[],"sidewalk_capacity":"enough","sidewalk_score":70,"sidewalk_width_m":2.2,"visibility":null,"visibility_score":null,"visibility_measured":false,"recommendation":"Chỉ có bề rộng.","ordinal_note":"Điểm vỉa hè và tầm nhìn là thang thứ tự đã quy ước, không phải số đo mét."}
+                """);
+        assertEquals(409, post("""
+                {"lat":21.0378611,"lon":105.8010007,"business_type":"pharmacy","rent_vnd_per_month":25000000,"vision_job_id":"%s","blend_weight":0.5}
+                """.formatted(widthOnly)).getStatusCode().value());
     }
 
     private String insertJob(String status, String result) throws Exception {

@@ -110,23 +110,37 @@ public class VisionService {
         try {
             Assessment assessment = VisionAssessmentParser.parse(client.assess(image, contentType));
             ObjectNode result = mapper.createObjectNode();
+            boolean poor = assessment.sidewalkCapacity() == null;
             result.put("assessed", assessment.assessed());
-            result.put("image_quality", assessment.assessed() ? "ok" : "poor");
+            result.put("image_quality", poor ? "poor" : "ok");
             result.set("quality_reasons", mapper.valueToTree(assessment.qualityReasons()));
-            if (assessment.sidewalkCapacity() == null) {
+            if (poor) {
                 result.putNull("sidewalk_capacity");
                 result.putNull("sidewalk_score");
+                result.putNull("sidewalk_width_m");
                 result.putNull("visibility");
                 result.putNull("visibility_score");
             } else {
                 result.put("sidewalk_capacity", assessment.sidewalkCapacity());
                 result.put("sidewalk_score", assessment.sidewalkScore());
-                result.put("visibility", assessment.visibility());
-                result.put("visibility_score", assessment.visibilityScore());
+                if (assessment.widthMeters() == null) {
+                    result.putNull("sidewalk_width_m");
+                } else {
+                    result.put("sidewalk_width_m", assessment.widthMeters());
+                }
+                if (assessment.visibility() == null) {
+                    result.putNull("visibility");
+                    result.putNull("visibility_score");
+                    result.put("visibility_measured", false);
+                } else {
+                    result.put("visibility", assessment.visibility());
+                    result.put("visibility_score", assessment.visibilityScore());
+                    result.put("visibility_measured", true);
+                }
             }
             result.put("recommendation", assessment.recommendation());
             result.put("ordinal_note", "Điểm vỉa hè và tầm nhìn là thang thứ tự đã quy ước, không phải số đo mét.");
-            jobs.finish(id, assessment.assessed() ? "completed" : "poor_quality", mapper.writeValueAsString(result), null);
+            jobs.finish(id, poor ? "poor_quality" : "completed", mapper.writeValueAsString(result), null);
         } catch (RuntimeException exception) {
             jobs.finish(id, "failed", null, clip(exception.getMessage()));
         } catch (com.fasterxml.jackson.core.JsonProcessingException exception) {

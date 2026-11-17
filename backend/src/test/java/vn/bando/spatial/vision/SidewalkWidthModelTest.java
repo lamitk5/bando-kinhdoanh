@@ -73,19 +73,21 @@ class SidewalkWidthModelTest {
     void publishedSeoulModelBeatsTheMeanAndMatchesItsCoefficients() throws Exception {
         JsonNode node = mapper.readTree(SidewalkWidthModel.class.getResourceAsStream("/vision/sidewalk_width_model.json"));
         SidewalkWidthModel model = SidewalkWidthModel.read(node);
-        assertEquals("ridge", model.selected());
+        assertEquals("mlp", model.selected());
         assertEquals(349, node.path("train_count").asInt());
         assertEquals(53, node.path("val_count").asInt());
         assertEquals(112, node.path("test_count").asInt());
-        assertEquals(0.8469872683624012, model.testMaeMeters(), 1e-12);
+        assertEquals(48, node.path("resize").get(0).asInt());
+        assertEquals(36, node.path("resize").get(1).asInt());
+        assertEquals(0.8962524457859952, model.testMaeMeters(), 1e-12);
         assertEquals(1.2699672533769955, model.baselineMaeMeters(), 1e-12);
         assertTrue(model.beatsBaseline());
         assertTrue(model.testMaeMeters() < model.baselineMaeMeters());
         assertFalse(node.path("qwen_weights_updated").asBoolean());
         assertFalse(node.path("visibility_trained").asBoolean());
         assertEquals("10.5281/zenodo.22908353", node.path("doi").asText());
-        double[] gray = new double[768];
+        double[] gray = new double[1728];
         java.util.Arrays.fill(gray, 0.5);
-        assertEquals(2.2001173709690054, model.predictMeters(gray), 1e-9);
+        assertEquals(2.0732804281586765, model.predictMeters(gray), 1e-6);
     }
 }
