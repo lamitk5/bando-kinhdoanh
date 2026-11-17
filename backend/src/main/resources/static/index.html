@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Bản đồ mặt bằng</title>
+  <link rel="stylesheet" href="/vendor/ol.css">
+  <style>
+    body { margin: 0; font: 15px/1.45 sans-serif; color: #1c1917; }
+    header { padding: 12px 16px; border-bottom: 1px solid #e7e5e4; }
+    main { display: grid; grid-template-columns: 1.4fr 0.8fr; min-height: calc(100vh - 58px); }
+    #map { min-height: 640px; }
+    aside { padding: 12px 16px; overflow: auto; border-left: 1px solid #e7e5e4; }
+    label { display: block; margin: 8px 0 4px; }
+    button { margin-right: 8px; margin-top: 8px; }
+    table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    td, th { border-bottom: 1px solid #e7e5e4; text-align: left; padding: 4px; }
+    .note { color: #57534e; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>Bốn quận nội thành</strong>
+    <span class="note">Điểm hút khách và đối thủ lấy từ OpenStreetMap đã nạp. Vòng tròn là 200, 500 và 1000 m.</span>
+  </header>
+  <main>
+    <div id="map"></div>
+    <aside>
+      <label for="business">Ngành</label>
+      <select id="business">
+        <option value="cafe_drink">Cà phê / đồ uống</option>
+        <option value="pharmacy">Nhà thuốc</option>
+        <option value="convenience">Cửa hàng tiện lợi</option>
+      </select>
+      <button id="reload" type="button">Tải lại điểm</button>
+      <p class="note" id="count"></p>
+      <h2>So sánh 2–3 mặt bằng</h2>
+      <p class="note">Bấm trên bản đồ để thêm một điểm. Tối đa 3 điểm.</p>
+      <ol id="sites"></ol>
+      <button id="clear" type="button">Xóa điểm</button>
+      <button id="compare" type="button">So sánh</button>
+      <button id="pdf" type="button">Tải PDF</button>
+      <canvas id="radar" height="220"></canvas>
+      <p class="note" id="compare-note"></p>
+      <h2>Kiểm chứng vị trí</h2>
+      <button id="backtest" type="button">Chạy trên dữ liệu đã nạp</button>
+      <p class="note" id="backtest-note"></p>
+      <div id="backtest-table"></div>
+    </aside>
+  </main>
+  <script src="/vendor/ol.js"></script>
+  <script src="/vendor/chart.umd.min.js"></script>
+  <script>
+    const business = document.querySelector("#business");
+    const sites = [];
+    const siteSource = new ol.source.Vector();
+    const pointSource = new ol.source.Vector();
+    const heatSource = new ol.source.Vector();
+    const districtSource = new ol.source.Vector();
+    const map = new ol.Map({
+      target: "map",
+      layers: [
+        new ol.layer.Tile({ source: new ol.source.OSM() }),
+        new ol.layer.Vector({
+          source: districtSource,
+          style: new ol.style.Style({ stroke: new ol.style.Stroke({ color: "#1d4ed8", width: 2 }) })
+        }),
+        new ol.layer.Heatmap({ source: heatSource, blur: 18, radius: 12, weight: feature => feature.get("weight") }),
+        new ol.layer.Vector({
+          source: pointSource,
+          style: feature => new ol.style.Style({
+            image: new ol.style.Circle({
+              radius: 4,
+              fill: new ol.style.Fill({ color: feature.get("role") === "competitor" ? "#b45309" : "#047857" })
+            })
+          })
+        }),
+        new ol.layer.Vector({ source: siteSource })
+      ],
+      view: new ol.View({ center: ol.proj.fromLonLat([105.80, 21.03]), zoom: 12 })
+    });
+    let chart;
+
+    function geodesicCircle(lon, lat, meters) {
+      const earth = 6378137;
+      const step = meters / earth;
+      const lat1 = lat * Math.PI / 180;
+      const lon1 = lon * Math.PI / 180;
+      const coords = [];
+      for (let i = 0; i <= 64; i++) {
+        const bearing = 2 * Math.PI * i / 64;
+        const lat2 = Math.asin(Math.sin(lat1) * Math.cos(step) + Math.cos(lat1) * Math.sin(step) * Math.cos(bearing));
+        const lon2 = lon1 + Math.atan2(
+          Math.sin(bearing) * Math.sin(step) * Math.cos(lat1),
+          Math.cos(step) - Math.sin(lat1) * Math.sin(lat2)
+        );
+        coords.push(ol.proj.fromLonLat([lon2 * 180 / Math.PI, lat2 * 180 / Math.PI]));
+      }
+      return new ol.geom.LineString(coords);
+    }
+
+    function ring(lon, lat, meters, color) {
+      const feature = new ol.Feature({ geometry: geodesicCircle(lon, lat, meters) });
+      feature.setStyle(new ol.style.Style({
+        stroke: new ol.style.Stroke({ color: color, width: 2 })
+      }));
+      return feature;
+    }
+
+    function drawSites() {
+      siteSource.clear();
+      const list = document.querySelector("#sites");
+      list.innerHTML = "";
+      sites.forEach((site, index) => {
+        siteSource.addFeature(ring(site.lon, site.lat, 200, "#64748b"));
+        siteSource.addFeature(ring(site.lon, site.lat, 500, "#0f766e"));
+        siteSource.addFeature(ring(site.lon, site.lat, 1000, "#1d4ed8"));
+        const item = document.createElement("li");
+        item.textContent = site.label + " (" + site.lat.toFixed(5) + ", " + site.lon.toFixed(5) + ")";
+        list.appendChild(item);
+      });
+    }
+
+    async function loadMap() {
+      const frame = { west: 105.70, south: 20.96, east: 105.87, north: 21.10 };
+      const query = new URLSearchParams({ ...frame, business_type: business.value });
+      const [districts, points, heat] = await Promise.all([
+        fetch("/api/map/districts").then(response => response.json()),
+        fetch("/api/map/points?" + query).then(response => response.json()),
+        fetch("/api/map/heatmap?" + query).then(response => response.json())
+      ]);
+      districtSource.clear();
+      districtSource.addFeatures(new ol.format.GeoJSON().readFeatures(districts, {
+        dataProjection: "EPSG:4326",
+        featureProjection: "EPSG:3857"
+      }));
+      pointSource.clear();
+      points.features.forEach(point => {
+        const feature = new ol.Feature({
+          geometry: new ol.geom.Point(ol.proj.fromLonLat([point.lon, point.lat])),
+          role: point.role,
+          name: point.name
+        });
+        pointSource.addFeature(feature);
+      });
+      heatSource.clear();
+      heat.cells.forEach(cell => {
+        if (cell.competitors < 1) return;
+        heatSource.addFeature(new ol.Feature({
+          geometry: new ol.geom.Point(ol.proj.fromLonLat([cell.lon, cell.lat])),
+          weight: Math.min(1, cell.competitors / 8)
+        }));
+      });
+      const cap = points.truncated ? " Danh sách dừng ở " + points.features.length + " điểm." : "";
+      document.querySelector("#count").textContent = points.features.length + " điểm. Màu xanh là điểm hút khách, màu nâu là đối thủ của ngành đang chọn." + cap;
+    }
+
+    map.on("click", event => {
+      if (sites.length >= 3) return;
+      const lonLat = ol.proj.toLonLat(event.coordinate);
+      sites.push({ label: "Điểm " + (sites.length + 1), lon: lonLat[0], lat: lonLat[1] });
+      drawSites();
+    });
+
+    document.querySelector("#reload").onclick = () => loadMap().catch(error => alert(error));
+    document.querySelector("#clear").onclick = () => { sites.length = 0; drawSites(); };
+    business.onchange = () => loadMap().catch(error => alert(error));
+
+    async function compareBody() {
+      if (sites.length < 2) throw new Error("Cần ít nhất 2 điểm");
+      const response = await fetch("/api/scoring/compare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          business_type: business.value,
+          rent_vnd_per_month: 25000000,
+          sites: sites
+        })
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.message || response.status);
+      return body;
+    }
+
+    document.querySelector("#compare").onclick = async () => {
+      try {
+        const body = await compareBody();
+        const labels = ["Điểm hút khách", "Bão hòa đối thủ", "Tiếp cận đường"];
+        const colors = ["#0f766e", "#b45309", "#1d4ed8"];
+        if (chart) chart.destroy();
+        chart = new Chart(document.querySelector("#radar"), {
+          type: "radar",
+          data: {
+            labels,
+            datasets: body.sites.map((site, index) => ({
+              label: site.label,
+              data: [
+                site.components.attractor_density.score,
+                site.components.competitor_saturation.score,
+                site.components.arterial_access.score
+              ],
+              borderColor: colors[index]
+            }))
+          },
+          options: { scales: { r: { min: 0, max: 100 } } }
+        });
+        document.querySelector("#compare-note").textContent = body.radar_note + " Tiền thuê 25.000.000 đồng/tháng là mốc chung, không phải giá quan sát.";
+      } catch (error) {
+        document.querySelector("#compare-note").textContent = error.message || "Không so sánh được";
+      }
+    };
+
+    document.querySelector("#pdf").onclick = async () => {
+      if (sites.length < 2) return;
+      const response = await fetch("/api/scoring/compare.pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          business_type: business.value,
+          rent_vnd_per_month: 25000000,
+          sites
+        })
+      });
+      const blob = await response.blob();
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "so-sanh.pdf";
+      link.click();
+    };
+
+    document.querySelector("#backtest").onclick = async () => {
+      document.querySelector("#backtest-note").textContent = "Đang chấm các điểm...";
+      const response = await fetch("/api/backtest");
+      const body = await response.json();
+      document.querySelector("#backtest-note").textContent = body.limitation + " " + body.question;
+      const table = document.createElement("table");
+      table.innerHTML = "<tr><th>Ngành</th><th>Số cơ sở</th><th>Trung vị cơ sở, đã trừ chính nó</th><th>Trung vị điểm lưới</th></tr>";
+      body.businesses.forEach(item => {
+        const row = document.createElement("tr");
+        row.innerHTML = "<td>" + item.business_type + "</td><td>" + item.shop_count + "</td><td>"
+          + item.shop_median_spatial_score_without_self + "</td><td>" + item.grid_median_spatial_score + "</td>";
+        table.appendChild(row);
+      });
+      const host = document.querySelector("#backtest-table");
+      host.innerHTML = "";
+      host.appendChild(table);
+    };
+
+    loadMap().catch(error => { document.querySelector("#count").textContent = error.message; });
+  </script>
+</body>
+</html>

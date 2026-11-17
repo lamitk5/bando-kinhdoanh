@@ -53,7 +53,8 @@ public class ScoringRepository {
     private static RuntimeException mapSqlState(DataAccessException exception) {
         Throwable cause = exception.getMostSpecificCause();
         if (cause instanceof SQLException sql && "22023".equals(sql.getSQLState())) {
-            return new ResponseStatusException(HttpStatus.BAD_REQUEST, cause.getMessage(), exception);
+            String message = cause.getMessage() == null ? "Điểm không chấm được" : cause.getMessage().split("\\R", 2)[0];
+            return new ResponseStatusException(HttpStatus.BAD_REQUEST, message, exception);
         }
         return exception;
     }

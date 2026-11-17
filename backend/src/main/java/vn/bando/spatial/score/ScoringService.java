@@ -91,6 +91,61 @@ public class ScoringService {
         return response;
     }
 
+    public ObjectNode compare(JsonNode request) {
+        if (request == null || !request.isObject()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cần một đối tượng JSON");
+        }
+        request.fieldNames().forEachRemaining(field -> {
+            if (!field.equals("business_type") && !field.equals("rent_vnd_per_month") && !field.equals("sites")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trường không được gửi: " + field);
+            }
+        });
+        require(request, "business_type", "rent_vnd_per_month", "sites");
+        JsonNode sites = request.get("sites");
+        if (!sites.isArray() || sites.size() < 2 || sites.size() > 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cần từ 2 đến 3 mặt bằng");
+        }
+        java.util.Set<String> labels = new java.util.HashSet<>();
+        ObjectNode response = mapper.createObjectNode();
+        response.put("business_type", text(request, "business_type"));
+        response.put("rent_vnd_per_month", rent(request));
+        response.put("radar_note", "Ba cánh là điểm thành phần 0–100 của cùng một ngành và cùng một mức thuê. Không phải doanh thu.");
+        var compared = response.putArray("sites");
+        for (JsonNode site : sites) {
+            if (!site.isObject()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mỗi mặt bằng phải là một đối tượng");
+            }
+            site.fieldNames().forEachRemaining(field -> {
+                if (!field.equals("label") && !field.equals("lat") && !field.equals("lon")) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trường không được gửi: " + field);
+                }
+            });
+            if (!site.hasNonNull("label") || !site.path("label").isTextual()
+                    || !site.path("lat").isNumber() || !site.path("lon").isNumber()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mỗi mặt bằng cần label, lat và lon");
+            }
+            String label = site.get("label").asText().trim();
+            if (label.isEmpty() || label.length() > 40 || !labels.add(label)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nhãn mặt bằng phải khác nhau và không quá 40 ký tự");
+            }
+            ObjectNode one = mapper.createObjectNode();
+            one.put("lat", site.get("lat").asDouble());
+            one.put("lon", site.get("lon").asDouble());
+            one.put("business_type", text(request, "business_type"));
+            one.put("rent_vnd_per_month", rent(request));
+            ObjectNode scored = evaluate(one);
+            ObjectNode row = compared.addObject();
+            row.put("label", label);
+            row.put("lat", scored.path("lat").asDouble());
+            row.put("lon", scored.path("lon").asDouble());
+            row.put("spatial_score", scored.path("spatial_score").asDouble());
+            row.put("rent_index_points_per_million_vnd", scored.path("rent_index_points_per_million_vnd").asDouble());
+            row.set("components", scored.path("components"));
+            row.put("partial_ring", scored.path("partial_ring").asBoolean());
+        }
+        return response;
+    }
+
     private void applyVision(ObjectNode response, JsonNode request, String business, double spatial) {
         response.put("vision_applied", false);
         response.putNull("vision_job_id");

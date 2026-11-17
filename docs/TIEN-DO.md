@@ -23,7 +23,7 @@ Câu xác nhận hợp lệ gồm các ý như: "ok", "duyệt", "chức năng n
 
 ## Hạng mục
 
-Chín hạng mục dưới đây bám bốn phân hệ của đề tài. Năm mục đã `thành công` vì người phụ trách yêu cầu ba giám khảo chấm thang 100 và tự gán khi điểm trung bình đạt mức đã yêu cầu. Mức của mục 6 là 93.
+Chín hạng mục dưới đây bám bốn phân hệ của đề tài. Bảy mục đã `thành công` vì người phụ trách yêu cầu ba giám khảo chấm thang 100 và tự gán khi điểm trung bình đạt mức đã yêu cầu. Mức của mục 6 là 93. Các mục sau dùng mức trên 90.
 
 | # | Phân hệ | Hạng mục | Trạng thái |
 | --- | --- | --- | --- |
@@ -33,9 +33,9 @@ Chín hạng mục dưới đây bám bốn phân hệ của đề tài. Năm m�
 | 4 | AHP Scoring Core | Ma trận AHP theo từng ngành, CR dưới 0.1, thang điểm 0–100, chỉ số hiệu quả theo giá thuê | `thành công` |
 | 5 | Multimodal AI | Hàng đợi Redis và WebSocket cho pipeline ảnh | `thành công` |
 | 6 | Multimodal AI | Vision AI: vỉa hè, tầm nhìn, cảnh báo ảnh kém, báo cáo khuyến nghị dạng JSON | `thành công` |
-| 7 | Web GIS | Bản đồ OpenLayers: bán kính, phân loại đối thủ / khách tiềm năng, heatmap | `chưa làm` |
-| 8 | Web GIS | So sánh 2–3 mặt bằng (radar) và xuất PDF | `chưa làm` |
-| 9 | Kiểm chứng | Back-test 10–15 địa điểm thực tế tại Hà Nội | `chưa làm` |
+| 7 | Web GIS | Bản đồ OpenLayers: bán kính, phân loại đối thủ / khách tiềm năng, heatmap | `thành công` |
+| 8 | Web GIS | So sánh 2–3 mặt bằng (radar) và xuất PDF | `thành công` |
+| 9 | Kiểm chứng | Back-test 10–15 địa điểm thực tế tại Hà Nội | `chờ duyệt` |
 
 ## Nhật ký
 
@@ -43,6 +43,8 @@ Ghi từ trên xuống dưới, mục mới nhất ở đầu. Tài liệu tổn
 
 | Thời điểm (UTC+7) | Hạng mục | Trạng thái | Cách kiểm tra |
 | --- | --- | --- | --- |
+| 2026-11-18 01:46 | Ba giám khảo chấm mục 7, 8 và 9 | `thành công` cho 7 và 8, mục 9 vẫn `chờ duyệt` | Mục 7: 91, 93 và 96, trung bình 93,3. Mục 8: 93, 98 và 99, trung bình 96,7. Mục 9: 64, 63 và 70, trung bình 65,7. Mức để gán thành công là trung bình trên 90. Mục 9 không có nhóm cửa hàng đã đóng. Sau khi chấm, vòng trên bản đồ được vẽ theo mét mặt đất và lỗi điểm ngoài bốn quận không còn kèm vị trí hàm SQL. |
+| 2026-11-18 01:18 | Bản đồ, so sánh PDF và kiểm chứng vị trí | `chờ duyệt` | Mở `/`. Bản đồ có bốn quận, điểm xanh là điểm hút khách, điểm nâu là đối thủ. Bấm hai điểm rồi bấm So sánh: radar ba cánh. PDF từ `POST /api/scoring/compare.pdf` chứa đúng điểm không gian. `GET /api/backtest` trả 12 cơ sở có liên kết OpenStreetMap và nói rõ không có cửa hàng đã đóng. Trung vị cà phê 42,3 so với lưới 70,7; nhà thuốc 45,3 so với 62,5; tiện lợi 58,6 so với 59,5. |
 | 2026-11-17 21:06 | Đổi cách học sang dải và biên, rồi ba giám khảo chấm lại mục 6 | `thành công` | Đọc mục bề rộng trong [CHAM-DIEM.md](CHAM-DIEM.md) và [geometry_selection.json](../etl/vision/geometry_selection.json). Trung bình 5 láng giềng thắng vì sai số chọn 0,544 m, thấp hơn 0,719 m của mạng trước. Sai số kiểm tra 0,568 m, so với 1,270 m của trung bình tập học. Khớp mức quy ước 78,6%, mức đa số khớp 53,6%. Sai số học 0,473 m bị lạc quan vì ảnh học nằm trong nhóm của chính nó. PNG 1×1 thành `poor_quality`. Ảnh đủ biến thiên thành `completed` với số mét và `visibility` null. Ba ngành nhận số mét, `vision_applied` false, không có điểm ảnh. Gửi `blend_weight` thì 409. Ba giám khảo: 92, 100 và 100, trung bình 97,3. Giám khảo 1 trừ vì chưa có tầm nhìn. Hai giám khảo kia không trừ. Trung bình đạt mức 93 nên ghi `thành công`. Tầm nhìn vẫn chưa được đo. |
 | 2026-11-17 18:37 | Nối mô hình bề rộng vào pipeline và chấm lại mục 6 | `chờ duyệt` | Đọc mục bề rộng trong [CHAM-DIEM.md](CHAM-DIEM.md). Mạng 48×36 được chọn vì sai số tập chọn 0,719 m. Sai số kiểm tra 0,896 m, so với 1,270 m của trung bình tập học và 0,847 m của ridge lần trước. Độ khớp mức quy ước 58,9%, mức đa số khớp 53,6%. PNG 1×1 thành `poor_quality`. Ảnh đủ biến thiên thành `completed`, có số mét, `visibility` null, `assessed` false. Ba giám khảo: 85, 90 và 91, trung bình 88,7. Dưới 93 nên vẫn `chờ duyệt`. |
 | 2026-11-17 15:44 | Huấn luyện bề rộng vỉa hè, rồi ba giám khảo chấm lại mục 6 | `chờ duyệt` | Đọc mục bề rộng trong [CHAM-DIEM.md](CHAM-DIEM.md). 514 ảnh Seoul, DOI 10.5281/zenodo.22908353, bề rộng đo tại chỗ. Tách 349/53/112. Ridge phạt 1.000 được chọn trên tập chọn. Sai số kiểm tra 0,847 m, so với 1,270 m nếu đoán bằng trung bình tập học. Không tinh chỉnh Qwen. Không có nhãn tầm nhìn. Pipeline ảnh không gọi mô hình này. Ba giám khảo chấm mục 6: 84, 86 và 88, trung bình 86. Dưới 90 nên vẫn `chờ duyệt`. |
