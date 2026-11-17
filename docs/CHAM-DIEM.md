@@ -93,6 +93,24 @@ Trên tập kiểm tra, mức theo quy ước mét khớp 78,6%. Nếu luôn đo
 
 Không có khóa Gemini hoặc Groq thì pipeline gọi mô hình này. Ảnh có cạnh ngắn dưới 64 điểm, độ xám trung bình dưới 20 hoặc trên 240, hoặc phương sai dưới 50 thì thành `poor_quality` và không có bề rộng. Ngưỡng này nằm dưới phân bố 40 ảnh học đã xem trước, nơi độ xám trung bình khoảng 76–143 và phương sai trên 3000. Ảnh dùng được trả `completed` với số mét, mức quy ước, `visibility` null và `assessed` false. Khi chấm một điểm cho cà phê, nhà thuốc hoặc tiện lợi, số mét được gắn vào kết quả nhưng không thành điểm ảnh và không trộn vào điểm tổng, vì chưa có tầm nhìn. Gửi kèm `blend_weight` với ảnh này thì bị từ chối. Ảnh học ở Seoul, không phải mặt tiền bốn quận Hà Nội.
 
+## Bản đồ, so sánh và kiểm chứng vị trí
+
+Trang `/` vẽ bốn quận, điểm hút khách và đối thủ của ngành đang chọn, vòng 200/500/1000 m quanh điểm người dùng bấm, và lớp nhiệt theo số đối thủ trong ô 0,002 độ. Ô nhiệt là số điểm, không phải mật độ trên km². Khung rộng hơn 0,25 độ bị từ chối. Với cà phê, khung phủ bốn quận trả 2862 điểm và không bị cắt.
+
+`POST /api/scoring/compare` nhận 2 hoặc 3 mặt bằng, cùng ngành và cùng tiền thuê. Ba cánh radar là điểm hút khách, bão hòa đối thủ và tiếp cận trục đường. PDF tải từ `POST /api/scoring/compare.pdf` ghi lại đúng các số đó. Tiền thuê 25.000.000 đồng/tháng trên trang là mốc chung, không phải giá quan sát.
+
+`GET /api/backtest` không đối chiếu cửa hàng còn sống với cửa hàng đã đóng. Bảng `raw_poi` có 7385 dòng, 0 thẻ `disused` và 0 thẻ `abandoned`. Mười hai cơ sở là mỗi quận một cơ sở có tên cho mỗi ngành, chọn `osm_id` nhỏ nhất, không phải mẫu ngẫu nhiên và không phải nhóm hoạt động lâu năm. Mười hai điểm lưới là `ST_GeneratePoints` trong ranh mỗi quận, seed 1, ba điểm một quận. Điểm cơ sở dùng để so trung vị đã trừ một đối thủ vì chính cơ sở nằm ở tâm vòng 500 m.
+
+Trung vị điểm không gian, mức thuê mốc 25.000.000 đồng/tháng:
+
+| Ngành | 4 cơ sở, đã trừ chính nó | 12 điểm lưới |
+| --- | ---: | ---: |
+| Cà phê / đồ uống | 42,3 | 70,7 |
+| Nhà thuốc | 45,3 | 62,5 |
+| Cửa hàng tiện lợi | 58,6 | 59,5 |
+
+Bốn cơ sở mỗi ngành không nằm ở điểm cao hơn lưới. Mẫu quá nhỏ và cách chọn theo `osm_id` không đại diện cho cửa hàng thành công.
+
 ## Việc chưa làm
 
-Chưa có phiếu chuyên gia, chưa có doanh thu để thành ROI, chưa có tài khoản người duyệt, và chưa có nhãn tầm nhìn hay ảnh mặt tiền Hà Nội đã gán mức. Back-test 10–15 cửa hàng vẫn là hạng mục riêng.
+Chưa có phiếu chuyên gia, chưa có doanh thu để thành ROI, chưa có tài khoản người duyệt, và chưa có nhãn tầm nhìn hay ảnh mặt tiền Hà Nội đã gán mức. Chưa có danh sách cửa hàng đã đóng cửa để đối chiếu.
