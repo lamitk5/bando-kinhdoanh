@@ -1,6 +1,6 @@
 # Dữ liệu không gian
 
-Hạng mục nạp bản đồ đưa OpenStreetMap vào PostgreSQL/PostGIS, đánh chỉ mục GIST và cache bản tóm tắt trên Redis. Vùng đệm 200/500/1000 m được tính riêng, bằng mét. Đóng góp hiện trường nằm ở bảng riêng và chỉ vào vùng đệm sau khi được duyệt. Chưa chấm điểm AHP và chưa có tài khoản người duyệt.
+Hạng mục nạp bản đồ đưa OpenStreetMap vào PostgreSQL/PostGIS, đánh chỉ mục GIST và cache bản tóm tắt trên Redis. Vùng đệm 200/500/1000 m được tính riêng, bằng mét. Đóng góp hiện trường nằm ở bảng riêng và chỉ vào vùng đệm sau khi được duyệt. Thang chấm điểm và việc ảnh cũng nằm ở bảng riêng, không bị lần nạp xóa. Công thức chấm điểm nằm ở [CHAM-DIEM.md](CHAM-DIEM.md). Chưa có tài khoản người duyệt.
 
 Số liệu sau mỗi lần chạy nằm ở [manifest.json](../data/manifest.json). File đó do `etl/import_osm.sh` ghi từ câu lệnh SQL, không gõ tay. Nếu file chưa có, lần nạp chưa chạy xong.
 
@@ -115,6 +115,8 @@ Chưa có đăng nhập. Bước duyệt là một lời gọi riêng, chưa ph�
 `etl/sql/060_buffer_checks.sql` kiểm tra hàm vùng đệm trên dữ liệu vừa nạp: đúng ba bán kính, số đếm không giảm khi bán kính tăng, khoảng cách trục đường khớp phép đo geography, điểm 105°E 21°N không được đánh dấu đếm đủ, và ngành `restaurant` bị từ chối. Kiểm tra này dừng nếu node OSM 423736651 không còn là `cafe_drink` trong bảng `poi`.
 
 `etl/sql/065_contribution_checks.sql` không nằm trong lệnh nạp. File mở một giao dịch, tạo một đóng góp cách node đó 15 m, xác nhận lúc chờ thì số đếm không đổi, lúc duyệt thì số đối thủ và `epoch` tăng 1 so với lúc bắt đầu, lúc từ chối thì số đếm không tăng, rồi `ROLLBACK`. Dòng có sẵn không bị xóa.
+
+`etl/sql/066_scoring_checks.sql` chạy trong lệnh nạp. Nó tính lại thang hai lần và đòi cùng số mẫu, cùng P95, cùng trung vị. Số mẫu phải từ 200 trở lên, P95 điểm hút phải cao hơn P95 cà phê, trung vị đường phải nằm trong khoảng 20–2000 m. Nó không khóa các phân vị 90,93 hay 23,05, vì ảnh PBF sau có thể đổi thang. Node 423736651 phải còn là cà phê, vòng 500 m đếm đủ, và đường gần nhất nằm trong khoảng 5–20 m. Điểm 105°E 21°N bị từ chối vì nằm ngoài bốn quận.
 
 `etl/spotcheck_osm.py` lấy tối đa hai node mỗi hạng mục, gọi API `api.openstreetmap.org`, và chỉ tính là khớp khi node còn tồn tại và lệch không quá 500 m. API trực tiếp có thể mới hơn ảnh PBF. Lệch thẻ sau mốc header không làm lần nạp thất bại. Dưới 5 node khớp thì script dừng.
 
