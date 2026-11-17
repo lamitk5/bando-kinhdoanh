@@ -23,12 +23,12 @@ Câu xác nhận hợp lệ gồm các ý như: "ok", "duyệt", "chức năng n
 
 ## Hạng mục
 
-Chín hạng mục dưới đây bám bốn phân hệ của đề tài. Chưa có mục nào `thành công`.
+Chín hạng mục dưới đây bám bốn phân hệ của đề tài. Hai mục đã `thành công` vì người phụ trách yêu cầu ba giám khảo chấm thang 100 và tự gán khi điểm trung bình trên 90.
 
 | # | Phân hệ | Hạng mục | Trạng thái |
 | --- | --- | --- | --- |
-| 1 | Spatial Engine | Nạp OSM vào PostGIS, chỉ mục GIST, cache Redis | `chờ duyệt` |
-| 2 | Spatial Engine | Truy vấn vùng đệm 200 / 500 / 1000 m (điểm hút khách, đối thủ, trục đường) | `chờ duyệt` |
+| 1 | Spatial Engine | Nạp OSM vào PostGIS, chỉ mục GIST, cache Redis | `thành công` |
+| 2 | Spatial Engine | Truy vấn vùng đệm 200 / 500 / 1000 m (điểm hút khách, đối thủ, trục đường) | `thành công` |
 | 3 | Spatial Engine | Đóng góp POI có kiểm duyệt | `chờ duyệt` |
 | 4 | AHP Scoring Core | Ma trận AHP theo từng ngành, CR dưới 0.1, thang điểm 0–100, chỉ số hiệu quả theo giá thuê | `chưa làm` |
 | 5 | Multimodal AI | Hàng đợi Redis và WebSocket cho pipeline ảnh | `chưa làm` |
@@ -43,6 +43,7 @@ Ghi từ trên xuống dưới, mục mới nhất ở đầu. Tài liệu tổn
 
 | Thời điểm (UTC+7) | Hạng mục | Trạng thái | Cách kiểm tra |
 | --- | --- | --- | --- |
+| 2026-11-17 09:06 | Ba giám khảo chấm hạng mục đã làm | `thành công` cho mục 1 và 2; mục 3 vẫn `chờ duyệt` | Người phụ trách yêu cầu ba giám khảo độc lập chấm thang 100 và tự gán `thành công` khi điểm trung bình trên 90. Mục 1: 95, 95 và 96, trung bình 95,3. Mục 2: 98, 96 và 90, trung bình 94,7. Mục 3: 90, 89 và 80, trung bình 86,3. Điểm trừ lớn của mục 3 là chưa có người duyệt riêng với người gửi. |
 | 2026-11-17 08:43 | Đóng góp POI có kiểm duyệt | `chờ duyệt` | Đọc mục đóng góp trong [DU-LIEU.md](DU-LIEU.md). Gửi `POST /api/spatial/contributions` một quán cà phê trong bốn quận: dòng phải là `pending` và vùng đệm chưa đổi. `approve` làm số đối thủ tăng 1, `contribution_competitor_count` thành 1, và khóa cache đổi epoch. Gọi duyệt lần hai trả 409. `reject` không làm tăng số đếm và bắt buộc có lý do. `health` vẫn đếm 3290 POI OpenStreetMap. Chưa có đăng nhập. Lệnh nạp không chạy file kiểm tra và không xóa bảng này. Lần tự kiểm tra đã xóa đúng id vừa tạo; bảng đóng góp trống, `contribution_epoch` còn 1. |
 | 2026-11-17 08:26 | Tự kiểm tra lại vùng đệm 200 / 500 / 1000 m | `chờ duyệt` | Gọi lại địa chỉ Cà Phê Kafa. Đối thủ cà phê vẫn 6 / 12 / 35, điểm hút 4 / 24 / 127, vòng 1000 m vẫn `counts_complete=false` với phần diện tích 0,7645, trục đường vẫn Nguyễn Khánh Toàn 10,2 m. Nhà thuốc cùng điểm ra đối thủ 0 / 1 / 4. `restaurant` và tọa độ 0,0 trả 400. Cache tóm tắt đã hết hạn 6 giờ nên lần gọi đầu ghi lại, lần sau `cache.hit=true`. Hạng mục 2 chưa được người phụ trách xác nhận. |
 | 2026-11-16 20:33 | Truy vấn vùng đệm 200 / 500 / 1000 m | `chờ duyệt` | Đọc mục vùng đệm trong [DU-LIEU.md](DU-LIEU.md). Gọi `GET /api/spatial/buffers?lat=21.0378611&lon=105.8010007&business_type=cafe_drink` (node [Cà Phê Kafa](https://www.openstreetmap.org/node/423736651)). Lần kiểm tra này đếm đối thủ cà phê 6 / 12 / 35 và điểm hút khách 4 / 24 / 127; vòng 200 m và 500 m có `counts_complete=true`, vòng 1000 m còn 0,7645 diện tích trong bốn quận nên `counts_complete=false` (mép Cầu Giấy cách điểm khoảng 530 m). Trục đường gần nhất là [Nguyễn Khánh Toàn](https://www.openstreetmap.org/way/180131788), 10,2 m. Gọi lại cùng tọa độ, lần hai phải có `cache.hit=true`. Cùng điểm với `pharmacy` phải ra số đối thủ khác. `business_type=restaurant` và tọa độ 0,0 phải trả 400. Đây chưa phải điểm số. |
