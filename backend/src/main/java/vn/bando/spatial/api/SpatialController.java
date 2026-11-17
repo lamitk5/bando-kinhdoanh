@@ -1,9 +1,13 @@
 package vn.bando.spatial.api;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,6 +47,26 @@ public class SpatialController {
             @RequestParam("lon") double lon,
             @RequestParam("business_type") String businessType) {
         return service.buffer(lat, lon, businessType);
+    }
+
+    @PostMapping("/contributions")
+    public JsonNode submitContribution(@RequestBody JsonNode body) {
+        return service.submitContribution(body);
+    }
+
+    @GetMapping("/contributions")
+    public JsonNode contributions(@RequestParam(name = "status", required = false) String status) {
+        return service.listContributions(status);
+    }
+
+    @PostMapping("/contributions/{id}/approve")
+    public JsonNode approveContribution(@PathVariable("id") long id, @RequestBody(required = false) JsonNode body) {
+        return service.decideContribution(id, "approved", body);
+    }
+
+    @PostMapping("/contributions/{id}/reject")
+    public JsonNode rejectContribution(@PathVariable("id") long id, @RequestBody JsonNode body) {
+        return service.decideContribution(id, "rejected", body);
     }
 
     @GetMapping("/samples")

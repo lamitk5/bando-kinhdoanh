@@ -28,7 +28,7 @@ public final class BufferRequest {
         return new Normalized(round6(lat), round6(lon), businessType);
     }
 
-    static double round6(double value) {
+    public static double round6(double value) {
         return BigDecimal.valueOf(value).setScale(6, RoundingMode.HALF_UP).doubleValue();
     }
 }

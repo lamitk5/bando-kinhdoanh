@@ -164,19 +164,82 @@ public class SpatialRepository {
                     businessType
             );
         } catch (DataAccessException exception) {
-            if (isInvalidInput(exception)) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        exception.getMostSpecificCause().getMessage(),
-                        exception);
-            }
-            throw exception;
+            throw mapSqlState(exception);
         }
     }
 
-    private static boolean isInvalidInput(DataAccessException exception) {
+    public String submitContribution(
+            String name,
+            String category,
+            double lon,
+            double lat,
+            String note,
+            String submitter) {
+        try {
+            return jdbc.queryForObject(
+                    "SELECT submit_poi_contribution(?, ?, ?, ?, ?, ?)::text",
+                    String.class,
+                    name,
+                    category,
+                    lon,
+                    lat,
+                    note,
+                    submitter
+            );
+        } catch (DataAccessException exception) {
+            throw mapSqlState(exception);
+        }
+    }
+
+    public String decideContribution(long id, String decision, String note) {
+        try {
+            return jdbc.queryForObject(
+                    "SELECT decide_poi_contribution(?, ?, ?)::text",
+                    String.class,
+                    id,
+                    decision,
+                    note
+            );
+        } catch (DataAccessException exception) {
+            throw mapSqlState(exception);
+        }
+    }
+
+    public long contributionEpoch() {
+        Long epoch = jdbc.queryForObject("SELECT epoch FROM contribution_epoch WHERE id = 1", Long.class);
+        if (epoch == null) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Chưa có mốc đóng góp");
+        }
+        return epoch;
+    }
+
+    public String listContributions(String status) {
+        try {
+            return jdbc.queryForObject(
+                    "SELECT list_poi_contributions(?)::text",
+                    String.class,
+                    status
+            );
+        } catch (DataAccessException exception) {
+            throw mapSqlState(exception);
+        }
+    }
+
+    private static RuntimeException mapSqlState(DataAccessException exception) {
         Throwable cause = exception.getMostSpecificCause();
-        return cause instanceof SQLException sql && "22023".equals(sql.getSQLState());
+        if (cause instanceof SQLException sql) {
+            String state = sql.getSQLState();
+            if ("22023".equals(state)) {
+                return new ResponseStatusException(HttpStatus.BAD_REQUEST, cause.getMessage(), exception);
+            }
+            if ("02000".equals(state)) {
+                return new ResponseStatusException(HttpStatus.NOT_FOUND, cause.getMessage(), exception);
+            }
+            if ("P0001".equals(state)) {
+                return new ResponseStatusException(HttpStatus.CONFLICT, cause.getMessage(), exception);
+            }
+        }
+        return exception;
     }
 
     public HealthResponse health(String redisStatus) {
