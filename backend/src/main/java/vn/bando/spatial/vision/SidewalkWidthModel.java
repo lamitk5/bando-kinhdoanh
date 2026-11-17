@@ -20,6 +20,9 @@ public final class SidewalkWidthModel {
     private final double[] b1;
     private final double[] w2;
     private final double b2;
+    private final int neighbors;
+    private final double[][] trainFeatures;
+    private final double[] trainTargets;
 
     private SidewalkWidthModel(
             String selected,
@@ -33,7 +36,10 @@ public final class SidewalkWidthModel {
             double[][] w1,
             double[] b1,
             double[] w2,
-            double b2) {
+            double b2,
+            int neighbors,
+            double[][] trainFeatures,
+            double[] trainTargets) {
         this.selected = selected;
         this.beatsBaseline = beatsBaseline;
         this.testMaeMeters = testMaeMeters;
@@ -46,11 +52,14 @@ public final class SidewalkWidthModel {
         this.b1 = b1;
         this.w2 = w2;
         this.b2 = b2;
+        this.neighbors = neighbors;
+        this.trainFeatures = trainFeatures;
+        this.trainTargets = trainTargets;
     }
 
     public static SidewalkWidthModel read(JsonNode node) {
         String selected = node.path("selected").asText();
-        if (!"ridge".equals(selected) && !"mlp".equals(selected)) {
+        if (!"ridge".equals(selected) && !"mlp".equals(selected) && !"knn".equals(selected)) {
             throw new IllegalArgumentException("Mô hình bề rộng không có họ đã chọn");
         }
         double[] mean = vector(node, "feature_mean");
@@ -69,6 +78,19 @@ public final class SidewalkWidthModel {
         if ("mlp".equals(selected) && (w1.length == 0 || w1[0].length != mean.length || b1.length != w1.length || w2.length != w1.length)) {
             throw new IllegalArgumentException("Trọng số mạng không khớp số đặc trưng");
         }
+        int neighbors = 0;
+        double[][] trainFeatures = new double[0][0];
+        double[] trainTargets = new double[0];
+        if ("knn".equals(selected)) {
+            JsonNode knn = node.path("knn");
+            neighbors = knn.path("k").asInt();
+            trainFeatures = matrix(knn.path("train_features"));
+            trainTargets = vector(knn, "train_targets_m");
+            if (neighbors < 1 || trainFeatures.length < neighbors || trainTargets.length != trainFeatures.length
+                    || trainFeatures[0].length != mean.length) {
+                throw new IllegalArgumentException("Tập láng giềng không khớp số đặc trưng");
+            }
+        }
         return new SidewalkWidthModel(
                 selected,
                 node.path("beats_baseline").asBoolean(false),
@@ -81,7 +103,10 @@ public final class SidewalkWidthModel {
                 w1,
                 b1,
                 w2,
-                mlp.path("b2").asDouble());
+                mlp.path("b2").asDouble(),
+                neighbors,
+                trainFeatures,
+                trainTargets);
     }
 
     public String selected() {
@@ -119,11 +144,43 @@ public final class SidewalkWidthModel {
         if ("ridge".equals(selected)) {
             return dot(ridgeWeights, scaled) + targetMean;
         }
+        if ("knn".equals(selected)) {
+            return nearestMean(scaled);
+        }
         double[] hidden = new double[w1.length];
         for (int row = 0; row < w1.length; row++) {
             hidden[row] = Math.max(0, dot(w1[row], scaled) + b1[row]);
         }
         return dot(w2, hidden) + b2 + targetMean;
+    }
+
+    private double nearestMean(double[] scaled) {
+        int[] chosen = new int[neighbors];
+        double[] chosenDistance = new double[neighbors];
+        java.util.Arrays.fill(chosenDistance, Double.POSITIVE_INFINITY);
+        for (int row = 0; row < trainFeatures.length; row++) {
+            double distance = 0;
+            for (int col = 0; col < scaled.length; col++) {
+                double delta = scaled[col] - ((trainFeatures[row][col] - mean[col]) / std[col]);
+                distance += delta * delta;
+            }
+            int place = neighbors - 1;
+            if (distance >= chosenDistance[place]) {
+                continue;
+            }
+            while (place > 0 && distance < chosenDistance[place - 1]) {
+                chosenDistance[place] = chosenDistance[place - 1];
+                chosen[place] = chosen[place - 1];
+                place--;
+            }
+            chosenDistance[place] = distance;
+            chosen[place] = row;
+        }
+        double sum = 0;
+        for (int index : chosen) {
+            sum += trainTargets[index];
+        }
+        return sum / neighbors;
     }
 
     private static double dot(double[] left, double[] right) {

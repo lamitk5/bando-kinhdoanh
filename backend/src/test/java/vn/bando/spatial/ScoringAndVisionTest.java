@@ -189,6 +189,17 @@ class ScoringAndVisionTest {
         assertEquals(409, post("""
                 {"lat":21.0378611,"lon":105.8010007,"business_type":"pharmacy","rent_vnd_per_month":25000000,"vision_job_id":"%s","blend_weight":0.5}
                 """.formatted(widthOnly)).getStatusCode().value());
+        for (String business : new String[] {"cafe_drink", "pharmacy", "convenience"}) {
+            JsonNode attached = evaluate("""
+                    {"lat":21.0378611,"lon":105.8010007,"business_type":"%s","rent_vnd_per_month":25000000,"vision_job_id":"%s"}
+                    """.formatted(business, widthOnly));
+            assertFalse(attached.path("vision_applied").asBoolean());
+            assertTrue(attached.path("image_score").isNull());
+            assertTrue(attached.path("composite_score").isNull());
+            assertEquals(2.2, attached.path("sidewalk_width_m").asDouble());
+            assertEquals("enough", attached.path("sidewalk_capacity").asText());
+            assertEquals(business, attached.path("business_type").asText());
+        }
     }
 
     private String insertJob(String status, String result) throws Exception {

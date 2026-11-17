@@ -85,11 +85,13 @@ Nguồn nhãn là Seoul Sidewalk Accessibility Image Dataset, DOI `10.5281/zenod
 
 Tách mẫu bằng SHA-256 của đúng chuỗi trong cột `filename`, chốt trước khi xem sai số: đuôi 0–1 là kiểm tra, đuôi 2 là chọn mô hình, đuôi 3–9 là học. Ra 349 / 53 / 112 ảnh. Đặc trưng là trung bình từng ô của ảnh xám `(299R + 587G + 114B) / 1000`, rồi chia 255. Hai cỡ ô 32×24 và 48×36, mỗi cỡ có ridge và mạng một lớp ẩn 16 nút, được chốt trước. Ứng viên nào sai số trên tập chọn thấp hơn thì được giữ. Tập kiểm tra không tham gia lựa chọn.
 
-Lần đầu, ridge trên ảnh bilinear 32×24 có sai số kiểm tra 0,847 m. Lần chọn lại trên đặc trưng ô, mạng 48×36 có sai số chọn 0,719 m, thấp nhất trong bốn ứng viên, nên được giữ. Sai số kiểm tra của mạng này là 0,896 m, cao hơn 0,847 m của ridge trước. Sai số học là 0,352 m. Dự đoán bằng trung bình tập học thì sai 1,270 m trên cùng 112 ảnh. Trung bình bề rộng tập học là 2,928 m.
+Lần đầu, ridge trên ảnh bilinear 32×24 có sai số kiểm tra 0,847 m. Lần chọn trên đặc trưng ô, mạng 48×36 có sai số chọn 0,719 m nhưng sai số kiểm tra 0,896 m.
 
-Trên tập kiểm tra, mức theo quy ước mét khớp 58,9%. Nếu luôn đoán mức chiếm đa số trong tập học, là `wide`, thì khớp 53,6%. Tập không có mẫu `none`.
+Cách học đang dùng đổi sang đặc trưng dải và biên trên lưới 128×96: tám dải ngang, mỗi dải có trung bình, độ lệch, ba phần trái giữa phải và bão hòa màu; mười sáu hàng có tâm biên, độ rộng biên và mép trái. Các ứng viên chốt trước là ridge trên mét, ridge trên log, histogram, và trung bình 5, 11 hoặc 21 láng giềng. Ứng viên có sai số học nhỏ hơn một nửa sai số chọn thì bị loại. Trung bình 5 láng giềng có sai số chọn 0,544 m, thấp nhất và thấp hơn 0,719 m, nên thay mô hình cũ. Sai số kiểm tra, tính một lần sau khi chọn, là 0,568 m. Sai số học 0,473 m bị lạc quan vì mỗi ảnh học nằm trong chính nhóm láng giềng của nó. Dự đoán bằng trung bình tập học thì sai 1,270 m trên cùng 112 ảnh.
 
-Không có khóa Gemini hoặc Groq thì pipeline gọi mô hình này. Ảnh có cạnh ngắn dưới 64 điểm, độ xám trung bình dưới 20 hoặc trên 240, hoặc phương sai dưới 50 thì thành `poor_quality` và không có bề rộng. Ngưỡng này nằm dưới phân bố 40 ảnh học đã xem trước, nơi độ xám trung bình khoảng 76–143 và phương sai trên 3000. Ảnh dùng được trả `completed` với số mét, mức quy ước, `visibility` null và `assessed` false. Chấm điểm từ chối trộn ảnh này vào điểm không gian vì chưa có tầm nhìn. Ảnh học ở Seoul, không phải mặt tiền bốn quận Hà Nội.
+Trên tập kiểm tra, mức theo quy ước mét khớp 78,6%. Nếu luôn đoán mức chiếm đa số trong tập học, là `wide`, thì khớp 53,6%. Tập không có mẫu `none`.
+
+Không có khóa Gemini hoặc Groq thì pipeline gọi mô hình này. Ảnh có cạnh ngắn dưới 64 điểm, độ xám trung bình dưới 20 hoặc trên 240, hoặc phương sai dưới 50 thì thành `poor_quality` và không có bề rộng. Ngưỡng này nằm dưới phân bố 40 ảnh học đã xem trước, nơi độ xám trung bình khoảng 76–143 và phương sai trên 3000. Ảnh dùng được trả `completed` với số mét, mức quy ước, `visibility` null và `assessed` false. Khi chấm một điểm cho cà phê, nhà thuốc hoặc tiện lợi, số mét được gắn vào kết quả nhưng không thành điểm ảnh và không trộn vào điểm tổng, vì chưa có tầm nhìn. Gửi kèm `blend_weight` với ảnh này thì bị từ chối. Ảnh học ở Seoul, không phải mặt tiền bốn quận Hà Nội.
 
 ## Việc chưa làm
 

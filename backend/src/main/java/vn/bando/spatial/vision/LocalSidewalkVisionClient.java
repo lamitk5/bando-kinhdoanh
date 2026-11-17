@@ -17,12 +17,19 @@ public final class LocalSidewalkVisionClient implements VisionClient {
 
     private final SidewalkWidthModel model;
     private final ObjectMapper mapper;
+    private final String featureKind;
     private final int gridWidth;
     private final int gridHeight;
 
-    public LocalSidewalkVisionClient(SidewalkWidthModel model, ObjectMapper mapper, int gridWidth, int gridHeight) {
+    public LocalSidewalkVisionClient(
+            SidewalkWidthModel model,
+            ObjectMapper mapper,
+            String featureKind,
+            int gridWidth,
+            int gridHeight) {
         this.model = model;
         this.mapper = mapper;
+        this.featureKind = featureKind;
         this.gridWidth = gridWidth;
         this.gridHeight = gridHeight;
     }
@@ -40,7 +47,9 @@ public final class LocalSidewalkVisionClient implements VisionClient {
             node.put("recommendation", "Ảnh không đủ để ước lượng bề rộng. Không gán mức vỉa hè hay tầm nhìn.");
             return node.toString();
         }
-        double[] pixels = BlockGray.features(decoded, gridWidth, gridHeight);
+        double[] pixels = "band-edge-v3".equals(featureKind)
+                ? SidewalkGeometry.features(decoded)
+                : BlockGray.features(decoded, gridWidth, gridHeight);
         double meters = round3(model.predictMeters(pixels));
         String band = WidthBand.of(meters);
         node.put("image_quality", "ok");

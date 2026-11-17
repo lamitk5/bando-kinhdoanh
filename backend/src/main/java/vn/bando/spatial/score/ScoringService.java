@@ -114,8 +114,29 @@ public class ScoringService {
                     "Ảnh chưa được chấm. Trạng thái " + status + ". Ảnh kém không bị tính điểm 0.");
         }
         JsonNode result = job.path("result");
-        if (!result.path("assessed").asBoolean() || result.path("sidewalk_score").isNull() || result.path("visibility_score").isNull()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ảnh chưa có điểm thứ tự để đưa vào tổng hợp");
+        boolean full = result.path("assessed").asBoolean()
+                && !result.path("sidewalk_score").isNull()
+                && !result.path("visibility_score").isNull();
+        if (!full) {
+            boolean widthOnly = !result.path("sidewalk_score").isNull() && result.path("visibility_score").isNull();
+            if (widthOnly && !hasBlend) {
+                response.put("vision_job_id", id.toString());
+                response.put("visibility_measured", false);
+                if (result.path("sidewalk_width_m").isNumber()) {
+                    response.put("sidewalk_width_m", result.path("sidewalk_width_m").asDouble());
+                } else {
+                    response.putNull("sidewalk_width_m");
+                }
+                response.put("sidewalk_capacity", result.path("sidewalk_capacity").asText(null));
+                response.put("sidewalk_score", result.path("sidewalk_score").asInt());
+                response.put("vision_note", "Chỉ gắn ước lượng bề rộng. Không có tầm nhìn nên không tạo điểm ảnh và không trộn vào điểm tổng.");
+                return;
+            }
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    widthOnly
+                            ? "Chưa có tầm nhìn nên không trộn vào điểm tổng."
+                            : "Ảnh chưa có điểm thứ tự để đưa vào tổng hợp");
         }
         double[] imageWeights = Ahp.pairWeights(WorkingJudgments.sidewalkVersusVisibility(business));
         double image = ScoreMath.imageScore(

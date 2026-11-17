@@ -29,7 +29,12 @@ public class VisionClientConfig {
                 return new UnconfiguredVisionClient();
             }
             JsonNode resize = node.path("resize");
-            return new LocalSidewalkVisionClient(model, mapper, resize.get(0).asInt(), resize.get(1).asInt());
+            return new LocalSidewalkVisionClient(
+                    model,
+                    mapper,
+                    node.path("feature_kind").asText(""),
+                    resize.get(0).asInt(),
+                    resize.get(1).asInt());
         } catch (java.io.IOException exception) {
             throw new IllegalStateException("Không đọc được mô hình bề rộng", exception);
         }
