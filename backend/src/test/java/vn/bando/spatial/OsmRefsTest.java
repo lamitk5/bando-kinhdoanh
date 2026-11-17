@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
+import vn.bando.spatial.ContributionRules;
+
 class OsmRefsTest {
 
     @Test
@@ -27,8 +29,8 @@ class OsmRefsTest {
     @Test
     void bufferCacheKeyUsesSixDecimals() {
         assertEquals(
-                "spatial:buffer:v1:1:cafe_drink:21.037861:105.801001",
-                CacheKeys.buffer(1, "cafe_drink", 21.037861, 105.801001));
+                "spatial:buffer:v2:1:cafe_drink:21.037861:105.801001:0",
+                CacheKeys.buffer(1, "cafe_drink", 21.037861, 105.801001, 0));
     }
 
     @Test
@@ -38,5 +40,15 @@ class OsmRefsTest {
         assertEquals(105.801001, normalized.lon());
         assertThrows(IllegalArgumentException.class, () -> BufferRequest.normalize(21.03, 105.8, "restaurant"));
         assertThrows(IllegalArgumentException.class, () -> BufferRequest.normalize(0, 0, "cafe_drink"));
+    }
+
+    @Test
+    void contributionRulesTrimAndRejectUnknownCategory() {
+        assertEquals("Cà phê", ContributionRules.cleanName("  Cà phê  "));
+        assertEquals("cafe_drink", ContributionRules.requireCategory("cafe_drink"));
+        assertEquals(21.037861, ContributionRules.latitude(21.0378614));
+        assertThrows(IllegalArgumentException.class, () -> ContributionRules.requireCategory("restaurant"));
+        assertThrows(IllegalArgumentException.class, () -> ContributionRules.requireRejectionNote("  "));
+        assertThrows(IllegalArgumentException.class, () -> ContributionRules.longitude(0));
     }
 }

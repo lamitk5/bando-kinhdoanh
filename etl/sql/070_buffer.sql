@@ -1,5 +1,5 @@
 -- Vùng đệm 200/500/1000 m. Đơn vị là mét trên geography, không phải độ.
--- Hàm đọc bảng poi, road, district của lần nạp hiện tại.
+-- Hàm đọc counted_poi (POI OpenStreetMap và đóng góp đã duyệt), road, district.
 
 CREATE INDEX IF NOT EXISTS road_arterial_geog_gix
     ON road USING GIST ((geom::geography))
@@ -49,15 +49,17 @@ BEGIN
         SELECT
             radii.radius_m,
             count(poi.id) FILTER (WHERE poi.role = 'attractor') AS attractor_count,
-            count(poi.id) FILTER (WHERE poi.category = p_business) AS competitor_count
+            count(poi.id) FILTER (WHERE poi.category = p_business) AS competitor_count,
+            count(poi.id) FILTER (WHERE poi.origin = 'contribution' AND poi.role = 'attractor') AS contribution_attractor_count,
+            count(poi.id) FILTER (WHERE poi.origin = 'contribution' AND poi.category = p_business) AS contribution_competitor_count
         FROM radii
-        LEFT JOIN poi ON ST_DWithin(poi.geom::geography, pt, radii.radius_m)
+        LEFT JOIN counted_poi AS poi ON ST_DWithin(poi.geom::geography, pt, radii.radius_m)
         GROUP BY radii.radius_m
     ),
     breakdown AS (
         SELECT radii.radius_m, poi.category, count(*) AS n
         FROM radii
-        JOIN poi
+        JOIN counted_poi AS poi
             ON poi.role = 'attractor'
            AND ST_DWithin(poi.geom::geography, pt, radii.radius_m)
         GROUP BY radii.radius_m, poi.category
@@ -76,6 +78,8 @@ BEGIN
             'counts_complete', coverage.fraction >= 0.999,
             'attractor_count', counts.attractor_count,
             'competitor_count', counts.competitor_count,
+            'contribution_attractor_count', counts.contribution_attractor_count,
+            'contribution_competitor_count', counts.contribution_competitor_count,
             'attractors_by_category', coalesce(by_category.cats, '{}'::jsonb)
         )
         ORDER BY counts.radius_m
@@ -110,7 +114,7 @@ BEGIN
         'radii_m', jsonb_build_array(200, 500, 1000),
         'distance_unit', 'meter',
         'srid', 4326,
-        'count_rule', 'Đếm mọi POI đã nạp trong bán kính, kể cả cửa hàng nằm đúng tại tọa độ hỏi. Không phải điểm số.',
+        'count_rule', 'Đếm POI OpenStreetMap và đóng góp đã duyệt còn nằm trong bốn quận, kể cả điểm đúng tại tọa độ hỏi. Đóng góp đang chờ hoặc bị từ chối không được tính. Không phải điểm số.',
         'counts_complete_rule', 'counts_complete khi ít nhất 0.999 diện tích vòng tròn nằm trong bốn quận đã nạp. Dưới ngưỡng này số đếm thiếu điểm ngoài vùng.',
         'nearest_arterial_rule', 'Khoảng cách tới tuyến arterial đã nạp trong bốn quận, tính bằng mét. Đường nằm trọn ngoài vùng không có trong bảng, nên với điểm sát mép hoặc ngoài vùng khoảng cách này có thể lớn hơn khoảng cách thật. Tuyến cắt biên được giữ nguyên, nên điểm gần nhất có thể nằm ngoài bốn quận và khoảng cách có thể ngắn hơn khoảng cách tới đoạn nằm trong vùng.',
         'rings', rings,

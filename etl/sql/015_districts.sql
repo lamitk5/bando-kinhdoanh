@@ -1,4 +1,5 @@
 -- Tạo lần nạp và 4 quận từ raw_admin. Chưa đọc POI.
+-- Không xóa poi_contribution: đóng góp hiện trường phải sống qua lần nạp lại.
 
 DROP TABLE IF EXISTS road_district CASCADE;
 DROP TABLE IF EXISTS poi CASCADE;
