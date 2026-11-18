@@ -121,6 +121,17 @@ Trung vị điểm không gian, mức thuê mốc 25.000.000 đồng/tháng:
 
 Ba điểm này không đủ nhóm 10–15 cửa hàng đã đóng.
 
+Đối chiếu `vietnam-210101.osm.pbf` mốc 2021-01-01T21:42:03Z với bản 2026-11-15 thấy nhiều node ngành trong bốn quận không còn. Lời changeset lúc xóa phần lớn là dọn điểm Grab (`Adding POIs`) hoặc cập nhật cửa hàng WinMart+. Tập đó không được huấn luyện và không được gọi là cửa hàng đã đóng.
+
+Nhóm có nguồn riêng, chấm cùng mức thuê mốc:
+
+| Nhóm | Số điểm | Trung vị điểm để so | Cách biết |
+| --- | ---: | ---: | --- |
+| Người vẽ ghi không còn | 5 | 52,9 | Comment changeset: `closed`, `không tồn tại`, `not present`, `not existed` |
+| Circle K còn trong danh sách hãng | 5 | 73,4 | Có ở cả trang Circle K lưu 2024-08-05 và 2026-07-10, khớp số nhà trên OpenStreetMap. Điểm đã trừ chính cửa hàng |
+
+Năm điểm Circle K là 34,0; 65,4; 73,4; 73,7 và 85,6. Năm điểm người vẽ ghi không còn là 39,4; 41,0; 52,9; 65,2 và 75,5. Hai khoảng chồng lên nhau. Mẫu này không đủ để học một ngưỡng.
+
 ## Việc chưa làm
 
 Chưa có phiếu chuyên gia, chưa có doanh thu để thành ROI, chưa có tài khoản người duyệt, và chưa có nhãn tầm nhìn hay ảnh mặt tiền Hà Nội đã gán mức. Chưa có danh sách cửa hàng đã đóng cửa để đối chiếu.

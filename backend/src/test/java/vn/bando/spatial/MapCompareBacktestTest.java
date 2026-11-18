@@ -94,6 +94,31 @@ class MapCompareBacktestTest {
     void backtestUsesTwelveNamedShopsAndDoesNotClaimClosures() throws Exception {
         JsonNode body = get("/api/backtest");
         assertTrue(body.path("limitation").asText().contains("không đủ 10–15"));
+        assertTrue(body.path("training_rejection").asText().contains("Grab"));
+        assertEquals(5, body.path("mapper_absent_count").asInt());
+        assertEquals(5, body.path("brand_listed_count").asInt());
+        boolean twitterbeans = false;
+        boolean circleK = false;
+        for (JsonNode place : body.path("sourced_places")) {
+            assertTrue(place.path("source_url").asText().startsWith("https://"));
+            assertTrue(place.path("spatial_score_for_compare").isNumber());
+            if (place.path("osm_url").asText().endsWith("/3440274560")) {
+                twitterbeans = true;
+                assertEquals("mapper_absent", place.path("outcome").asText());
+                assertEquals("Đống Đa", place.path("district").asText());
+                JsonNode alone = postJson("/api/scoring/evaluate", """
+                        {"lat":%s,"lon":%s,"business_type":"cafe_drink","rent_vnd_per_month":25000000}
+                        """.formatted(place.path("lat").asDouble(), place.path("lon").asDouble()));
+                assertEquals(alone.path("spatial_score").asDouble(), place.path("spatial_score").asDouble());
+            }
+            if (place.path("osm_url").asText().endsWith("/6688293360")) {
+                circleK = true;
+                assertEquals("brand_listed", place.path("outcome").asText());
+                assertEquals("Circle K", place.path("name").asText());
+            }
+        }
+        assertTrue(twitterbeans);
+        assertTrue(circleK);
         assertTrue(body.path("question").asText().contains("không phải đối chiếu cửa hàng còn sống"));
         assertTrue(body.path("survey_rule").asText().contains("check_date"));
         assertEquals(3, body.path("former_places").size());

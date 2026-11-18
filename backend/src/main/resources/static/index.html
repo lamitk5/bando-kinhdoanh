@@ -322,7 +322,8 @@
       const former = (body.former_places || []).map(place =>
         place.district + " " + place.lifecycle_key + "=" + place.lifecycle_value + " điểm " + place.spatial_score
       ).join("; ");
-      document.querySelector("#backtest-note").textContent = body.limitation + " " + body.question
+      document.querySelector("#backtest-note").textContent = body.limitation + " " + body.training_rejection + " "
+        + body.sourced_note + " " + body.question
         + (former ? " Điểm từng mang thẻ tiện lợi: " + former + "." : "");
       const table = document.createElement("table");
       table.innerHTML = "<tr><th>Ngành</th><th>Cơ sở có tên</th><th>Trung vị, đã trừ chính nó</th><th>Khoảng một phần tư</th><th>Trung vị 60 điểm lưới</th><th>Có ngày xem</th></tr>";
@@ -334,9 +335,18 @@
           + item.grid_median_spatial_score + "</td><td>" + item.surveyed_count + "</td>";
         table.appendChild(row);
       });
+      const sourced = document.createElement("table");
+      sourced.innerHTML = "<tr><th>Điểm có nguồn</th><th>Quận</th><th>Nhóm</th><th>Điểm để so</th></tr>";
+      (body.sourced_places || []).forEach(place => {
+        const row = document.createElement("tr");
+        row.innerHTML = "<td><a href=\"" + place.osm_url + "\">" + place.name + "</a></td><td>"
+          + place.district + "</td><td>" + place.outcome + "</td><td>" + place.spatial_score_for_compare + "</td>";
+        sourced.appendChild(row);
+      });
       const host = document.querySelector("#backtest-table");
       host.innerHTML = "";
       host.appendChild(table);
+      host.appendChild(sourced);
     };
 
     loadMap().catch(error => { document.querySelector("#count").textContent = error.message; });
