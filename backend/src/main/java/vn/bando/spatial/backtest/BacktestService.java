@@ -90,6 +90,7 @@ public class BacktestService {
         }
         former(body);
         sourced(body);
+        benchmarks(body);
         return body;
     }
 
@@ -199,6 +200,174 @@ public class BacktestService {
         body.put("mapper_absent_median_spatial_score", median(absent));
         body.put("brand_listed_count", listed.size());
         body.put("brand_listed_median_spatial_score", median(listed));
+    }
+
+    private void benchmarks(ObjectNode body) {
+        JsonNode scale = scoring.referenceNode();
+        var circleLists = circleListSnapshots();
+        var places = body.putArray("benchmarks");
+        var byBrand = new java.util.LinkedHashMap<String, List<Double>>();
+        for (Addressed place : addressedBrands()) {
+            JsonNode indicators = read(place.indicators());
+            double withoutSelf = scoring.score(place.businessType(), indicators, scale, true);
+            ObjectNode row = places.addObject();
+            row.put("district", place.district());
+            row.put("name", place.name());
+            row.put("brand", place.brand());
+            row.put("business_type", place.businessType());
+            row.put("housenumber", place.housenumber());
+            row.put("street", place.street());
+            putOptional(row, "opening_hours", place.openingHours());
+            putOptional(row, "phone", place.phone());
+            putOptional(row, "website", place.website());
+            putOptional(row, "check_date", place.checkDate());
+            putOptional(row, "start_date", place.startDate());
+            row.put("osm_url", OsmRefs.url(place.osmType(), place.osmId()));
+            row.put("lat", place.lat());
+            row.put("lon", place.lon());
+            row.put("attractor_density_per_km2", indicators.path("attractor_density_per_km2").asDouble());
+            row.put("competitor_count", indicators.path("competitor_count").asInt());
+            row.put("arterial_distance_m", indicators.path("arterial_distance_m").asDouble());
+            row.put("spatial_score_without_self", withoutSelf);
+            if ("circle k".equals(fold(place.brand()))) {
+                row.put("circle_k_list", circleLists.getOrDefault(circleKey(place.district(), place.housenumber(), place.street()), "not_in_saved_lists"));
+            } else {
+                row.putNull("circle_k_list");
+            }
+            byBrand.computeIfAbsent(place.brand() + "\n" + place.businessType(), key -> new ArrayList<>()).add(withoutSelf);
+        }
+        var brands = body.putArray("benchmark_brands");
+        byBrand.entrySet().stream()
+                .sorted(java.util.Map.Entry.<String, List<Double>>comparingByValue(java.util.Comparator.comparingInt(List::size)).reversed())
+                .forEach(entry -> {
+                    String[] parts = entry.getKey().split("\n", 2);
+                    ObjectNode brand = brands.addObject();
+                    brand.put("brand", parts[0]);
+                    brand.put("business_type", parts[1]);
+                    brand.put("count", entry.getValue().size());
+                    brand.put("median_spatial_score_without_self", median(entry.getValue()));
+                });
+        body.put("benchmark_count", places.size());
+        body.put("benchmark_note", "Mỗi dòng là một cơ sở đối thủ có brand, số nhà và tên đường trên OpenStreetMap. Giờ mở cửa, điện thoại, website, check_date và start_date chỉ xuất hiện khi thẻ đó có trong dữ liệu; không có thì để null. circle_k_list đối chiếu số nhà và tên đường với trang Circle K lưu ngày 2024-08-05 và 2026-07-10. Không bịa thông số còn thiếu.");
+    }
+
+    private static void putOptional(ObjectNode row, String field, String value) {
+        if (value == null || value.isBlank()) {
+            row.putNull(field);
+        } else {
+            row.put(field, value);
+        }
+    }
+
+    private java.util.Map<String, String> circleListSnapshots() {
+        JsonNode locator = readResource("/backtest/circle_k_locator.json", "Thiếu danh sách Circle K đã lưu");
+        var snapshots = new java.util.LinkedHashMap<String, java.util.LinkedHashSet<String>>();
+        for (JsonNode row : locator) {
+            String key = circleKey(row.path("district").asText(), row.path("number").asText(), row.path("street_key").asText());
+            if (key.startsWith("\n") || key.endsWith("\n") || key.contains("\n\n")) {
+                continue;
+            }
+            snapshots.computeIfAbsent(key, ignored -> new java.util.LinkedHashSet<>()).add(row.path("snapshot").asText());
+        }
+        var status = new java.util.LinkedHashMap<String, String>();
+        snapshots.forEach((key, found) -> {
+            boolean older = found.contains("2024-08-05");
+            boolean newer = found.contains("2026-07-10");
+            status.put(key, older && newer ? "listed_both" : newer ? "listed_2026_only" : older ? "listed_2024_only" : "not_in_saved_lists");
+        });
+        return status;
+    }
+
+    static String circleKey(String district, String housenumber, String street) {
+        return district + "\n" + numberKey(housenumber) + "\n" + streetKey(street);
+    }
+
+    static String numberKey(String value) {
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\d+").matcher(fold(value));
+        if (!matcher.find()) {
+            return "";
+        }
+        return Integer.toString(Integer.parseInt(matcher.group()));
+    }
+
+    static String streetKey(String value) {
+        String folded = fold(value).replaceAll("\\b(duong|pho|ngo|hem|dai lo)\\b", " ");
+        folded = folded.replaceAll("\\d+", " ");
+        return folded.replaceAll("[^a-z]+", " ").trim().replaceAll(" +", " ");
+    }
+
+    static String fold(String value) {
+        String source = value == null ? "" : value;
+        String normalized = java.text.Normalizer.normalize(source, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase(java.util.Locale.ROOT)
+                .replace('đ', 'd');
+        return normalized;
+    }
+
+    private List<Addressed> addressedBrands() {
+        return jdbc.query(
+                """
+                SELECT d.name AS district, p.business_type, p.name, p.osm_type, p.osm_id,
+                       btrim(p.tags ->> 'brand') AS brand,
+                       btrim(p.tags ->> 'addr:housenumber') AS housenumber,
+                       btrim(p.tags ->> 'addr:street') AS street,
+                       nullif(btrim(p.tags ->> 'opening_hours'), '') AS opening_hours,
+                       nullif(btrim(coalesce(p.tags ->> 'phone', p.tags ->> 'contact:phone')), '') AS phone,
+                       nullif(btrim(coalesce(p.tags ->> 'website', p.tags ->> 'contact:website')), '') AS website,
+                       nullif(btrim(p.tags ->> 'check_date'), '') AS check_date,
+                       nullif(btrim(p.tags ->> 'start_date'), '') AS start_date,
+                       round(ST_Y(p.geom)::numeric, 6)::float8 AS lat,
+                       round(ST_X(p.geom)::numeric, 6)::float8 AS lon,
+                       location_indicators(
+                           round(ST_X(p.geom)::numeric, 6)::float8,
+                           round(ST_Y(p.geom)::numeric, 6)::float8,
+                           p.business_type
+                       )::text AS indicators
+                FROM poi AS p
+                JOIN district AS d ON d.id = p.district_id
+                WHERE p.role = 'competitor'
+                  AND nullif(btrim(p.tags ->> 'brand'), '') IS NOT NULL
+                  AND nullif(btrim(p.tags ->> 'addr:housenumber'), '') IS NOT NULL
+                  AND nullif(btrim(p.tags ->> 'addr:street'), '') IS NOT NULL
+                ORDER BY p.tags ->> 'brand', d.name, p.osm_id
+                """,
+                (rs, row) -> new Addressed(
+                        rs.getString("district"),
+                        rs.getString("business_type"),
+                        rs.getString("name"),
+                        rs.getString("osm_type"),
+                        rs.getLong("osm_id"),
+                        rs.getString("brand"),
+                        rs.getString("housenumber"),
+                        rs.getString("street"),
+                        rs.getString("opening_hours"),
+                        rs.getString("phone"),
+                        rs.getString("website"),
+                        rs.getString("check_date"),
+                        rs.getString("start_date"),
+                        rs.getDouble("lat"),
+                        rs.getDouble("lon"),
+                        rs.getString("indicators")));
+    }
+
+    private record Addressed(
+            String district,
+            String businessType,
+            String name,
+            String osmType,
+            long osmId,
+            String brand,
+            String housenumber,
+            String street,
+            String openingHours,
+            String phone,
+            String website,
+            String checkDate,
+            String startDate,
+            double lat,
+            double lon,
+            String indicators) {
     }
 
     private JsonNode readResource(String path, String missing) {

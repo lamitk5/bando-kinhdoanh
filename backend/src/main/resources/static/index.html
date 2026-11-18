@@ -343,10 +343,19 @@
           + place.district + "</td><td>" + place.outcome + "</td><td>" + place.spatial_score_for_compare + "</td>";
         sourced.appendChild(row);
       });
+      const brands = document.createElement("table");
+      brands.innerHTML = "<tr><th>Thương hiệu có số nhà</th><th>Ngành</th><th>Số cơ sở</th><th>Trung vị, đã trừ chính nó</th></tr>";
+      (body.benchmark_brands || []).filter(brand => brand.count >= 3).forEach(brand => {
+        const row = document.createElement("tr");
+        row.innerHTML = "<td>" + brand.brand + "</td><td>" + brand.business_type + "</td><td>"
+          + brand.count + "</td><td>" + brand.median_spatial_score_without_self + "</td>";
+        brands.appendChild(row);
+      });
       const host = document.querySelector("#backtest-table");
       host.innerHTML = "";
       host.appendChild(table);
       host.appendChild(sourced);
+      host.appendChild(brands);
     };
 
     loadMap().catch(error => { document.querySelector("#count").textContent = error.message; });

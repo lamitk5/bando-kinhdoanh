@@ -3,7 +3,7 @@
 
 Các ứng viên được chốt trước khi xem tập kiểm tra:
 - đặc trưng dải và biên trên lưới 128×96, hồi quy ridge
-- cùng đặc trưng, trung bình k láng giềng, k trong 5, 11, 21
+- cùng đặc trưng, trung bình k láng giềng, k trong 3, 5, 7, 9, 11, 21
 - cùng đặc trưng, ridge trên log của bề rộng, rồi đổi về mét
 - histogram xám và bão hòa, ridge
 
@@ -29,8 +29,8 @@ REPORT_PATH = Path(__file__).resolve().parents[2] / "etl" / "vision" / "geometry
 GRID_W = 128
 GRID_H = 96
 ALPHAS = (0.1, 1.0, 10.0, 100.0, 1000.0, 10000.0)
-NEIGHBORS = (5, 11, 21)
-CURRENT_VAL_MAE = 0.7190039108932567
+NEIGHBORS = (3, 5, 7, 9, 11, 21)
+CURRENT_VAL_MAE = 0.5435849056603773
 BANDS = (0.90, 1.50, 3.00)
 
 
