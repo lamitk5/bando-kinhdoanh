@@ -35,6 +35,7 @@ public class BacktestService {
         List<Observed> grid = gridPoints();
         ObjectNode body = mapper.createObjectNode();
         body.put("limitation", "Bảng poi đã nạp không có thẻ disused. File vietnam-latest.osm.pbf mốc 2026-11-15T21:22:28Z, kể cả quán ăn, cà phê, nhà thuốc và cửa hàng trống, chỉ có 3 điểm trong bốn quận mang thẻ tiện lợi đã ngừng. Không có cà phê hay nhà thuốc mang thẻ tương ứng. Cả ba không có tên. check_date là ngày người vẽ bản đồ ghi đã xem, không phải số năm hoạt động. Chỉ một quán cà phê có start_date. Đây không đủ 10–15 cửa hàng đã đóng và không phải khảo sát hiện trường.");
+        body.put("training_rejection", "Đối chiếu vietnam-210101.osm.pbf mốc 2021-01-01T21:42:03Z với bản 2026-11-15 có hàng trăm node ngành biến mất trong bốn quận. Lời changeset khi xóa phần lớn là Adding POIs của Grab hoặc cập nhật cửa hàng WinMart+. Tập đó không được dùng để huấn luyện và không được gọi là cửa hàng đã đóng.");
         body.put("question", "Mọi cơ sở có tên đang có trên bản đồ có điểm không gian khác lưới trong bốn quận hay không. Đây không phải đối chiếu cửa hàng còn sống với cửa hàng đã đóng.");
         body.put("shop_rule", "Mọi cơ sở đối thủ có tên. Điểm đã trừ chính cơ sở khỏi vòng 500 m.");
         body.put("grid_rule", "Mỗi quận 15 điểm ST_GeneratePoints nằm trong ranh, seed 1. Cùng lưới được chấm cho cả ba ngành.");
@@ -88,6 +89,7 @@ public class BacktestService {
             gridScores.forEach(gridArray::add);
         }
         former(body);
+        sourced(body);
         return body;
     }
 
@@ -151,6 +153,62 @@ public class BacktestService {
             row.put("district", district);
             row.put("spatial_score", scored.path("spatial_score").asDouble());
             row.put("included_as_competitor", false);
+        }
+    }
+
+    private void sourced(ObjectNode body) {
+        JsonNode catalog = readResource("/backtest/sourced_places.json", "Thiếu danh sách điểm có nguồn");
+        JsonNode scale = scoring.referenceNode();
+        var rows = body.putArray("sourced_places");
+        var absent = new ArrayList<Double>();
+        var listed = new ArrayList<Double>();
+        for (JsonNode place : catalog) {
+            double lat = place.path("lat").asDouble();
+            double lon = place.path("lon").asDouble();
+            String business = place.path("business_type").asText();
+            ObjectNode request = mapper.createObjectNode();
+            request.put("lat", lat);
+            request.put("lon", lon);
+            request.put("business_type", business);
+            request.put("rent_vnd_per_month", RENT);
+            ObjectNode scored = scoring.evaluate(request);
+            boolean removeSelf = place.path("remove_self").asBoolean();
+            double compare = removeSelf
+                    ? scoring.score(business, scored.path("indicators"), scale, true)
+                    : scored.path("spatial_score").asDouble();
+            ObjectNode row = rows.addObject();
+            row.put("name", place.path("name").asText());
+            row.put("business_type", business);
+            row.put("district", place.path("district").asText());
+            row.put("outcome", place.path("outcome").asText());
+            row.put("basis", place.path("basis").asText());
+            row.put("source_url", place.path("source_url").asText());
+            row.put("osm_url", OsmRefs.url(place.path("osm_type").asText(), place.path("osm_id").asLong()));
+            row.put("lat", scored.path("lat").asDouble());
+            row.put("lon", scored.path("lon").asDouble());
+            row.put("spatial_score", scored.path("spatial_score").asDouble());
+            row.put("spatial_score_for_compare", compare);
+            if ("mapper_absent".equals(place.path("outcome").asText())) {
+                absent.add(compare);
+            } else if ("brand_listed".equals(place.path("outcome").asText())) {
+                listed.add(compare);
+            }
+        }
+        body.put("sourced_note", "mapper_absent là lời người vẽ khi xóa điểm, không phải khảo sát cửa hàng đã đóng. brand_listed là Circle K còn trong danh sách hãng ở cả hai mốc 2024-08-05 và 2026-07-10 và khớp số nhà trên bản đồ. Năm điểm và năm điểm không đủ nhóm 10–15 cửa hàng đã đóng.");
+        body.put("mapper_absent_count", absent.size());
+        body.put("mapper_absent_median_spatial_score", median(absent));
+        body.put("brand_listed_count", listed.size());
+        body.put("brand_listed_median_spatial_score", median(listed));
+    }
+
+    private JsonNode readResource(String path, String missing) {
+        try (var stream = BacktestService.class.getResourceAsStream(path)) {
+            if (stream == null) {
+                throw new IllegalStateException(missing);
+            }
+            return mapper.readTree(stream);
+        } catch (java.io.IOException exception) {
+            throw new IllegalStateException(missing, exception);
         }
     }
 
