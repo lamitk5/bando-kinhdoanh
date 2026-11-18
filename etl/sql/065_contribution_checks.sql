@@ -13,6 +13,7 @@ DECLARE
     approved jsonb;
     duplicate jsonb;
     rejected jsonb;
+    self_review jsonb;
     after jsonb;
     competitor_before integer;
     competitor_pending integer;
@@ -60,7 +61,7 @@ BEGIN
         RAISE EXCEPTION 'Đóng góp đang chờ đã làm đổi số đối thủ từ % thành %', competitor_before, competitor_pending;
     END IF;
 
-    approved := decide_poi_contribution((pending ->> 'id')::bigint, 'approved', NULL);
+    approved := decide_poi_contribution((pending ->> 'id')::bigint, 'approved', NULL, 'người duyệt kiểm tra');
     IF approved ->> 'status' IS DISTINCT FROM 'approved'
         OR NOT (approved ->> 'counted_in_buffer')::boolean THEN
         RAISE EXCEPTION 'Duyệt không đưa điểm vào vùng đệm: %', approved;
@@ -87,7 +88,7 @@ BEGIN
     END IF;
 
     BEGIN
-        PERFORM decide_poi_contribution((pending ->> 'id')::bigint, 'rejected', 'không được duyệt lần hai');
+        PERFORM decide_poi_contribution((pending ->> 'id')::bigint, 'rejected', 'không được duyệt lần hai', 'người duyệt kiểm tra');
         RAISE EXCEPTION 'Đóng góp đã duyệt vẫn bị quyết định lại';
     EXCEPTION
         WHEN SQLSTATE 'P0001' THEN
@@ -101,7 +102,7 @@ BEGIN
     IF NOT (duplicate ->> 'possible_duplicate')::boolean OR (duplicate ->> 'counted_in_buffer')::boolean THEN
         RAISE EXCEPTION 'Tên trùng trong 30 m không được gắn cờ, hoặc đã bị tính: %', duplicate;
     END IF;
-    rejected := decide_poi_contribution((duplicate ->> 'id')::bigint, 'rejected', 'trùng tên, chỉ để kiểm tra');
+    rejected := decide_poi_contribution((duplicate ->> 'id')::bigint, 'rejected', 'trùng tên, chỉ để kiểm tra', 'người duyệt kiểm tra');
     IF rejected ->> 'status' IS DISTINCT FROM 'rejected' OR (rejected ->> 'counted_in_buffer')::boolean THEN
         RAISE EXCEPTION 'Từ chối không đúng: %', rejected;
     END IF;
@@ -121,6 +122,21 @@ BEGIN
         WHEN SQLSTATE '22023' THEN
             NULL;
     END;
+
+    self_review := submit_poi_contribution(
+        'KIỂM TRA TỰ DUYỆT', 'cafe_drink', sample_lon, sample_lat, NULL, 'bộ kiểm tra'
+    );
+    created_ids := created_ids || (self_review ->> 'id')::bigint;
+    BEGIN
+        PERFORM decide_poi_contribution((self_review ->> 'id')::bigint, 'approved', NULL, 'bộ kiểm tra');
+        RAISE EXCEPTION 'Người gửi tự duyệt đáng lẽ bị từ chối';
+    EXCEPTION
+        WHEN SQLSTATE '22023' THEN
+            NULL;
+    END;
+    IF (SELECT status FROM poi_contribution WHERE id = (self_review ->> 'id')::bigint) <> 'pending' THEN
+        RAISE EXCEPTION 'Lần tự duyệt đã làm đổi trạng thái';
+    END IF;
 
     BEGIN
         PERFORM submit_poi_contribution('KIỂM TRA ĐÓNG GÓP', 'restaurant', sample_lon, sample_lat, NULL, 'bộ kiểm tra');

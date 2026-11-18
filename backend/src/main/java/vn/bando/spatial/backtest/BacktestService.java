@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -38,7 +39,7 @@ public class BacktestService {
         List<Place> shops = shops();
         List<Place> grid = grid();
         ObjectNode body = mapper.createObjectNode();
-        body.put("limitation", "Bản đồ đã nạp có 0 thẻ disused và 0 thẻ abandoned, nên không tách được cửa hàng đã đóng cửa hay sang nhượng.");
+        body.put("limitation", "Bảng poi đã nạp không có thẻ disused. File vietnam-latest.osm.pbf mốc 2026-11-15T21:22:28Z có 3 điểm trong bốn quận mang disused:shop=convenience hoặc was:shop=convenience. Không có cà phê hay nhà thuốc mang thẻ tương ứng. Cả ba điểm không có tên. Đây không đủ 10–15 địa điểm và không phải khảo sát cửa hàng đã đóng.");
         body.put("question", "Cơ sở đang có trên OpenStreetMap có điểm không gian khác các điểm lưới trong cùng bốn quận hay không. Đây không phải đối chiếu cửa hàng còn sống với cửa hàng đã đóng.");
         body.put("shop_rule", "Mỗi quận và mỗi ngành lấy một cơ sở có tên, chọn osm_id nhỏ nhất.");
         body.put("grid_rule", "Mỗi quận lấy 3 điểm ST_GeneratePoints nằm trong ranh, seed 1.");
@@ -57,7 +58,65 @@ public class BacktestService {
             block.put("shop_median_spatial_score_without_self", median(shopScores));
             block.put("grid_median_spatial_score", median(gridScores));
         }
+        former(body);
         return body;
+    }
+
+    private void former(ObjectNode body) {
+        JsonNode catalog;
+        try (var stream = BacktestService.class.getResourceAsStream("/backtest/former_convenience.json")) {
+            if (stream == null) {
+                throw new IllegalStateException("Thiếu danh sách điểm từng mang thẻ tiện lợi");
+            }
+            catalog = mapper.readTree(stream);
+        } catch (java.io.IOException exception) {
+            throw new IllegalStateException("Không đọc được danh sách điểm từng mang thẻ tiện lợi", exception);
+        }
+        body.put("former_source", "vietnam-latest.osm.pbf mốc 2026-11-15T21:22:28Z");
+        var rows = body.putArray("former_places");
+        for (JsonNode place : catalog) {
+            double lat = place.path("lat").asDouble();
+            double lon = place.path("lon").asDouble();
+            String district = districtCovering(lon, lat);
+            ObjectNode row = rows.addObject();
+            row.put("osm_url", OsmRefs.url(place.path("osm_type").asText(), place.path("osm_id").asLong()));
+            row.put("lifecycle_key", place.path("lifecycle_key").asText());
+            row.put("lifecycle_value", place.path("lifecycle_value").asText());
+            row.put("business_type", place.path("business_type").asText());
+            row.put("lat", lat);
+            row.put("lon", lon);
+            row.putNull("name");
+            if (district == null) {
+                row.put("inside_study", false);
+                row.putNull("district");
+                row.putNull("spatial_score");
+                continue;
+            }
+            ObjectNode request = mapper.createObjectNode();
+            request.put("lat", lat);
+            request.put("lon", lon);
+            request.put("business_type", place.path("business_type").asText());
+            request.put("rent_vnd_per_month", RENT);
+            ObjectNode scored = scoring.evaluate(request);
+            row.put("inside_study", true);
+            row.put("district", district);
+            row.put("spatial_score", scored.path("spatial_score").asDouble());
+            row.put("included_as_competitor", false);
+        }
+    }
+
+    private String districtCovering(double lon, double lat) {
+        java.util.List<String> names = jdbc.query(
+                """
+                SELECT name
+                FROM district
+                WHERE ST_Covers(geom, ST_SetSRID(ST_MakePoint(?, ?), 4326))
+                ORDER BY name
+                """,
+                (rs, row) -> rs.getString("name"),
+                lon,
+                lat);
+        return names.size() == 1 ? names.get(0) : null;
     }
 
     private List<Double> fill(

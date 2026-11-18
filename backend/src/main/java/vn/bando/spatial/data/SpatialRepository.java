@@ -191,14 +191,15 @@ public class SpatialRepository {
         }
     }
 
-    public String decideContribution(long id, String decision, String note) {
+    public String decideContribution(long id, String decision, String note, String reviewer) {
         try {
             return jdbc.queryForObject(
-                    "SELECT decide_poi_contribution(?, ?, ?)::text",
+                    "SELECT decide_poi_contribution(?, ?, ?, ?)::text",
                     String.class,
                     id,
                     decision,
-                    note
+                    note,
+                    reviewer
             );
         } catch (DataAccessException exception) {
             throw mapSqlState(exception);
@@ -230,16 +231,23 @@ public class SpatialRepository {
         if (cause instanceof SQLException sql) {
             String state = sql.getSQLState();
             if ("22023".equals(state)) {
-                return new ResponseStatusException(HttpStatus.BAD_REQUEST, cause.getMessage(), exception);
+                return new ResponseStatusException(HttpStatus.BAD_REQUEST, firstLine(cause.getMessage()), exception);
             }
             if ("02000".equals(state)) {
-                return new ResponseStatusException(HttpStatus.NOT_FOUND, cause.getMessage(), exception);
+                return new ResponseStatusException(HttpStatus.NOT_FOUND, firstLine(cause.getMessage()), exception);
             }
             if ("P0001".equals(state)) {
-                return new ResponseStatusException(HttpStatus.CONFLICT, cause.getMessage(), exception);
+                return new ResponseStatusException(HttpStatus.CONFLICT, firstLine(cause.getMessage()), exception);
             }
         }
         return exception;
+    }
+
+    private static String firstLine(String message) {
+        if (message == null || message.isBlank()) {
+            return "Yêu cầu không xử lý được";
+        }
+        return message.split("\\R", 2)[0];
     }
 
     public HealthResponse health(String redisStatus) {

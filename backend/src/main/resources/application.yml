@@ -24,3 +24,7 @@ server:
 vision:
   worker:
     enabled: true
+bando:
+  reviewer:
+    name: ${BANDO_REVIEWER_NAME:}
+    token: ${BANDO_REVIEWER_TOKEN:}
