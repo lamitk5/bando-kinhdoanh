@@ -325,11 +325,13 @@
       document.querySelector("#backtest-note").textContent = body.limitation + " " + body.question
         + (former ? " Điểm từng mang thẻ tiện lợi: " + former + "." : "");
       const table = document.createElement("table");
-      table.innerHTML = "<tr><th>Ngành</th><th>Số cơ sở</th><th>Trung vị cơ sở, đã trừ chính nó</th><th>Trung vị điểm lưới</th></tr>";
+      table.innerHTML = "<tr><th>Ngành</th><th>Cơ sở có tên</th><th>Trung vị, đã trừ chính nó</th><th>Khoảng một phần tư</th><th>Trung vị 60 điểm lưới</th><th>Có ngày xem</th></tr>";
       body.businesses.forEach(item => {
         const row = document.createElement("tr");
-        row.innerHTML = "<td>" + item.business_type + "</td><td>" + item.shop_count + "</td><td>"
-          + item.shop_median_spatial_score_without_self + "</td><td>" + item.grid_median_spatial_score + "</td>";
+        row.innerHTML = "<td>" + item.business_type + "</td><td>" + item.named_count + "</td><td>"
+          + item.named_median_spatial_score_without_self + "</td><td>"
+          + item.named_lower_quartile + "–" + item.named_upper_quartile + "</td><td>"
+          + item.grid_median_spatial_score + "</td><td>" + item.surveyed_count + "</td>";
         table.appendChild(row);
       });
       const host = document.querySelector("#backtest-table");

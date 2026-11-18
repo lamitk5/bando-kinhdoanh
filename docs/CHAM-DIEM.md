@@ -99,19 +99,19 @@ Trang `/` vẽ bốn quận, điểm hút khách và đối thủ của ngành �
 
 `POST /api/scoring/compare` nhận 2 hoặc 3 mặt bằng, cùng ngành và cùng tiền thuê. Ba cánh radar là điểm hút khách, bão hòa đối thủ và tiếp cận trục đường. PDF tải từ `POST /api/scoring/compare.pdf` ghi lại đúng các số đó. Tiền thuê 25.000.000 đồng/tháng trên trang là mốc chung, không phải giá quan sát.
 
-`GET /api/backtest` không đối chiếu cửa hàng còn sống với cửa hàng đã đóng. Bảng `raw_poi` có 7385 dòng, 0 thẻ `disused` và 0 thẻ `abandoned`. Mười hai cơ sở là mỗi quận một cơ sở có tên cho mỗi ngành, chọn `osm_id` nhỏ nhất, không phải mẫu ngẫu nhiên và không phải nhóm hoạt động lâu năm. Mười hai điểm lưới là `ST_GeneratePoints` trong ranh mỗi quận, seed 1, ba điểm một quận. Điểm cơ sở dùng để so trung vị đã trừ một đối thủ vì chính cơ sở nằm ở tâm vòng 500 m.
+`GET /api/backtest` không đối chiếu cửa hàng còn sống với cửa hàng đã đóng. Lần mở rộng chấm mọi cơ sở đối thủ có tên, không còn lấy bốn cơ sở theo `osm_id` nhỏ nhất. Điểm cơ sở đã trừ chính cơ sở khỏi vòng 500 m. Lưới là 15 điểm `ST_GeneratePoints` trong mỗi quận, seed 1, rồi chấm cùng lưới cho cả ba ngành. Mốc một phần tư là điểm tại vị trí `floor(tỉ lệ × (số điểm − 1))` sau khi sắp xếp.
 
 Trung vị điểm không gian, mức thuê mốc 25.000.000 đồng/tháng:
 
-| Ngành | 4 cơ sở, đã trừ chính nó | 12 điểm lưới |
-| --- | ---: | ---: |
-| Cà phê / đồ uống | 42,3 | 70,7 |
-| Nhà thuốc | 45,3 | 62,5 |
-| Cửa hàng tiện lợi | 58,6 | 59,5 |
+| Ngành | Số cơ sở có tên | Mốc một phần tư | Trung vị cơ sở | Trung vị 60 điểm lưới | Có `check_date` |
+| --- | ---: | --- | ---: | ---: | ---: |
+| Cà phê / đồ uống | 376 | 34,3–61,4 | 46,2 | 63,1 | 10 |
+| Nhà thuốc | 69 | 47,8–68,1 | 60,2 | 59,6 | 3 |
+| Cửa hàng tiện lợi | 308 | 44,6–65,9 | 55,8 | 56,6 | 9 |
 
-Bốn cơ sở mỗi ngành không nằm ở điểm cao hơn lưới. Mẫu quá nhỏ và cách chọn theo `osm_id` không đại diện cho cửa hàng thành công.
+`check_date` là ngày người vẽ bản đồ ghi đã xem, không phải số năm cửa hàng hoạt động. Chỉ một quán cà phê có `start_date`, ngày 2023-08-04. Với cả ba ngành, trung vị cơ sở có tên không cao hơn lưới một cách rõ: cà phê thấp hơn, nhà thuốc nhích hơn 0,6 điểm, tiện lợi gần như bằng.
 
-File `vietnam-latest.osm.pbf` mốc 2026-11-15T21:22:28Z có thêm 3 điểm nằm trong bốn quận với `disused:shop=convenience` hoặc `was:shop=convenience`. Không có cà phê hay nhà thuốc mang thẻ tương ứng. Cả ba không có tên. Chúng không nằm trong bảng `poi` nên không bị tính là đối thủ của chính mình. Điểm không gian, cùng mức thuê mốc:
+Đã lọc lại file `vietnam-latest.osm.pbf` mốc 2026-11-15T21:22:28Z theo cà phê, nhà thuốc, tiện lợi, quán ăn, đồ ăn nhanh, quán bar và cửa hàng trống. Trong bốn quận vẫn chỉ có 3 điểm, đều là tiện lợi từng ngừng. Không có cà phê hay nhà thuốc mang thẻ tương ứng. Cả ba không có tên và không nằm trong bảng `poi`. Điểm không gian, cùng mức thuê mốc:
 
 | Quận | OSM | Thẻ | Điểm |
 | --- | --- | --- | ---: |

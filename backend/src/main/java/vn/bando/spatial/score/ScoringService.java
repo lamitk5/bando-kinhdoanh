@@ -69,7 +69,7 @@ public class ScoringService {
         double attractor = ScoreMath.higherIsBetter(indicators.path("attractor_density_per_km2").asDouble(), attractorScale);
         double saturation = ScoreMath.saturation(indicators.path("competitor_density_per_km2").asDouble(), competitorScale);
         double access = ScoreMath.access(indicators.path("arterial_distance_m").asDouble(), median);
-        double spatial = round1(ScoreMath.weighted(judgment.weights(), attractor, saturation, access));
+        double spatial = score(point.businessType(), indicators, scale, false);
 
         ObjectNode response = mapper.createObjectNode();
         response.put("lat", point.lat());
@@ -89,6 +89,28 @@ public class ScoringService {
         response.put("rent_index_meaning", "Điểm không gian trên mỗi triệu đồng tiền thuê một tháng. Không phải lợi nhuận vì chưa có doanh thu.");
         applyVision(response, request, point.businessType(), spatial);
         return response;
+    }
+
+    public JsonNode referenceNode() {
+        return read(scoring.reference());
+    }
+
+    public double score(String business, JsonNode indicators, JsonNode scale, boolean removeSelf) {
+        Ahp.Result judgment = Ahp.solve3(WorkingJudgments.spatialMatrix(business));
+        Ahp.requireConsistent(judgment);
+        double attractorScale = requiredPositive(scale, "attractor_density_p95");
+        double competitorScale = requiredPositive(scale, competitorField(business));
+        double roadMedian = requiredPositive(scale, "arterial_distance_median_m");
+        double density = indicators.path("competitor_density_per_km2").asDouble();
+        if (removeSelf) {
+            int competitors = indicators.path("competitor_count").asInt();
+            double area = indicators.path("searched_area_m2").asDouble();
+            density = Math.max(0, competitors - 1) / (area / 1_000_000.0);
+        }
+        double attractor = ScoreMath.higherIsBetter(indicators.path("attractor_density_per_km2").asDouble(), attractorScale);
+        double saturation = ScoreMath.saturation(density, competitorScale);
+        double access = ScoreMath.access(indicators.path("arterial_distance_m").asDouble(), roadMedian);
+        return round1(ScoreMath.weighted(judgment.weights(), attractor, saturation, access));
     }
 
     public ObjectNode compare(JsonNode request) {
