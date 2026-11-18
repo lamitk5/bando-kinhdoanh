@@ -12,10 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import vn.bando.spatial.OsmRefs;
-import vn.bando.spatial.score.Ahp;
-import vn.bando.spatial.score.ScoreMath;
 import vn.bando.spatial.score.ScoringService;
-import vn.bando.spatial.score.WorkingJudgments;
 
 @Service
 public class BacktestService {
@@ -32,34 +29,86 @@ public class BacktestService {
         this.mapper = mapper;
     }
 
-    public record Place(String district, String businessType, String name, String osmType, Long osmId, double lat, double lon) {
-    }
-
     public ObjectNode run() {
-        List<Place> shops = shops();
-        List<Place> grid = grid();
+        JsonNode scale = scoring.referenceNode();
+        List<Observed> named = namedShops();
+        List<Observed> grid = gridPoints();
         ObjectNode body = mapper.createObjectNode();
-        body.put("limitation", "Bảng poi đã nạp không có thẻ disused. File vietnam-latest.osm.pbf mốc 2026-11-15T21:22:28Z có 3 điểm trong bốn quận mang disused:shop=convenience hoặc was:shop=convenience. Không có cà phê hay nhà thuốc mang thẻ tương ứng. Cả ba điểm không có tên. Đây không đủ 10–15 địa điểm và không phải khảo sát cửa hàng đã đóng.");
-        body.put("question", "Cơ sở đang có trên OpenStreetMap có điểm không gian khác các điểm lưới trong cùng bốn quận hay không. Đây không phải đối chiếu cửa hàng còn sống với cửa hàng đã đóng.");
-        body.put("shop_rule", "Mỗi quận và mỗi ngành lấy một cơ sở có tên, chọn osm_id nhỏ nhất.");
-        body.put("grid_rule", "Mỗi quận lấy 3 điểm ST_GeneratePoints nằm trong ranh, seed 1.");
+        body.put("limitation", "Bảng poi đã nạp không có thẻ disused. File vietnam-latest.osm.pbf mốc 2026-11-15T21:22:28Z, kể cả quán ăn, cà phê, nhà thuốc và cửa hàng trống, chỉ có 3 điểm trong bốn quận mang thẻ tiện lợi đã ngừng. Không có cà phê hay nhà thuốc mang thẻ tương ứng. Cả ba không có tên. check_date là ngày người vẽ bản đồ ghi đã xem, không phải số năm hoạt động. Chỉ một quán cà phê có start_date. Đây không đủ 10–15 cửa hàng đã đóng và không phải khảo sát hiện trường.");
+        body.put("question", "Mọi cơ sở có tên đang có trên bản đồ có điểm không gian khác lưới trong bốn quận hay không. Đây không phải đối chiếu cửa hàng còn sống với cửa hàng đã đóng.");
+        body.put("shop_rule", "Mọi cơ sở đối thủ có tên. Điểm đã trừ chính cơ sở khỏi vòng 500 m.");
+        body.put("grid_rule", "Mỗi quận 15 điểm ST_GeneratePoints nằm trong ranh, seed 1. Cùng lưới được chấm cho cả ba ngành.");
+        body.put("survey_rule", "Nhóm check_date là cơ sở có thẻ ngày người vẽ ghi đã xem. Thẻ được giữ nguyên, không suy ra tuổi cửa hàng.");
+        body.put("quartile_rule", "Mốc một phần tư là điểm tại vị trí floor(tỉ lệ * (số điểm - 1)) sau khi sắp xếp, rồi làm tròn một chữ số.");
         body.put("rent_vnd_per_month", RENT);
         body.put("rent_note", "Mức thuê này chỉ để gọi cùng một công thức. Không phải giá thuê quan sát tại từng điểm.");
         body.put("self_count_note", "Điểm công khai tính cả chính cơ sở vào mật độ đối thủ. Trung vị cơ sở ở dưới dùng điểm đã trừ một đối thủ, vì điểm đó nằm tại tâm vòng 500 m.");
         var businesses = body.putArray("businesses");
         for (String business : new String[] {"cafe_drink", "pharmacy", "convenience"}) {
+            List<Observed> own = named.stream().filter(place -> business.equals(place.businessType())).toList();
+            List<Observed> ownGrid = grid.stream().filter(place -> business.equals(place.businessType())).toList();
+            List<Double> shopScores = new ArrayList<>();
+            List<Double> gridScores = new ArrayList<>();
+            Observed traced = null;
             ObjectNode block = businesses.addObject();
             block.put("business_type", business);
-            List<Place> ownShops = shops.stream().filter(place -> business.equals(place.businessType())).toList();
-            List<Double> shopScores = fill(block.putArray("shops"), ownShops, business, true);
-            List<Double> gridScores = fill(block.putArray("grid"), grid, business, false);
-            block.put("shop_count", shopScores.size());
+            var surveyed = block.putArray("surveyed");
+            for (Observed place : own) {
+                JsonNode indicators = read(place.indicators());
+                double withSelf = scoring.score(business, indicators, scale, false);
+                double withoutSelf = scoring.score(business, indicators, scale, true);
+                shopScores.add(withoutSelf);
+                if (traced == null || place.osmId() < traced.osmId()) {
+                    traced = place;
+                    block.set("traced", tracedNode(place, withSelf, withoutSelf));
+                }
+                if (place.checkDate() != null) {
+                    ObjectNode row = surveyed.addObject();
+                    row.put("district", place.district());
+                    row.put("name", place.name());
+                    row.put("check_date", place.checkDate());
+                    row.put("osm_url", OsmRefs.url(place.osmType(), place.osmId()));
+                    row.put("spatial_score", withSelf);
+                    row.put("spatial_score_without_self", withoutSelf);
+                }
+            }
+            for (Observed place : ownGrid) {
+                gridScores.add(scoring.score(business, read(place.indicators()), scale, false));
+            }
+            block.put("named_count", shopScores.size());
+            block.put("surveyed_count", surveyed.size());
             block.put("grid_count", gridScores.size());
-            block.put("shop_median_spatial_score_without_self", median(shopScores));
+            block.put("named_median_spatial_score_without_self", median(shopScores));
+            block.put("named_lower_quartile", orderStatistic(shopScores, 0.25));
+            block.put("named_upper_quartile", orderStatistic(shopScores, 0.75));
             block.put("grid_median_spatial_score", median(gridScores));
+            var shopArray = block.putArray("named_scores_without_self");
+            shopScores.forEach(shopArray::add);
+            var gridArray = block.putArray("grid_scores");
+            gridScores.forEach(gridArray::add);
         }
         former(body);
         return body;
+    }
+
+    private ObjectNode tracedNode(Observed place, double withSelf, double withoutSelf) {
+        ObjectNode node = mapper.createObjectNode();
+        node.put("district", place.district());
+        node.put("name", place.name());
+        node.put("osm_url", OsmRefs.url(place.osmType(), place.osmId()));
+        node.put("lat", place.lat());
+        node.put("lon", place.lon());
+        node.put("spatial_score", withSelf);
+        node.put("spatial_score_without_self", withoutSelf);
+        return node;
+    }
+
+    private JsonNode read(String json) {
+        try {
+            return mapper.readTree(json);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException exception) {
+            throw new IllegalStateException("JSON chỉ số không đọc được", exception);
+        }
     }
 
     private void former(ObjectNode body) {
@@ -119,102 +168,73 @@ public class BacktestService {
         return names.size() == 1 ? names.get(0) : null;
     }
 
-    private List<Double> fill(
-            com.fasterxml.jackson.databind.node.ArrayNode array,
-            List<Place> places,
-            String business,
-            boolean removeSelf) {
-        List<Double> scores = new ArrayList<>();
-        double[] weights = Ahp.solve3(WorkingJudgments.spatialMatrix(business)).weights();
-        for (Place place : places) {
-            ObjectNode request = mapper.createObjectNode();
-            request.put("lat", place.lat());
-            request.put("lon", place.lon());
-            request.put("business_type", business);
-            request.put("rent_vnd_per_month", RENT);
-            ObjectNode scored = scoring.evaluate(request);
-            double spatial = scored.path("spatial_score").asDouble();
-            ObjectNode row = array.addObject();
-            row.put("district", place.district());
-            if (place.name() == null) {
-                row.putNull("name");
-            } else {
-                row.put("name", place.name());
-            }
-            row.put("lat", scored.path("lat").asDouble());
-            row.put("lon", scored.path("lon").asDouble());
-            row.put("spatial_score", spatial);
-            if (removeSelf) {
-                double withoutSelf = withoutSelf(scored, weights);
-                row.put("spatial_score_without_self", withoutSelf);
-                scores.add(withoutSelf);
-            } else {
-                scores.add(spatial);
-            }
-            if (place.osmId() != null) {
-                row.put("osm_url", OsmRefs.url(place.osmType(), place.osmId()));
-            } else {
-                row.putNull("osm_url");
-            }
-        }
-        return scores;
+    private record Observed(
+            String district,
+            String businessType,
+            String name,
+            String osmType,
+            long osmId,
+            double lat,
+            double lon,
+            String checkDate,
+            String indicators) {
     }
 
-    private static double withoutSelf(ObjectNode scored, double[] weights) {
-        var indicators = scored.path("indicators");
-        var components = scored.path("components");
-        int competitors = indicators.path("competitor_count").asInt();
-        double area = indicators.path("searched_area_m2").asDouble();
-        double density = Math.max(0, competitors - 1) / (area / 1_000_000.0);
-        double attractor = ScoreMath.higherIsBetter(
-                indicators.path("attractor_density_per_km2").asDouble(),
-                components.path("attractor_density").path("scale").asDouble());
-        double saturation = ScoreMath.saturation(density, components.path("competitor_saturation").path("scale").asDouble());
-        double access = ScoreMath.access(
-                indicators.path("arterial_distance_m").asDouble(),
-                components.path("arterial_access").path("scale").asDouble());
-        return Math.round(ScoreMath.weighted(weights, attractor, saturation, access) * 10.0) / 10.0;
-    }
-
-    private List<Place> shops() {
+    private List<Observed> namedShops() {
         return jdbc.query(
                 """
-                SELECT DISTINCT ON (d.name, p.business_type)
-                       d.name AS district, p.business_type, p.name, p.osm_type, p.osm_id,
-                       ST_Y(p.geom) AS lat, ST_X(p.geom) AS lon
+                SELECT d.name AS district, p.business_type, p.name, p.osm_type, p.osm_id,
+                       round(ST_Y(p.geom)::numeric, 6)::float8 AS lat,
+                       round(ST_X(p.geom)::numeric, 6)::float8 AS lon,
+                       nullif(btrim(p.tags ->> 'check_date'), '') AS check_date,
+                       location_indicators(
+                           round(ST_X(p.geom)::numeric, 6)::float8,
+                           round(ST_Y(p.geom)::numeric, 6)::float8,
+                           p.business_type
+                       )::text AS indicators
                 FROM poi AS p
                 JOIN district AS d ON d.id = p.district_id
                 WHERE p.role = 'competitor'
                   AND p.name IS NOT NULL
                   AND length(btrim(p.name)) > 0
-                ORDER BY d.name, p.business_type, p.osm_id
+                ORDER BY p.business_type, p.osm_id
                 """,
-                (rs, row) -> new Place(
+                (rs, row) -> new Observed(
                         rs.getString("district"),
                         rs.getString("business_type"),
                         rs.getString("name"),
                         rs.getString("osm_type"),
                         rs.getLong("osm_id"),
                         rs.getDouble("lat"),
-                        rs.getDouble("lon")));
+                        rs.getDouble("lon"),
+                        rs.getString("check_date"),
+                        rs.getString("indicators")));
     }
 
-    private List<Place> grid() {
+    private List<Observed> gridPoints() {
         return jdbc.query(
                 """
-                SELECT d.name AS district, ST_Y((point).geom) AS lat, ST_X((point).geom) AS lon
+                SELECT d.name AS district, b.business AS business_type,
+                       location_indicators(
+                           ST_X((point).geom),
+                           ST_Y((point).geom),
+                           b.business
+                       )::text AS indicators
                 FROM district AS d
-                CROSS JOIN LATERAL ST_Dump(ST_GeneratePoints(d.geom, 3, 1)) AS point
-                ORDER BY d.name, lat, lon
+                CROSS JOIN LATERAL ST_Dump(ST_GeneratePoints(d.geom, 15, 1)) AS point
+                CROSS JOIN (VALUES ('cafe_drink'), ('pharmacy'), ('convenience')) AS b(business)
+                ORDER BY b.business, d.name
                 """,
-                (rs, row) -> new Place(
+                (rs, row) -> new Observed(
                         rs.getString("district"),
+                        rs.getString("business_type"),
                         null,
                         null,
+                        0,
+                        0,
+                        0,
                         null,
-                        null,
-                        rs.getDouble("lat"),
-                        rs.getDouble("lon")));
+                        rs.getString("indicators")));
     }
 
     public static double median(List<Double> values) {
@@ -227,5 +247,14 @@ public class BacktestService {
                 ? sorted.get(size / 2)
                 : (sorted.get(size / 2 - 1) + sorted.get(size / 2)) / 2.0;
         return Math.round(middle * 10.0) / 10.0;
+    }
+
+    public static double orderStatistic(List<Double> values, double fraction) {
+        List<Double> sorted = values.stream().sorted(Comparator.naturalOrder()).toList();
+        if (sorted.isEmpty()) {
+            return Double.NaN;
+        }
+        int index = (int) Math.floor(fraction * (sorted.size() - 1));
+        return Math.round(sorted.get(index) * 10.0) / 10.0;
     }
 }

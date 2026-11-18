@@ -95,6 +95,7 @@ class MapCompareBacktestTest {
         JsonNode body = get("/api/backtest");
         assertTrue(body.path("limitation").asText().contains("không đủ 10–15"));
         assertTrue(body.path("question").asText().contains("không phải đối chiếu cửa hàng còn sống"));
+        assertTrue(body.path("survey_rule").asText().contains("check_date"));
         assertEquals(3, body.path("former_places").size());
         boolean formerConvenience = false;
         for (JsonNode place : body.path("former_places")) {
@@ -108,28 +109,44 @@ class MapCompareBacktestTest {
             }
         }
         assertTrue(formerConvenience);
-        int shops = 0;
+        int surveyed = 0;
+        boolean highlands = false;
         boolean kafa = false;
         for (JsonNode business : body.path("businesses")) {
-            assertEquals(4, business.path("shop_count").asInt());
-            assertEquals(12, business.path("grid_count").asInt());
+            assertEquals(60, business.path("grid_count").asInt());
+            assertTrue(business.path("named_count").asInt() > 50);
             List<Double> shopScores = new ArrayList<>();
-            for (JsonNode shop : business.path("shops")) {
-                shops++;
-                shopScores.add(shop.path("spatial_score_without_self").asDouble());
-                assertTrue(shop.path("osm_url").asText().startsWith("https://www.openstreetmap.org/"));
-                if (shop.path("osm_url").asText().endsWith("/423736651")) {
-                    kafa = true;
-                }
+            for (JsonNode score : business.path("named_scores_without_self")) {
+                shopScores.add(score.asDouble());
             }
             List<Double> gridScores = new ArrayList<>();
-            for (JsonNode point : business.path("grid")) {
-                gridScores.add(point.path("spatial_score").asDouble());
+            for (JsonNode score : business.path("grid_scores")) {
+                gridScores.add(score.asDouble());
             }
-            assertEquals(BacktestService.median(shopScores), business.path("shop_median_spatial_score_without_self").asDouble(), 1e-9);
+            assertEquals(business.path("named_count").asInt(), shopScores.size());
+            assertEquals(BacktestService.median(shopScores), business.path("named_median_spatial_score_without_self").asDouble(), 1e-9);
+            assertEquals(BacktestService.orderStatistic(shopScores, 0.25), business.path("named_lower_quartile").asDouble(), 1e-9);
             assertEquals(BacktestService.median(gridScores), business.path("grid_median_spatial_score").asDouble(), 1e-9);
+            for (JsonNode place : business.path("surveyed")) {
+                surveyed++;
+                assertTrue(place.path("check_date").asText().matches("\\d{4}-\\d{2}-\\d{2}"));
+                if (place.path("osm_url").asText().endsWith("/10269656432")) {
+                    highlands = true;
+                    assertEquals("2025-10-28", place.path("check_date").asText());
+                    assertEquals("Cầu Giấy", place.path("district").asText());
+                }
+            }
+            if ("cafe_drink".equals(business.path("business_type").asText())) {
+                JsonNode traced = business.path("traced");
+                kafa = traced.path("osm_url").asText().endsWith("/423736651");
+                JsonNode alone = postJson("/api/scoring/evaluate", """
+                        {"lat":%s,"lon":%s,"business_type":"cafe_drink","rent_vnd_per_month":25000000}
+                        """.formatted(traced.path("lat").asDouble(), traced.path("lon").asDouble()));
+                assertEquals(alone.path("spatial_score").asDouble(), traced.path("spatial_score").asDouble());
+            }
         }
-        assertEquals(12, shops);
+        assertTrue(surveyed >= 15);
+        assertTrue(highlands);
         assertTrue(kafa);
     }
 
