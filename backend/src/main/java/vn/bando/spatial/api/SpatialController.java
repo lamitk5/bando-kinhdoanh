@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -60,13 +61,19 @@ public class SpatialController {
     }
 
     @PostMapping("/contributions/{id}/approve")
-    public JsonNode approveContribution(@PathVariable("id") long id, @RequestBody(required = false) JsonNode body) {
-        return service.decideContribution(id, "approved", body);
+    public JsonNode approveContribution(
+            @PathVariable("id") long id,
+            @RequestHeader(name = "X-Reviewer-Token", required = false) String reviewerToken,
+            @RequestBody(required = false) JsonNode body) {
+        return service.decideContribution(id, "approved", body, reviewerToken);
     }
 
     @PostMapping("/contributions/{id}/reject")
-    public JsonNode rejectContribution(@PathVariable("id") long id, @RequestBody JsonNode body) {
-        return service.decideContribution(id, "rejected", body);
+    public JsonNode rejectContribution(
+            @PathVariable("id") long id,
+            @RequestHeader(name = "X-Reviewer-Token", required = false) String reviewerToken,
+            @RequestBody JsonNode body) {
+        return service.decideContribution(id, "rejected", body, reviewerToken);
     }
 
     @GetMapping("/samples")

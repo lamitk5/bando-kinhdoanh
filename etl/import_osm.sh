@@ -157,6 +157,7 @@ psql_bando \
     -f "$ROOT/etl/sql/025_features.sql" \
     -f "$ROOT/etl/sql/030_verify.sql" \
     -f "$ROOT/etl/sql/080_contribution.sql" \
+    -f "$ROOT/etl/sql/081_reviewer.sql" \
     -f "$ROOT/etl/sql/090_scoring.sql" \
     -f "$ROOT/etl/sql/095_vision.sql" \
     -f "$ROOT/etl/sql/070_buffer.sql"

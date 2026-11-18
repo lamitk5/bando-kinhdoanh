@@ -41,6 +41,33 @@
       <button id="pdf" type="button">Tải PDF</button>
       <canvas id="radar" height="220"></canvas>
       <p class="note" id="compare-note"></p>
+      <h2>Đóng góp điểm</h2>
+      <p class="note">Điểm mới ở trạng thái chờ. Chỉ người duyệt đã cấu hình, khác người gửi, mới đưa điểm vào tính điểm. Mã duyệt không được lưu trên trang.</p>
+      <label for="place-category">Hạng mục</label>
+      <select id="place-category">
+        <option value="cafe_drink">Cà phê / đồ uống</option>
+        <option value="pharmacy">Nhà thuốc</option>
+        <option value="convenience">Cửa hàng tiện lợi</option>
+        <option value="education">Trường học</option>
+        <option value="office">Văn phòng</option>
+        <option value="apartments">Chung cư</option>
+        <option value="hospital">Bệnh viện</option>
+        <option value="clinic">Phòng khám</option>
+        <option value="transit_station">Ga</option>
+        <option value="transit_stop">Điểm dừng</option>
+      </select>
+      <label for="place-name">Tên điểm</label>
+      <input id="place-name" value="">
+      <label for="place-submitter">Người gửi</label>
+      <input id="place-submitter" value="">
+      <button id="submit-place" type="button">Gửi để chờ duyệt</button>
+      <label for="review-token">Mã người duyệt</label>
+      <input id="review-token" type="password" value="">
+      <label for="decision-note">Lý do nếu từ chối</label>
+      <input id="decision-note" value="">
+      <button id="approve-place" type="button">Duyệt dòng vừa gửi</button>
+      <button id="reject-place" type="button">Từ chối dòng vừa gửi</button>
+      <p class="note" id="contribution-note"></p>
       <h2>Kiểm chứng vị trí</h2>
       <button id="backtest" type="button">Chạy trên dữ liệu đã nạp</button>
       <p class="note" id="backtest-note"></p>
@@ -227,11 +254,76 @@
       link.click();
     };
 
+    let lastContribution = null;
+    document.querySelector("#submit-place").onclick = async () => {
+      const note = document.querySelector("#contribution-note");
+      const response = await fetch("/api/spatial/contributions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: document.querySelector("#place-name").value,
+          category: document.querySelector("#place-category").value,
+          lat: sites.length ? sites[sites.length - 1].lat : 21.037861,
+          lon: sites.length ? sites[sites.length - 1].lon : 105.801001,
+          submitter: document.querySelector("#place-submitter").value
+        })
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        note.textContent = body.message || "Không gửi được";
+        return;
+      }
+      lastContribution = body;
+      note.textContent = "Đã nhận dòng " + body.id + ", trạng thái " + body.status + ". Chưa tính vào điểm.";
+    };
+    document.querySelector("#approve-place").onclick = async () => {
+      const note = document.querySelector("#contribution-note");
+      if (!lastContribution) {
+        note.textContent = "Chưa có dòng chờ.";
+        return;
+      }
+      const response = await fetch("/api/spatial/contributions/" + lastContribution.id + "/approve", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Reviewer-Token": document.querySelector("#review-token").value
+        },
+        body: "{}"
+      });
+      const body = await response.json();
+      note.textContent = response.ok
+          ? "Đã duyệt bởi " + body.reviewer + ". Điểm này được tính."
+          : (body.message || "Không duyệt được");
+    };
+    document.querySelector("#reject-place").onclick = async () => {
+      const note = document.querySelector("#contribution-note");
+      if (!lastContribution) {
+        note.textContent = "Chưa có dòng chờ.";
+        return;
+      }
+      const response = await fetch("/api/spatial/contributions/" + lastContribution.id + "/reject", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Reviewer-Token": document.querySelector("#review-token").value
+        },
+        body: JSON.stringify({ decision_note: document.querySelector("#decision-note").value })
+      });
+      const body = await response.json();
+      note.textContent = response.ok
+          ? "Đã từ chối. Dòng không được tính."
+          : (body.message || "Không từ chối được");
+    };
+
     document.querySelector("#backtest").onclick = async () => {
       document.querySelector("#backtest-note").textContent = "Đang chấm các điểm...";
       const response = await fetch("/api/backtest");
       const body = await response.json();
-      document.querySelector("#backtest-note").textContent = body.limitation + " " + body.question;
+      const former = (body.former_places || []).map(place =>
+        place.district + " " + place.lifecycle_key + "=" + place.lifecycle_value + " điểm " + place.spatial_score
+      ).join("; ");
+      document.querySelector("#backtest-note").textContent = body.limitation + " " + body.question
+        + (former ? " Điểm từng mang thẻ tiện lợi: " + former + "." : "");
       const table = document.createElement("table");
       table.innerHTML = "<tr><th>Ngành</th><th>Số cơ sở</th><th>Trung vị cơ sở, đã trừ chính nó</th><th>Trung vị điểm lưới</th></tr>";
       body.businesses.forEach(item => {

@@ -23,13 +23,13 @@ Câu xác nhận hợp lệ gồm các ý như: "ok", "duyệt", "chức năng n
 
 ## Hạng mục
 
-Chín hạng mục dưới đây bám bốn phân hệ của đề tài. Bảy mục đã `thành công` vì người phụ trách yêu cầu ba giám khảo chấm thang 100 và tự gán khi điểm trung bình đạt mức đã yêu cầu. Mức của mục 6 là 93. Các mục sau dùng mức trên 90.
+Chín hạng mục dưới đây bám bốn phân hệ của đề tài. Tám mục đã `thành công` vì người phụ trách yêu cầu ba giám khảo chấm thang 100 và tự gán khi điểm trung bình đạt mức đã yêu cầu. Mức của mục 6 là 93. Các mục sau dùng mức trên 90.
 
 | # | Phân hệ | Hạng mục | Trạng thái |
 | --- | --- | --- | --- |
 | 1 | Spatial Engine | Nạp OSM vào PostGIS, chỉ mục GIST, cache Redis | `thành công` |
 | 2 | Spatial Engine | Truy vấn vùng đệm 200 / 500 / 1000 m (điểm hút khách, đối thủ, trục đường) | `thành công` |
-| 3 | Spatial Engine | Đóng góp POI có kiểm duyệt | `chờ duyệt` |
+| 3 | Spatial Engine | Đóng góp POI có kiểm duyệt | `thành công` |
 | 4 | AHP Scoring Core | Ma trận AHP theo từng ngành, CR dưới 0.1, thang điểm 0–100, chỉ số hiệu quả theo giá thuê | `thành công` |
 | 5 | Multimodal AI | Hàng đợi Redis và WebSocket cho pipeline ảnh | `thành công` |
 | 6 | Multimodal AI | Vision AI: vỉa hè, tầm nhìn, cảnh báo ảnh kém, báo cáo khuyến nghị dạng JSON | `thành công` |
@@ -43,6 +43,8 @@ Ghi từ trên xuống dưới, mục mới nhất ở đầu. Tài liệu tổn
 
 | Thời điểm (UTC+7) | Hạng mục | Trạng thái | Cách kiểm tra |
 | --- | --- | --- | --- |
+| 2026-11-18 09:10 | Ba giám khảo chấm lại mục 3 | `thành công` | Điểm 98, 100 và 97, trung bình 98,3. Mức trên 90. Giám khảo 1 trừ vì trang lúc chấm chỉ gửi ba ngành. Sau đó trang có đủ mười hạng mục. Giám khảo 3 trừ vì điểm thử không phải tiện ích khảo sát thật. Tài liệu vẫn nói đây là một mã dùng chung, chưa phải tài khoản từng người. |
+| 2026-11-18 09:02 | Tách người duyệt khỏi người gửi, và ghi 3 điểm tiện lợi từng ngừng | `chờ duyệt` | `BANDO_REVIEWER_NAME` và `BANDO_REVIEWER_TOKEN` trống thì duyệt trả 503. Thiếu hoặc sai `X-Reviewer-Token` trả 401, dòng vẫn `pending`. Tên duyệt trùng người gửi trả 400. Đúng mã thì `reviewer` là tên đã cấu hình, không phải tên client gửi. `etl/sql/065_contribution_checks.sql` rollback sạch. `GET /api/backtest` có 3 `former_places`: node 4739103928 điểm 28,1, node 12161473580 điểm 56,9, node 13006583946 điểm 67,1. Không đủ 10–15 cửa hàng đã đóng. |
 | 2026-11-18 01:46 | Ba giám khảo chấm mục 7, 8 và 9 | `thành công` cho 7 và 8, mục 9 vẫn `chờ duyệt` | Mục 7: 91, 93 và 96, trung bình 93,3. Mục 8: 93, 98 và 99, trung bình 96,7. Mục 9: 64, 63 và 70, trung bình 65,7. Mức để gán thành công là trung bình trên 90. Mục 9 không có nhóm cửa hàng đã đóng. Sau khi chấm, vòng trên bản đồ được vẽ theo mét mặt đất và lỗi điểm ngoài bốn quận không còn kèm vị trí hàm SQL. |
 | 2026-11-18 01:18 | Bản đồ, so sánh PDF và kiểm chứng vị trí | `chờ duyệt` | Mở `/`. Bản đồ có bốn quận, điểm xanh là điểm hút khách, điểm nâu là đối thủ. Bấm hai điểm rồi bấm So sánh: radar ba cánh. PDF từ `POST /api/scoring/compare.pdf` chứa đúng điểm không gian. `GET /api/backtest` trả 12 cơ sở có liên kết OpenStreetMap và nói rõ không có cửa hàng đã đóng. Trung vị cà phê 42,3 so với lưới 70,7; nhà thuốc 45,3 so với 62,5; tiện lợi 58,6 so với 59,5. |
 | 2026-11-17 21:06 | Đổi cách học sang dải và biên, rồi ba giám khảo chấm lại mục 6 | `thành công` | Đọc mục bề rộng trong [CHAM-DIEM.md](CHAM-DIEM.md) và [geometry_selection.json](../etl/vision/geometry_selection.json). Trung bình 5 láng giềng thắng vì sai số chọn 0,544 m, thấp hơn 0,719 m của mạng trước. Sai số kiểm tra 0,568 m, so với 1,270 m của trung bình tập học. Khớp mức quy ước 78,6%, mức đa số khớp 53,6%. Sai số học 0,473 m bị lạc quan vì ảnh học nằm trong nhóm của chính nó. PNG 1×1 thành `poor_quality`. Ảnh đủ biến thiên thành `completed` với số mét và `visibility` null. Ba ngành nhận số mét, `vision_applied` false, không có điểm ảnh. Gửi `blend_weight` thì 409. Ba giám khảo: 92, 100 và 100, trung bình 97,3. Giám khảo 1 trừ vì chưa có tầm nhìn. Hai giám khảo kia không trừ. Trung bình đạt mức 93 nên ghi `thành công`. Tầm nhìn vẫn chưa được đo. |

@@ -22,7 +22,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import vn.bando.spatial.backtest.BacktestService;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "vision.worker.enabled=false")
 class MapCompareBacktestTest {
 
     @Autowired
@@ -91,8 +93,21 @@ class MapCompareBacktestTest {
     @Test
     void backtestUsesTwelveNamedShopsAndDoesNotClaimClosures() throws Exception {
         JsonNode body = get("/api/backtest");
-        assertTrue(body.path("limitation").asText().contains("disused"));
+        assertTrue(body.path("limitation").asText().contains("không đủ 10–15"));
         assertTrue(body.path("question").asText().contains("không phải đối chiếu cửa hàng còn sống"));
+        assertEquals(3, body.path("former_places").size());
+        boolean formerConvenience = false;
+        for (JsonNode place : body.path("former_places")) {
+            assertTrue(place.path("inside_study").asBoolean());
+            assertTrue(place.path("spatial_score").isNumber());
+            assertTrue(place.path("osm_url").asText().startsWith("https://www.openstreetmap.org/node/"));
+            if (place.path("osm_url").asText().endsWith("/12161473580")) {
+                formerConvenience = true;
+                assertEquals("Cầu Giấy", place.path("district").asText());
+                assertEquals("disused:shop", place.path("lifecycle_key").asText());
+            }
+        }
+        assertTrue(formerConvenience);
         int shops = 0;
         boolean kafa = false;
         for (JsonNode business : body.path("businesses")) {

@@ -111,6 +111,16 @@ Trung vị điểm không gian, mức thuê mốc 25.000.000 đồng/tháng:
 
 Bốn cơ sở mỗi ngành không nằm ở điểm cao hơn lưới. Mẫu quá nhỏ và cách chọn theo `osm_id` không đại diện cho cửa hàng thành công.
 
+File `vietnam-latest.osm.pbf` mốc 2026-11-15T21:22:28Z có thêm 3 điểm nằm trong bốn quận với `disused:shop=convenience` hoặc `was:shop=convenience`. Không có cà phê hay nhà thuốc mang thẻ tương ứng. Cả ba không có tên. Chúng không nằm trong bảng `poi` nên không bị tính là đối thủ của chính mình. Điểm không gian, cùng mức thuê mốc:
+
+| Quận | OSM | Thẻ | Điểm |
+| --- | --- | --- | ---: |
+| Thanh Xuân | node 4739103928 | disused:shop | 28,1 |
+| Cầu Giấy | node 12161473580 | disused:shop | 56,9 |
+| Thanh Xuân | node 13006583946 | was:shop | 67,1 |
+
+Ba điểm này không đủ nhóm 10–15 cửa hàng đã đóng.
+
 ## Việc chưa làm
 
 Chưa có phiếu chuyên gia, chưa có doanh thu để thành ROI, chưa có tài khoản người duyệt, và chưa có nhãn tầm nhìn hay ảnh mặt tiền Hà Nội đã gán mức. Chưa có danh sách cửa hàng đã đóng cửa để đối chiếu.

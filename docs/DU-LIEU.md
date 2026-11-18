@@ -104,7 +104,7 @@ Dòng mới có `status = pending` và `counted_in_buffer = false`. `POST /api/s
 
 `GET /api/spatial/contributions?status=pending` liệt kê tối đa 100 dòng. `health` và `summary` vẫn chỉ đếm POI OpenStreetMap.
 
-Chưa có đăng nhập. Bước duyệt là một lời gọi riêng, chưa phải phân quyền Spring Security. Người gọi biết địa chỉ API có thể tự duyệt dòng của mình.
+Duyệt và từ chối cần header `X-Reviewer-Token`. Tên người duyệt lấy từ `BANDO_REVIEWER_NAME`, không lấy từ thân yêu cầu. Mã lấy từ `BANDO_REVIEWER_TOKEN`. Kho mã không ghi sẵn hai giá trị này. Khi một trong hai trống, lời gọi trả 503. Mã sai hoặc thiếu trả 401 và dòng vẫn `pending`. Tên người duyệt trùng người gửi, sau khi cắt khoảng trắng và không phân biệt hoa thường, trả 400 và dòng vẫn `pending`. Đây là một danh tính duyệt dùng chung cho môi trường, chưa phải tài khoản từng người.
 
 ## Kiểm tra
 

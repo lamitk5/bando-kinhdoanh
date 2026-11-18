@@ -1,0 +1,29 @@
+[
+  {
+    "osm_type": "N",
+    "osm_id": 4739103928,
+    "lat": 20.9959109,
+    "lon": 105.8282148,
+    "lifecycle_key": "disused:shop",
+    "lifecycle_value": "convenience",
+    "business_type": "convenience"
+  },
+  {
+    "osm_type": "N",
+    "osm_id": 12161473580,
+    "lat": 21.0343404,
+    "lon": 105.7833396,
+    "lifecycle_key": "disused:shop",
+    "lifecycle_value": "convenience",
+    "business_type": "convenience"
+  },
+  {
+    "osm_type": "N",
+    "osm_id": 13006583946,
+    "lat": 20.9887063,
+    "lon": 105.8012158,
+    "lifecycle_key": "was:shop",
+    "lifecycle_value": "convenience",
+    "business_type": "convenience"
+  }
+]

@@ -34,11 +34,17 @@ public class SpatialService {
     private final SpatialRepository repository;
     private final StringRedisTemplate redis;
     private final ObjectMapper objectMapper;
+    private final ReviewerGate reviewerGate;
 
-    public SpatialService(SpatialRepository repository, StringRedisTemplate redis, ObjectMapper objectMapper) {
+    public SpatialService(
+            SpatialRepository repository,
+            StringRedisTemplate redis,
+            ObjectMapper objectMapper,
+            ReviewerGate reviewerGate) {
         this.repository = repository;
         this.redis = redis;
         this.objectMapper = objectMapper;
+        this.reviewerGate = reviewerGate;
     }
 
     public SummaryResponse summary() {
@@ -106,7 +112,8 @@ public class SpatialService {
         return readTree(repository.listContributions(filter));
     }
 
-    public JsonNode decideContribution(long id, String decision, JsonNode body) {
+    public JsonNode decideContribution(long id, String decision, JsonNode body, String reviewerToken) {
+        String reviewer = reviewerGate.require(reviewerToken);
         rejectUnknown(body == null ? objectMapper.createObjectNode() : body, "decision_note");
         String note = body == null ? null : text(body, "decision_note");
         try {
@@ -121,7 +128,7 @@ public class SpatialService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
         }
         try {
-            JsonNode result = readTree(repository.decideContribution(id, decision, note));
+            JsonNode result = readTree(repository.decideContribution(id, decision, note, reviewer));
             if ("approved".equals(decision)) {
                 evictBufferCache();
             }
