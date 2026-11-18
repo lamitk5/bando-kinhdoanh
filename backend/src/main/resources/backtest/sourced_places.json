@@ -61,7 +61,7 @@
     "remove_self": false,
     "osm_type": "N",
     "osm_id": 5609999053,
-    "basis": "Changeset 121833793 ngày 2022-06-02 ghi Remove place not existed.",
+    "basis": "Changeset 121833793 ngày 2022-06-02 ghi Remove place not existed. Thẻ địa chỉ ghi 51 Quan Nhân, Thanh Xuân. Tọa độ node nằm trong đa giác Cầu Giấy, cách ranh Thanh Xuân 3 m.",
     "source_url": "https://www.openstreetmap.org/changeset/121833793"
   },
   {
@@ -111,9 +111,9 @@
     "lon": 105.807732,
     "outcome": "brand_listed",
     "remove_self": true,
-    "osm_type": "N",
+    "osm_type": "W",
     "osm_id": 1046053646,
-    "basis": "Số 33 Chùa Láng có trong danh sách Circle K lưu ngày 2024-08-05 và 2026-07-10, khớp số nhà trên OpenStreetMap.",
+    "basis": "Số 33 Chùa Láng có trong danh sách Circle K lưu ngày 2024-08-05 và 2026-07-10, khớp số nhà trên way OpenStreetMap 1046053646.",
     "source_url": "https://web.archive.org/web/20260710175657/https://www.circlek.com.vn/vi/store-locator/"
   },
   {

@@ -99,6 +99,7 @@ class MapCompareBacktestTest {
         assertEquals(5, body.path("brand_listed_count").asInt());
         boolean twitterbeans = false;
         boolean circleK = false;
+        boolean chuaLang = false;
         for (JsonNode place : body.path("sourced_places")) {
             assertTrue(place.path("source_url").asText().startsWith("https://"));
             assertTrue(place.path("spatial_score_for_compare").isNumber());
@@ -111,6 +112,10 @@ class MapCompareBacktestTest {
                         """.formatted(place.path("lat").asDouble(), place.path("lon").asDouble()));
                 assertEquals(alone.path("spatial_score").asDouble(), place.path("spatial_score").asDouble());
             }
+            if (place.path("osm_url").asText().endsWith("/way/1046053646")) {
+                chuaLang = true;
+                assertEquals("brand_listed", place.path("outcome").asText());
+            }
             if (place.path("osm_url").asText().endsWith("/6688293360")) {
                 circleK = true;
                 assertEquals("brand_listed", place.path("outcome").asText());
@@ -119,6 +124,7 @@ class MapCompareBacktestTest {
         }
         assertTrue(twitterbeans);
         assertTrue(circleK);
+        assertTrue(chuaLang);
         assertTrue(body.path("question").asText().contains("không phải đối chiếu cửa hàng còn sống"));
         assertTrue(body.path("survey_rule").asText().contains("check_date"));
         assertEquals(3, body.path("former_places").size());
