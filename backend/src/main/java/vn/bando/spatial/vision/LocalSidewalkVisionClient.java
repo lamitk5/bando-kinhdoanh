@@ -50,7 +50,7 @@ public final class LocalSidewalkVisionClient implements VisionClient {
         double[] pixels = "band-edge-v3".equals(featureKind)
                 ? SidewalkGeometry.features(decoded)
                 : BlockGray.features(decoded, gridWidth, gridHeight);
-        double meters = round3(model.predictMeters(pixels));
+        double meters = round2(model.predictMeters(pixels));
         String band = WidthBand.of(meters);
         node.put("image_quality", "ok");
         node.set("quality_reasons", mapper.createArrayNode());
@@ -63,29 +63,19 @@ public final class LocalSidewalkVisionClient implements VisionClient {
     }
 
     private static BufferedImage decode(byte[] image) {
-        try {
-            BufferedImage decoded = ImageIO.read(new ByteArrayInputStream(image));
-            if (decoded == null) {
-                throw new IllegalStateException("Không đọc được ảnh JPEG hoặc PNG để ước lượng bề rộng.");
-            }
-            return decoded;
-        } catch (IllegalStateException exception) {
-            throw exception;
-        } catch (java.io.IOException exception) {
-            throw new IllegalStateException("Không đọc được ảnh JPEG hoặc PNG để ước lượng bề rộng.");
-        }
+        return ImageDecoder.decode(image);
     }
 
     private String recommendation(double meters, String band) {
-        return "Ước lượng bề rộng %s m từ mô hình học trên 514 số đo vỉa hè Seoul. Sai số kiểm tra %s m. Không đo tầm nhìn và không phải số đo tại Hà Nội. Mức %s là quy ước mét, không phải nhãn người chấm."
-                .formatted(comma(meters), comma(model.testMaeMeters()), band);
+        return "Ước lượng bề rộng %s m (±%s m, MAE tập kiểm tra từ 514 mẫu vỉa hè Seoul). Không đo tầm nhìn và không phải số đo thực địa tại Hà Nội. Mức %s là quy ước mét, không phải nhãn người chấm."
+                .formatted(comma2(meters), comma2(model.testMaeMeters()), band);
     }
 
-    private static String comma(double value) {
-        return String.format(Locale.US, "%.3f", value).replace('.', ',');
+    private static String comma2(double value) {
+        return String.format(Locale.US, "%.2f", value).replace('.', ',');
     }
 
-    private static double round3(double value) {
-        return Math.round(value * 1000.0) / 1000.0;
+    private static double round2(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 }

@@ -79,9 +79,10 @@ Trọng số tiêu chí theo quy trình phân tích thứ bậc của Thomas L. 
 
 - Hàng đợi bất đồng bộ trên Redis.
 - WebSocket (STOMP) cập nhật trạng thái xử lý theo thời gian thực.
-- Vision AI trả về JSON có cấu trúc: sức chứa vỉa hè, độ thông thoáng tầm nhìn, cảnh báo ảnh kém chất lượng, và báo cáo khuyến nghị kinh doanh.
+- Tầng 1 chạy trên máy: YOLOv8m đa tỷ lệ (COCO), YOLOv8s-Worldv2, SegFormer-B0 Cityscapes và Depth-Anything-V2-Small đếm người đi bộ (tách riêng người lái xe hai bánh), xe máy, ô tô (gộp car, bus, truck có khử trùng liên lớp), cây, cột điện và biển báo đứng chắn trước nền mặt tiền. Mô hình bề rộng chỉ chạy khi kiểm định cảnh xác nhận mặt tiền tầng trệt và vỉa hè lộ rõ (loại trừ gầm cầu cạn, mặt nền bị xe che khuất và ảnh nhân tạo).
+- Tầng 2 đối chiếu số đếm, kiểm định cảnh mặt tiền và chỉ số PostGIS thành câu tư vấn trung thực. API đám mây chưa được gắn. Ảnh không được gửi đi.
 
-Đầu vào là ảnh chụp thực tế mặt tiền và không gian vỉa hè. Ảnh kém chất lượng bị gắn cờ, không được coi là đã thẩm định xong.
+Đầu vào tầng 1 hỗ trợ JPEG, PNG và WebP. Biển báo chắn tầm nhìn kiểm tra đồng thời nền công trình phía sau (SegFormer) và độ sâu đứng trước mặt công trình (Depth-Anything-V2).
 
 ### 4. Trực quan hóa bản đồ và báo cáo (Web GIS và Analytics)
 
@@ -96,7 +97,7 @@ Trọng số tiêu chí theo quy trình phân tích thứ bậc của Thomas L. 
 | Ngôn ngữ và backend | Java 17+, Spring Boot (modular monolith), Spring Security, Spring Data JPA |
 | Cơ sở dữ liệu và bản đồ | PostgreSQL, PostGIS, OpenLayers, OpenStreetMap (Geofabrik) |
 | Bất đồng bộ và cache | Redis (hàng đợi và spatial cache), WebSocket STOMP |
-| Trí tuệ nhân tạo | Gemini Multimodal API hoặc Groq Vision API, đầu ra JSON có cấu trúc |
+| Trí tuệ nhân tạo | YOLOv8m đa tỷ lệ, YOLOv8-World, SegFormer Cityscapes và Depth-Anything-V2 cho số đếm và kiểm định cảnh; mô hình bề rộng cho mét vỉa hè. Câu tư vấn đối chiếu từ JSON. API đám mây chưa gắn |
 | Frontend | React, Tailwind CSS, Chart.js |
 
 ## Cách kiểm chứng
@@ -107,6 +108,6 @@ Kiểm chứng ngược (back-testing): thu thập tọa độ và ảnh thực 
 
 ## Trạng thái kho mã
 
-Hạng mục nạp dữ liệu không gian, truy vấn vùng đệm 200/500/1000 m, chấm điểm AHP, hàng đợi ảnh, Vision JSON, bản đồ và so sánh PDF đã được ba giám khảo chấm đạt mức yêu cầu và ghi `thành công` trong [TIEN-DO.md](TIEN-DO.md). Đóng góp điểm tiện ích đã có người duyệt khác người gửi. Kiểm chứng đã chấm mọi cơ sở có tên và đã loại các node biến mất vì dọn dữ liệu Grab hoặc đổi tên WinMart. Vẫn chờ vì chưa đủ nhóm cửa hàng đã đóng. Đã có 154 cơ sở có thương hiệu và số nhà để làm mốc, trong đó 9 Circle K khớp danh sách hãng đã lưu. Ảnh quá nhỏ hoặc gần như một màu kết thúc `poor_quality`. Ảnh đọc được nhận ước lượng bề rộng, còn tầm nhìn để trống nên chưa trộn vào điểm ngành. Công thức và số đã đo nằm ở [CHAM-DIEM.md](CHAM-DIEM.md). Bản đồ, so sánh 2–3 mặt bằng, PDF và kiểm chứng vị trí đã có ở trang `/`. Kiểm chứng không tách được cửa hàng đã đóng vì dữ liệu đã nạp không có thẻ đó. Chưa có tài khoản người duyệt. Hai file trọng số Qwen2.5-VL-3B-Instruct đã tải về máy này và không được tinh chỉnh. Pipeline ảnh, khi không có khóa, dùng mô hình bề rộng học trên 514 số đo tại Seoul. Sai số kiểm tra của mô hình đang dùng, k = 7, là 0,618 m. Ảnh kém không được gán bề rộng. Tầm nhìn vẫn để trống. Số mét được gắn vào kết quả của cả ba ngành nhưng không trộn vào điểm tổng.
+Hạng mục nạp dữ liệu không gian, truy vấn vùng đệm 200/500/1000 m, chấm điểm AHP, hàng đợi ảnh, Vision JSON, bản đồ và so sánh PDF đã được ba giám khảo chấm đạt mức yêu cầu và ghi `thành công` trong [TIEN-DO.md](TIEN-DO.md). Đóng góp điểm tiện ích đã có người duyệt khác người gửi. Kiểm chứng đã chấm mọi cơ sở có tên và đã loại các node biến mất vì dọn dữ liệu Grab hoặc đổi tên WinMart. Vẫn chờ vì chưa đủ nhóm cửa hàng đã đóng. Đã có 154 cơ sở có thương hiệu và số nhà để làm mốc, trong đó 9 Circle K khớp danh sách hãng đã lưu. Ảnh quá nhỏ hoặc gần như một màu kết thúc `poor_quality`. Ảnh đọc được đi qua YOLOv8n rồi mới tới ước lượng bề rộng. Tầm nhìn vẫn để trống nên chưa trộn vào điểm ngành. API tư vấn chưa được gắn và không nhận ảnh. Công thức và số đã đo nằm ở [CHAM-DIEM.md](CHAM-DIEM.md). Bản đồ, so sánh 2–3 mặt bằng, PDF và kiểm chứng vị trí đã có ở trang `/`. Kiểm chứng không tách được cửa hàng đã đóng vì dữ liệu đã nạp không có thẻ đó. Chưa có tài khoản người duyệt. Hai file trọng số Qwen2.5-VL-3B-Instruct đã tải về máy này và không được tinh chỉnh. Pipeline ảnh, khi không có khóa, dùng mô hình bề rộng học trên 514 số đo tại Seoul. Sai số kiểm tra của mô hình đang dùng, k = 7, là 0,618 m. Ảnh kém không được gán bề rộng. Tầm nhìn vẫn để trống. Số mét được gắn vào kết quả của cả ba ngành nhưng không trộn vào điểm tổng.
 
 Khi một hạng mục được triển khai, trạng thái trong [TIEN-DO.md](TIEN-DO.md) chuyển thành `chờ duyệt`. Hạng mục chỉ thành `thành công` sau khi người phụ trách xác nhận đã xem và chức năng ổn.

@@ -177,11 +177,32 @@ class ScoringAndVisionTest {
         assertEquals(expected, blended.path("composite_score").asDouble(), 0.05);
 
         String poor = insertJob("poor_quality", """
-                {"assessed":false,"image_quality":"poor","quality_reasons":["mờ"],"sidewalk_capacity":null,"sidewalk_score":null,"visibility":null,"visibility_score":null,"recommendation":"Ảnh không đủ.","ordinal_note":"Điểm vỉa hè và tầm nhìn là thang thứ tự đã quy ước, không phải số đo mét."}
+                {"assessed":false,"image_quality":"poor","quality_reasons":["mờ"],"sidewalk_capacity":null,"sidewalk_score":null,"visibility":null,"visibility_score":null,"recommendation":"Ảnh không đủ.","ordinal_note":"Điểm vỉa hè và tầm nhìn là thang thứ tự đã quy ước, không phải số đo mét.","advisory":{"status":"not_sent","image_sent":false,"cloud_api":"not_attached","text":null,"reason":"Ảnh không đủ chất lượng."}}
                 """);
         assertEquals(409, post("""
                 {"lat":21.0378611,"lon":105.8010007,"business_type":"cafe_drink","rent_vnd_per_month":25000000,"vision_job_id":"%s","blend_weight":1}
                 """.formatted(poor)).getStatusCode().value());
+        JsonNode poorUnblended = evaluate("""
+                {"lat":21.0378611,"lon":105.8010007,"business_type":"cafe_drink","rent_vnd_per_month":25000000,"vision_job_id":"%s"}
+                """.formatted(poor));
+        assertFalse(poorUnblended.path("vision_applied").asBoolean());
+        assertFalse(poorUnblended.path("image_sent").asBoolean(true));
+        assertEquals("not_sent", poorUnblended.path("advisory_status").asText());
+        assertTrue(poorUnblended.path("sidewalk_width_m").isNull());
+
+        String nonStorefront = insertJob("completed", """
+                {"assessed":false,"image_quality":"ok","scene_verified":false,"quality_reasons":[],"sidewalk_capacity":null,"sidewalk_score":null,"sidewalk_width_m":null,"visibility":null,"visibility_score":null,"visibility_measured":false,"recommendation":"Không đủ mặt tiền công trình.","ordinal_note":"Điểm vỉa hè và tầm nhìn là thang thứ tự đã quy ước, không phải số đo mét.","yolo":{"requested":{"person":0,"car":0,"motorcycle":0,"utility_pole":1,"tree":3,"sign_blocking_visibility":0},"counts":{"person":0,"rider":0,"car":0,"motorcycle":0,"bus":0,"truck":0,"traffic_light":0,"stop_sign":0,"tree":3,"hanging_sign":0,"utility_pole":1,"traffic_sign":2},"scene_verified":false,"scene":{"verified":false,"building_ratio":0.012,"sidewalk_ratio":0.04,"lower_pavement_ratio":0.144,"lower_occlusion_ratio":0.002,"summary":"Không gán bề rộng vỉa hè vì tỷ lệ công trình mặt tiền 1,2% thấp hơn ngưỡng 12%."}},"advisory":{"status":"local_rules","image_sent":false,"cloud_api":"not_attached","text":"Đếm trên ảnh.","reason":"Cục bộ."}}
+                """);
+        assertEquals(409, post("""
+                {"lat":21.0378611,"lon":105.8010007,"business_type":"cafe_drink","rent_vnd_per_month":25000000,"vision_job_id":"%s","blend_weight":0.5}
+                """.formatted(nonStorefront)).getStatusCode().value());
+        JsonNode nonStorefrontScored = evaluate("""
+                {"lat":21.0378611,"lon":105.8010007,"business_type":"cafe_drink","rent_vnd_per_month":25000000,"vision_job_id":"%s"}
+                """.formatted(nonStorefront));
+        assertFalse(nonStorefrontScored.path("scene_verified").asBoolean(true));
+        assertTrue(nonStorefrontScored.path("sidewalk_width_m").isNull());
+        assertFalse(nonStorefrontScored.path("image_sent").asBoolean(true));
+        assertTrue(nonStorefrontScored.path("advisory_text").asText().contains("không đại diện mặt bằng đô thị"));
 
         String widthOnly = insertJob("completed", """
                 {"assessed":false,"image_quality":"ok","quality_reasons":[],"sidewalk_capacity":"enough","sidewalk_score":70,"sidewalk_width_m":2.2,"visibility":null,"visibility_score":null,"visibility_measured":false,"recommendation":"Chỉ có bề rộng.","ordinal_note":"Điểm vỉa hè và tầm nhìn là thang thứ tự đã quy ước, không phải số đo mét."}

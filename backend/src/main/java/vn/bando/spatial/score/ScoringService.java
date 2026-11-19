@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import vn.bando.spatial.BufferRequest;
+import vn.bando.spatial.vision.CountAdvisory;
 import vn.bando.spatial.vision.VisionJobRepository;
 
 @Service
@@ -185,12 +186,29 @@ public class ScoringService {
         JsonNode job = read(jobs.findJson(id).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Không thấy việc ảnh " + id)));
         String status = job.path("status").asText();
+        JsonNode result = job.path("result");
+        if ("poor_quality".equals(status)) {
+            if (hasBlend) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Ảnh chưa được chấm. Trạng thái " + status + ". Ảnh kém không bị tính điểm 0.");
+            }
+            response.put("vision_job_id", id.toString());
+            response.put("image_quality", "poor");
+            response.put("scene_verified", false);
+            response.put("visibility_measured", false);
+            response.putNull("sidewalk_width_m");
+            response.putNull("sidewalk_capacity");
+            response.putNull("sidewalk_score");
+            response.put("vision_note", "Ảnh không đạt chất lượng mặt tiền nên không đếm vật thể, không gán bề rộng vỉa hè và không bị tính điểm 0.");
+            attachAdvisory(response, result, business);
+            return;
+        }
         if (!"completed".equals(status)) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Ảnh chưa được chấm. Trạng thái " + status + ". Ảnh kém không bị tính điểm 0.");
         }
-        JsonNode result = job.path("result");
         boolean full = result.path("assessed").asBoolean()
                 && !result.path("sidewalk_score").isNull()
                 && !result.path("visibility_score").isNull();
@@ -198,6 +216,7 @@ public class ScoringService {
             boolean widthOnly = !result.path("sidewalk_score").isNull() && result.path("visibility_score").isNull();
             if (widthOnly && !hasBlend) {
                 response.put("vision_job_id", id.toString());
+                response.put("scene_verified", result.path("scene_verified").asBoolean(true));
                 response.put("visibility_measured", false);
                 if (result.path("sidewalk_width_m").isNumber()) {
                     response.put("sidewalk_width_m", result.path("sidewalk_width_m").asDouble());
@@ -206,7 +225,21 @@ public class ScoringService {
                 }
                 response.put("sidewalk_capacity", result.path("sidewalk_capacity").asText(null));
                 response.put("sidewalk_score", result.path("sidewalk_score").asInt());
-                response.put("vision_note", "Chỉ gắn ước lượng bề rộng. Không có tầm nhìn nên không tạo điểm ảnh và không trộn vào điểm tổng.");
+                response.put("vision_note", "Chỉ gắn ước lượng bề rộng khi cảnh có mặt tiền và mặt nền lộ rõ. Không có tầm nhìn nên không tạo điểm ảnh và không trộn vào điểm tổng.");
+                attachAdvisory(response, result, business);
+                return;
+            }
+            boolean countsOnly = result.path("sidewalk_score").isNull() && result.path("yolo").isObject();
+            if (countsOnly && !hasBlend) {
+                response.put("vision_job_id", id.toString());
+                response.put("scene_verified", false);
+                response.put("visibility_measured", false);
+                response.putNull("sidewalk_width_m");
+                response.putNull("sidewalk_capacity");
+                response.putNull("sidewalk_score");
+                response.put("vision_note", result.path("recommendation")
+                        .asText("Ảnh có số đếm vật thể nhưng không thỏa điều kiện mặt tiền/vỉa hè lộ rõ nên không gán bề rộng vỉa hè và không trộn vào điểm tổng."));
+                attachAdvisory(response, result, business);
                 return;
             }
             throw new ResponseStatusException(
@@ -227,6 +260,7 @@ public class ScoringService {
                 .put("sidewalk", round4(imageWeights[0]))
                 .put("visibility", round4(imageWeights[1])));
         response.put("image_weight_note", "Trọng số ảnh là so sánh cặp làm việc, không đo bằng mét.");
+        attachAdvisory(response, result, business);
         if (!hasBlend) {
             return;
         }
@@ -237,6 +271,49 @@ public class ScoringService {
         response.put("blend_weight", blend);
         response.put("composite_score", round1(blend * spatial + (1.0 - blend) * image));
         response.put("composite_meaning", "Người gọi chọn tỷ lệ. Hệ thống không tự đặt 70/30.");
+    }
+
+    private void attachAdvisory(ObjectNode response, JsonNode result, String business) {
+        JsonNode advisory = result.path("advisory");
+        if (!advisory.isObject()) {
+            response.put("image_sent", false);
+            return;
+        }
+        if (advisory.path("image_sent").asBoolean(true)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Kết quả ảnh khai báo đã gửi ảnh đi");
+        }
+        String status = advisory.path("status").asText();
+        response.put("advisory_status", status);
+        response.put("image_sent", false);
+        response.put("cloud_api", advisory.path("cloud_api").asText("not_attached"));
+        if (!"local_rules".equals(status)) {
+            if (advisory.path("text").isTextual()) {
+                response.put("advisory_text", advisory.path("text").asText());
+            } else {
+                response.putNull("advisory_text");
+            }
+            response.put("advisory_note", advisory.path("reason").asText("Ảnh không đủ chất lượng để sinh câu tư vấn."));
+            return;
+        }
+        ObjectNode input = mapper.createObjectNode();
+        input.set("postgis", response.path("components"));
+        input.set("indicators", response.path("indicators"));
+        if (result.has("scene") && result.get("scene").isObject()) {
+            input.set("scene", result.get("scene"));
+        }
+        if (result.has("yolo") && result.get("yolo").isObject()) {
+            input.set("yolo", result.get("yolo"));
+        } else {
+            input.putNull("yolo");
+        }
+        response.set("advisory_input", input);
+        response.put("advisory_text", CountAdvisory.withPlace(
+                result,
+                business,
+                response.path("indicators"),
+                response.path("components"),
+                response.path("spatial_score").asDouble()));
+        response.put("advisory_note", "Câu tư vấn đối chiếu số đếm, kiểm định cảnh mặt tiền và chỉ số PostGIS. API đám mây chưa được gắn. Ảnh không được gửi.");
     }
 
     private ObjectNode matrixNode(String business) {

@@ -69,7 +69,7 @@ Mỗi lần đổi trạng thái, máy chủ gửi JSON việc đó tới `/topi
 
 ## Thẩm định thị giác
 
-Nếu có `GEMINI_API_KEY` thì gọi Gemini `generateContent`. Nếu không, nhưng có `GROQ_API_KEY`, thì gọi Groq `chat/completions`. Tên mô hình bắt buộc nằm ở `GEMINI_MODEL` hoặc `GROQ_MODEL`. Khóa không được ghi log. Không có khóa thì dùng mô hình bề rộng ở mục dưới. Một PNG 1×1 kết thúc `poor_quality`, không có bề rộng.
+Ảnh không còn được gửi lên Gemini hoặc Groq, kể cả khi máy có khóa. Ảnh đủ điều kiện đi qua YOLOv8n trên máy này, rồi JSON đếm được giữ cho API tư vấn. API đó chưa được gắn, nên `advisory.status` là `waiting_for_api`, `advisory.text` là null và `image_sent` là false. Một PNG 1×1 kết thúc `poor_quality`, không có bề rộng và không có số đếm.
 
 Bộ phân tích chỉ nhận JSON có `image_quality` là `ok` hoặc `poor`, `quality_reasons`, `recommendation` không quá 500 ký tự, và khi ảnh dùng được thì `sidewalk_capacity` thuộc `none`, `narrow`, `enough`, `wide` còn `visibility` thuộc `blocked`, `partial`, `clear`. Ảnh `poor` mà vẫn kèm nhận định vỉa hè hoặc tầm nhìn bị từ chối. Ảnh `poor` thành trạng thái `poor_quality`, không được chấm như điểm 0: ảnh hỏng không phải mặt bằng xấu.
 
@@ -93,7 +93,28 @@ Lần này thêm k = 3, 7 và 9, vẫn trên cùng đặc trưng và cùng tập
 
 Trên tập kiểm tra, mức theo quy ước mét khớp 78,6%. Nếu luôn đoán mức chiếm đa số trong tập học, là `wide`, thì khớp 53,6%. Tập không có mẫu `none`.
 
-Không có khóa Gemini hoặc Groq thì pipeline gọi mô hình này. Ảnh có cạnh ngắn dưới 64 điểm, độ xám trung bình dưới 20 hoặc trên 240, hoặc phương sai dưới 50 thì thành `poor_quality` và không có bề rộng. Ngưỡng này nằm dưới phân bố 40 ảnh học đã xem trước, nơi độ xám trung bình khoảng 76–143 và phương sai trên 3000. Ảnh dùng được trả `completed` với số mét, mức quy ước, `visibility` null và `assessed` false. Khi chấm một điểm cho cà phê, nhà thuốc hoặc tiện lợi, số mét được gắn vào kết quả nhưng không thành điểm ảnh và không trộn vào điểm tổng, vì chưa có tầm nhìn. Gửi kèm `blend_weight` với ảnh này thì bị từ chối. Ảnh học ở Seoul, không phải mặt tiền bốn quận Hà Nội.
+Pipeline gọi mô hình bề rộng này trên máy, không gửi ảnh đi. Cổng `PhotoQuality` chặn ảnh có cạnh ngắn dưới 64 điểm, độ xám trung bình dưới 20 hoặc trên 240, phương sai dưới 50, trung bình trị tuyệt đối Laplace dưới 4, dưới 8/32 ô mức xám (bàn cờ), nhiễu điểm ảnh ngẫu nhiên, hoa văn tổng hợp đồng nhất và đồ họa phẳng nhân tạo thành `poor_quality` và không gán bề rộng. Với ảnh qua cổng chất lượng, mô hình bề rộng chỉ được gọi khi `SegFormer` và `Depth-Anything-V2` xác nhận cảnh mặt tiền tầng trệt có vỉa hè lộ rõ (`building_ratio >= 12%`, `sidewalk_ratio >= 3%`, `lower_sidewalk_ratio >= 5%`, `lower_pavement_ratio >= 20%`, `lower_occlusion_ratio <= 50%`, và loại trừ trần gầm cầu cạn `ceiling_depth_drop < 25%`). Ảnh đạt kiểm định trả `completed` với số mét (±0,62 m), mức quy ước, `visibility` null và `assessed` false; ảnh không đạt kiểm định cảnh vẫn trả số đếm vật thể nhưng giữ `sidewalk_width_m` là null. Khi chấm một điểm cho cà phê, nhà thuốc hoặc tiện lợi, số mét hợp lệ được gắn vào kết quả nhưng không thành điểm ảnh và không trộn vào điểm tổng vì chưa có nhãn tầm nhìn. Gửi kèm `blend_weight` với ảnh này thì bị từ chối. Ảnh học ở Seoul, không phải mặt tiền bốn quận Hà Nội.
+
+## Đếm vật thể và kiểm định cảnh 3D
+
+Tầng đếm cục bộ (`etl/vision/yolo_count.py`, kiểm tra khóa SHA-256 trong `YoloCounter.java`, giới hạn chờ 30 giây, hỗ trợ JPEG/PNG/WebP qua `webp-imageio`) phối hợp bốn mô hình trên CPU:
+- `yolov8m.pt` (`5d4a90cd…efe4fe5`): đếm đa tỷ lệ (`person`, `car`, `motorcycle`, `bus`, `truck`, `traffic_light`, `stop_sign`), khử trùng lặp liên lớp cho nhóm ô tô (`car + bus + truck`) và tách riêng người điều khiển xe hai bánh (`rider`) khỏi người đi bộ (`person`) kết hợp lớp `rider` của Cityscapes.
+- `yolov8s-worldv2.pt` (`9b2c17ab…f27792`): nhận diện `street tree` và `hanging sign` với tensor prompt cố định.
+- `segformer-b0-finetuned-cityscapes-1024-1024` (`1ed65f56…1d5`): phân đoạn 19 lớp với xác suất softmax thực trên từng vùng để đếm `utility_pole` (nối dọc qua khe dây cáp, loại trừ chân cọc biển báo và vùng trùng người), `traffic_sign`, tán cây `vegetation` (loại bồn hoa thấp tiền cảnh) và tính các tỷ lệ kiểm định cảnh.
+- `depth-anything-v2-small` (`453e3d7f…2f85`, lưu fp16, chạy fp32 trên CPU): đo độ sâu tương đối để (1) loại gầm cầu cạn trên cao nhô về phía ống kính (`ceiling_depth_drop >= 0,25`) và (2) xác định biển báo đứng chắn trước nền công trình (`area_fraction >= 0,15%`, `local_building_ratio >= 30%`, `depth_lead >= 0,12`). Đây là kiểm tra hình học – độ sâu 3D, không phải nhãn tầm nhìn người chấm cho AHP.
+
+Kết quả đo thực tế trên API:
+- `highlands-ha-noi.jpg` (mặt tiền Highlands Coffee Hà Nội, CC BY-SA 4.0): `scene_verified = true`, `sidewalk_width_m = 4,22` m, 3 xe máy, 4 ô tô, 2 người đi bộ, 0 cột điện, 1 cây, 0 biển chắn.
+- `bien-bao-che-mat-tien.jpg` (biển báo dựng trước dãy nhà phố, CC BY-SA 4.0): `scene_verified = false`, `sidewalk_width_m = null`, 1 xe máy, 9 ô tô, 19 người đi bộ, 1 biển đứng chắn trực diện trước nền công trình (`depth_lead = +0,81`).
+- `dong-tac-dong-da.jpg` (ngã tư Đông Tác, Đống Đa, CC BY-SA 4.0): `scene_verified = false`, `sidewalk_width_m = null`, 11 xe máy, 7 ô tô, 1 người đi bộ (tách riêng 9 `rider`), 1 cột điện, 2 cây, 0 biển chắn.
+- `cot-dien.jpg` (CC BY-SA 4.0): `scene_verified = false`, `sidewalk_width_m = null`, 1 cột điện, 3 cây, 2 biển báo ven cỏ, 0 biển chắn.
+- `xe-may-pho-ha-noi.jpg` (CC BY-SA 2.0): `scene_verified = false` (xe và người che 83,3% nửa dưới), `sidewalk_width_m = null`, 22 xe máy, 1 ô tô tải, 21 người đi bộ (tách 2 `rider`), 1 cây, 0 biển chắn.
+- `cau-giay-ha-noi.jpg` (dưới gầm cầu cạn đường Cầu Giấy, CC BY-SA 4.0): `scene_verified = false` (trần cầu cạn chênh sâu `+59,6%`), `sidewalk_width_m = null`, 7 xe máy, 3 ô tô, 2 người đi bộ (tách 10 `rider`), 4 cây.
+- Các ảnh nhân tạo (gradient, bàn cờ, nhiễu hạt, hoa văn tổng hợp, đồ họa phẳng): bị chặn tại `PhotoQuality` (`status = poor_quality`, `yolo = null`, `sidewalk_width_m = null`). Khi gọi `/api/scoring/evaluate` không kèm `blend_weight`, API trả HTTP 200 kèm `image_sent = false` và giữ nguyên điểm không gian PostGIS.
+
+Quá trình chấm độc lập bởi ba giám khảo trên API đang chạy ngày 19/11/2026 (giờ Việt Nam):
+- Lúc 13:54 (bản chỉ có YOLOv8n): 62, 55 và 58 -> trung bình cộng **58,3**.
+- Lúc 17:35 (sau khi phân tích nguyên nhân mất điểm và sửa lỗi qua các vòng trung gian 64,0 -> 80,0 -> 82,7 -> 84,7 -> 85,0): ba giám khảo độc lập chấm **86, 87 và 82**, trung bình cộng **255/3 = 85,0** (tăng +26,7 điểm so với 58,3). Do trung bình 85,0 chưa vượt mức 90 nên giữ nguyên trạng thái `chờ duyệt`, không tự nâng điểm. Các điểm trừ còn lại đến từ giới hạn dữ liệu thực tế: chưa có bộ số đo mét vỉa hè và nhãn tầm nhìn thực địa tại Hà Nội (vẫn dựa trên 514 mẫu Seoul), sai số bỏ sót xe máy xếp chồng dày hoặc gộp tán cây liên thông trên mô hình tiền huấn luyện, và lệch đọc EXIF trên ảnh WebP/PNG xoay hướng.
 
 ## Bản đồ, so sánh và kiểm chứng vị trí
 

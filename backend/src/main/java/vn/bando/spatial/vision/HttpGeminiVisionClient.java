@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+/** Không còn được gọi. Ảnh không được gửi lên Gemini. */
 final class HttpGeminiVisionClient implements VisionClient {
 
     static final String PROMPT = """

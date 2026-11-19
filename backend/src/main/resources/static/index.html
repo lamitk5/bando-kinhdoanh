@@ -68,6 +68,12 @@
       <button id="approve-place" type="button">Duyệt dòng vừa gửi</button>
       <button id="reject-place" type="button">Từ chối dòng vừa gửi</button>
       <p class="note" id="contribution-note"></p>
+      <h2>Đếm vật thể trên ảnh</h2>
+      <p class="note">Ảnh đi qua YOLOv8m đa tỷ lệ, YOLO-World, SegFormer Cityscapes và Depth-Anything-V2 ngay trên máy này. Chỉ gán bề rộng vỉa hè khi kiểm định cảnh có mặt tiền công trình và mặt nền lộ rõ. Ảnh không được gửi lên mạng. API đám mây chưa được gắn.</p>
+      <input id="photo" type="file" accept="image/jpeg,image/png,image/webp">
+      <button id="count-photo" type="button">Đếm trên ảnh</button>
+      <p class="note" id="photo-note"></p>
+      <div id="photo-table"></div>
       <h2>Kiểm chứng vị trí</h2>
       <button id="backtest" type="button">Chạy trên dữ liệu đã nạp</button>
       <p class="note" id="backtest-note"></p>
@@ -357,6 +363,72 @@
       host.appendChild(sourced);
       host.appendChild(brands);
     };
+
+    document.querySelector("#count-photo").addEventListener("click", () => {
+      const file = document.querySelector("#photo").files[0];
+      const note = document.querySelector("#photo-note");
+      const host = document.querySelector("#photo-table");
+      if (!file) {
+        note.textContent = "Chưa chọn ảnh.";
+        return;
+      }
+      const body = new FormData();
+      body.append("image", file);
+      note.textContent = "Đang đếm trên máy này.";
+      host.innerHTML = "";
+      fetch("/api/vision/jobs", { method: "POST", body }).then(response => response.json()).then(created => {
+        const id = created.id;
+        const wait = () => fetch("/api/vision/jobs/" + id).then(response => response.json()).then(job => {
+          if (job.status === "queued" || job.status === "running") {
+            note.textContent = "Trạng thái " + job.status + ".";
+            setTimeout(wait, 700);
+            return;
+          }
+          renderPhoto(job);
+        });
+        wait();
+      }).catch(error => { note.textContent = error.message; });
+    });
+
+    function renderPhoto(job) {
+      const note = document.querySelector("#photo-note");
+      const host = document.querySelector("#photo-table");
+      const result = job.result || {};
+      const advisory = result.advisory || {};
+      note.textContent = "Trạng thái " + job.status
+        + ". Tư vấn: " + (advisory.status || "không có")
+        + ". Ảnh đã gửi lên mạng: " + (advisory.image_sent === false ? "không" : "không rõ")
+        + ". " + (advisory.text || result.yolo_note || advisory.reason || job.error_message || "");
+      host.innerHTML = "";
+      const yolo = result.yolo;
+      if (!yolo) {
+        return;
+      }
+      const table = document.createElement("table");
+      table.innerHTML = "<tr><th>Hạng</th><th>Số đếm</th></tr>";
+      const requested = yolo.requested || {};
+      ["motorcycle", "car", "person", "utility_pole", "tree", "sign_blocking_visibility"].forEach(key => {
+        const row = document.createElement("tr");
+        const value = requested[key];
+        row.innerHTML = "<td>" + key + "</td><td>" + (value === null || value === undefined ? "trống" : value) + "</td>";
+        table.appendChild(row);
+      });
+      host.appendChild(table);
+      const extra = document.createElement("p");
+      extra.className = "note";
+      const counts = yolo.counts || {};
+      const widthText = result.sidewalk_width_m === null || result.sidewalk_width_m === undefined
+        ? "không gán (" + (result.recommendation || "chưa đủ mặt tiền/vỉa hè lộ rõ") + ")"
+        : result.sidewalk_width_m + " m";
+      extra.textContent = "Phân rã ô tô (car " + counts.car + ", bus " + counts.bus + ", truck " + counts.truck
+        + "), người lái xe hai bánh (rider) " + (counts.rider || 0)
+        + ", đèn giao thông " + counts.traffic_light + ", stop_sign " + counts.stop_sign
+        + ", biển báo Cityscapes " + counts.traffic_sign + ", biển treo " + counts.hanging_sign
+        + ". Bề rộng vỉa hè: " + widthText
+        + ". Thời gian suy luận YOLO " + yolo.inference_ms + " ms (tổng " + yolo.wall_ms + " ms) trên " + yolo.device
+        + ". " + (yolo.note || "");
+      host.appendChild(extra);
+    }
 
     loadMap().catch(error => { document.querySelector("#count").textContent = error.message; });
   </script>

@@ -11,14 +11,6 @@ public class VisionClientConfig {
 
     @Bean
     VisionClient visionClient(ObjectMapper mapper) {
-        String gemini = env("GEMINI_API_KEY");
-        if (!gemini.isBlank()) {
-            return new HttpGeminiVisionClient(gemini, env("GEMINI_MODEL"));
-        }
-        String groq = env("GROQ_API_KEY");
-        if (!groq.isBlank()) {
-            return new HttpGroqVisionClient(groq, env("GROQ_MODEL"));
-        }
         try (var input = VisionClientConfig.class.getResourceAsStream("/vision/sidewalk_width_model.json")) {
             if (input == null) {
                 return new UnconfiguredVisionClient();
@@ -38,10 +30,5 @@ public class VisionClientConfig {
         } catch (java.io.IOException exception) {
             throw new IllegalStateException("Không đọc được mô hình bề rộng", exception);
         }
-    }
-
-    private static String env(String name) {
-        String value = System.getenv(name);
-        return value == null ? "" : value.trim();
     }
 }
