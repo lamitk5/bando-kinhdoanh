@@ -105,6 +105,8 @@ Số đếm lấy từ các lớp COCO: `person`, `car`, `motorcycle`, `bus`, `t
 
 Khi chấm một điểm đã có việc ảnh `waiting_for_api`, phản hồi kèm `advisory_input` gồm thành phần PostGIS và JSON YOLO. `advisory_text` là null.
 
+Ba giám khảo chấm riêng chức năng này lúc 13:54 giờ Việt Nam ngày 19/11/2026. Điểm 62, 55 và 58. Trung bình cộng là 58,3. Dưới 90 nên chưa gán thành công. Các lần suy luận họ đo trên ảnh gradient là 80,4 ms, 37,6 ms và 38,2 ms.
+
 ## Bản đồ, so sánh và kiểm chứng vị trí
 
 Trang `/` vẽ bốn quận, điểm hút khách và đối thủ của ngành đang chọn, vòng 200/500/1000 m quanh điểm người dùng bấm, và lớp nhiệt theo số đối thủ trong ô 0,002 độ. Ô nhiệt là số điểm, không phải mật độ trên km². Khung rộng hơn 0,25 độ bị từ chối. Với cà phê, khung phủ bốn quận trả 2862 điểm và không bị cắt.
