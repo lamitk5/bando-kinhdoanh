@@ -93,19 +93,17 @@ Lần này thêm k = 3, 7 và 9, vẫn trên cùng đặc trưng và cùng tập
 
 Trên tập kiểm tra, mức theo quy ước mét khớp 78,6%. Nếu luôn đoán mức chiếm đa số trong tập học, là `wide`, thì khớp 53,6%. Tập không có mẫu `none`.
 
-Pipeline gọi mô hình bề rộng này trên máy, không gửi ảnh đi. Ảnh có cạnh ngắn dưới 64 điểm, độ xám trung bình dưới 20 hoặc trên 240, hoặc phương sai dưới 50 thì thành `poor_quality` và không có bề rộng. Ngưỡng này nằm dưới phân bố 40 ảnh học đã xem trước, nơi độ xám trung bình khoảng 76–143 và phương sai trên 3000. Ảnh dùng được trả `completed` với số mét, mức quy ước, `visibility` null và `assessed` false. Khi chấm một điểm cho cà phê, nhà thuốc hoặc tiện lợi, số mét được gắn vào kết quả nhưng không thành điểm ảnh và không trộn vào điểm tổng, vì chưa có tầm nhìn. Gửi kèm `blend_weight` với ảnh này thì bị từ chối. Ảnh học ở Seoul, không phải mặt tiền bốn quận Hà Nội.
+Pipeline gọi mô hình bề rộng này trên máy, không gửi ảnh đi. Ảnh có cạnh ngắn dưới 64 điểm, độ xám trung bình dưới 20 hoặc trên 240, phương sai dưới 50, hoặc trung bình trị tuyệt đối Laplace dưới 4 thì thành `poor_quality` và không có bề rộng. Ngưỡng Laplace 4 nằm giữa ảnh gradient đo được 0 và ảnh phố đo được từ 8,5 trở lên. Ngưỡng độ xám và phương sai nằm dưới phân bố 40 ảnh học đã xem trước, nơi độ xám trung bình khoảng 76–143 và phương sai trên 3000. Ảnh dùng được trả `completed` với số mét, mức quy ước, `visibility` null và `assessed` false. Khi chấm một điểm cho cà phê, nhà thuốc hoặc tiện lợi, số mét được gắn vào kết quả nhưng không thành điểm ảnh và không trộn vào điểm tổng, vì chưa có tầm nhìn. Gửi kèm `blend_weight` với ảnh này thì bị từ chối. Ảnh học ở Seoul, không phải mặt tiền bốn quận Hà Nội.
 
-## Đếm vật thể bằng YOLOv8n
+## Đếm vật thể
 
-Tệp `etl/vision/weights/yolov8n.pt` tải từ `https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.pt`. SHA-256 là `f59b3d833e2ff32e194b5bb8e08d211dc7c5bdf144b90d2c8412c47ccfc83b36`. Mô hình có 80 lớp COCO. Ngưỡng tin cậy là 0,25. Ảnh vào kích thước 640. Máy này chạy CPU với torch `2.15.0+cpu` và ultralytics `8.4.215`, không có CUDA.
+Người, ô tô, xe máy, xe buýt, xe tải, đèn giao thông, biển dừng, cây và biển treo lấy từ YOLOv8-World `yolov8s-worldv2.pt`, SHA-256 `9b2c17ab6124a913e9b3a5c170617920d91b0f01111a8479da69f00e2cf27792`. Prompt của cây là `street tree`. Prompt của biển treo là `hanging sign`. Ngưỡng tin cậy 0,25. Cột điện và biển báo lấy từ SegFormer-B0 đã tinh chỉnh trên Cityscapes, SHA-256 `1ed65f56d8c76fc7e11988ed5b7b4302e1c78706ea86583a54c1c9e07133c1d5`, lớp `pole` và `traffic sign`. Một vùng được đếm khi diện tích ít nhất 0,05% số điểm ảnh. Biển báo che tầm nhìn là biển báo hoặc biển treo có hộp cắt hình chữ nhật từ 30–70% chiều ngang và 20–80% chiều dọc. Đó là luật hình học, không phải nhãn người chấm, nên `visibility` của điểm ảnh vẫn để trống.
 
-Trên một ảnh gradient 96×96 tạo để thử ống dẫn, lần đếm thứ hai đo được 25,7 ms phần suy luận và 27,5 ms cả lần gọi. Bộ nhớ thường trú của tiến trình là 423,7 MB. Lần gọi đầu trong cùng tiến trình mất 921,1 ms vì còn khởi động. Đây không phải thời gian trên ảnh mặt tiền và không phải VRAM.
+Ảnh phố xe máy của Hector Garcia, CC BY-SA 2.0: 10 người, 6 xe máy, 1 cây, 2 biển treo, 1 biển cắt vùng giữa, 0 cột điện. Ảnh cột điện của Unnerving duck, CC BY-SA 4.0: 2 cột điện, 2 biển báo, 0 biển cắt vùng giữa vì biển nằm sát mép. Cả lần gọi đo được 1295,5 ms và 789,0 ms trên CPU. RSS sau ảnh phố là 695,6 MB. Ảnh gradient không được đếm vì thiếu chi tiết mặt tiền.
 
-Số đếm lấy từ các lớp COCO: `person`, `car`, `motorcycle`, `bus`, `truck`, `traffic_light`, `stop_sign`. `utility_pole`, `tree` và `sign_blocking_visibility` là null. `potted plant` không được đổi thành cây. Biển dừng và đèn giao thông không được ghi là che tầm nhìn. Ảnh gradient trên cho bảy lớp đếm đều bằng 0. Đó là đầu ra của mô hình trên ảnh thử, không phải đếm xe ngoài đường.
+Câu tư vấn ghép đúng các số đó với điểm PostGIS khi chấm một vị trí. Câu này nói không kết luận doanh thu. `cloud_api` là `not_attached`. Ảnh không được gửi đi.
 
-Khi chấm một điểm đã có việc ảnh `waiting_for_api`, phản hồi kèm `advisory_input` gồm thành phần PostGIS và JSON YOLO. `advisory_text` là null.
-
-Ba giám khảo chấm riêng chức năng này lúc 13:54 giờ Việt Nam ngày 19/11/2026. Điểm 62, 55 và 58. Trung bình cộng là 58,3. Dưới 90 nên chưa gán thành công. Các lần suy luận họ đo trên ảnh gradient là 80,4 ms, 37,6 ms và 38,2 ms.
+Ba giám khảo chấm bản chỉ có YOLOv8n lúc 13:54 giờ Việt Nam ngày 19/11/2026. Điểm 62, 55 và 58, trung bình 58,3. Bản này sửa ba chỗ họ trừ: lớp cột điện, cây và biển báo che tầm nhìn; câu tư vấn; ảnh gradient bị gán bề rộng.
 
 ## Bản đồ, so sánh và kiểm chứng vị trí
 

@@ -146,10 +146,11 @@ public class VisionService {
             if (poor) {
                 result.putNull("yolo");
                 result.put("yolo_note", "Ảnh không đủ để đếm vật thể.");
-                advisory(result, "not_sent", "Ảnh không đủ để đưa sang tầng tư vấn.");
+                advisory(result, "not_sent", "Ảnh không đủ để đếm và không đủ để tư vấn.", null);
             } else {
-                result.set("yolo", yolo.count(image, contentType));
-                advisory(result, "waiting_for_api", "API suy luận chưa được gắn. Ảnh không được gửi. Đầu vào sẽ là PostGIS và JSON YOLO.");
+                JsonNode counted = yolo.count(image, contentType);
+                result.set("yolo", counted);
+                advisory(result, "local_rules", "Câu tư vấn ghép từ số đếm. API đám mây chưa được gắn.", CountAdvisory.fromCounts(counted.path("requested")));
             }
             jobs.finish(id, poor ? "poor_quality" : "completed", mapper.writeValueAsString(result), null);
         } catch (RuntimeException exception) {
@@ -160,11 +161,16 @@ public class VisionService {
         return broadcast(id);
     }
 
-    private void advisory(ObjectNode result, String status, String reason) {
+    private void advisory(ObjectNode result, String status, String reason, String text) {
         ObjectNode advisory = result.putObject("advisory");
         advisory.put("status", status);
         advisory.put("image_sent", false);
-        advisory.putNull("text");
+        advisory.put("cloud_api", "not_attached");
+        if (text == null) {
+            advisory.putNull("text");
+        } else {
+            advisory.put("text", text);
+        }
         advisory.put("reason", reason);
     }
 

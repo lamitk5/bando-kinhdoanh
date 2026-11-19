@@ -1,3 +1,5 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch==2.15.0+cpu
 ultralytics==8.4.215
+transformers==5.23.0
+clip @ git+https://github.com/ultralytics/CLIP.git@7ffa84b3bfa40c42ecc1c77147a855e69cb2dd40

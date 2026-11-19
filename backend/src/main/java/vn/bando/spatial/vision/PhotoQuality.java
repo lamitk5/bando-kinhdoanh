@@ -43,6 +43,29 @@ public final class PhotoQuality {
         if (variance < 50) {
             reasons.add("Ảnh gần như một màu");
         }
+        if (width >= 3 && height >= 3 && meanAbsoluteLaplacian(image) < 4) {
+            reasons.add("Ảnh thiếu chi tiết mặt tiền");
+        }
         return new Verdict(!reasons.isEmpty(), List.copyOf(reasons));
+    }
+
+    static double meanAbsoluteLaplacian(BufferedImage image) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+        double sum = 0;
+        int count = 0;
+        for (int y = 1; y < height - 1; y++) {
+            for (int x = 1; x < width - 1; x++) {
+                double center = BlockGray.gray(image.getRGB(x, y));
+                double lap = Math.abs(4 * center
+                        - BlockGray.gray(image.getRGB(x - 1, y))
+                        - BlockGray.gray(image.getRGB(x + 1, y))
+                        - BlockGray.gray(image.getRGB(x, y - 1))
+                        - BlockGray.gray(image.getRGB(x, y + 1)));
+                sum += lap;
+                count++;
+            }
+        }
+        return sum / count;
     }
 }

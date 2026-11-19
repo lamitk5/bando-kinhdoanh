@@ -2,6 +2,7 @@ data/raw/
 data/work/
 data/models/
 .venv-yolo/
+/weights/
 __pycache__/
 *.pbf
 backend/target/

@@ -18,18 +18,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 
-/** Đếm vật thể bằng YOLOv8n trên máy này. Ảnh không rời khỏi tiến trình Python. */
+/** Đếm vật thể trên máy này. Ảnh không rời khỏi tiến trình Python. */
 @Component
 public class YoloCounter implements DisposableBean {
 
     static final List<String> COUNTS = List.of(
-            "person", "car", "motorcycle", "bus", "truck", "traffic_light", "stop_sign");
-    static final List<String> UNMEASURED = List.of("utility_pole", "tree", "sign_blocking_visibility");
+            "person", "car", "motorcycle", "bus", "truck", "traffic_light", "stop_sign",
+            "tree", "hanging_sign", "utility_pole", "traffic_sign");
+    static final List<String> REQUESTED = List.of(
+            "person", "car", "motorcycle", "utility_pole", "tree", "sign_blocking_visibility");
 
     private final ObjectMapper mapper;
     private final Path script;
     private final Path python;
-    private final String expectedSha;
+    private final String worldSha;
+    private final String segmenterSha;
     private Process process;
     private BufferedWriter stdin;
     private BufferedReader stdout;
@@ -43,7 +46,8 @@ public class YoloCounter implements DisposableBean {
         this.python = override == null || override.isBlank()
                 ? root.resolve(".venv-yolo/bin/python")
                 : Path.of(override);
-        this.expectedSha = readSha(root.resolve("etl/vision/weights/yolov8n.sha256"));
+        this.worldSha = readSha(root.resolve("etl/vision/weights/yolov8s-worldv2.sha256"));
+        this.segmenterSha = readSha(root.resolve("etl/vision/weights/segformer-cityscapes.sha256"));
     }
 
     public synchronized JsonNode count(byte[] image, String contentType) {
@@ -58,7 +62,7 @@ public class YoloCounter implements DisposableBean {
             file = Files.createTempFile("yolo-", suffix);
             Files.write(file, image);
         } catch (java.io.IOException exception) {
-            throw new IllegalStateException("Không ghi được ảnh tạm cho YOLOv8n", exception);
+            throw new IllegalStateException("Không ghi được ảnh tạm để đếm vật thể", exception);
         }
         try {
             return readCount(file);
@@ -76,25 +80,27 @@ public class YoloCounter implements DisposableBean {
         stop();
     }
 
-    static void validate(JsonNode node, String expectedSha) {
+    static void validate(JsonNode node, String worldSha, String segmenterSha) {
         if (node == null || !node.isObject() || node.hasNonNull("error") || node.path("ready").asBoolean(false)) {
-            throw new IllegalArgumentException("YOLOv8n không trả bản đếm");
+            throw new IllegalArgumentException("Bộ đếm không trả bản đếm");
         }
-        if (!"yolov8n.pt".equals(node.path("weights_file").asText())
-                || !expectedSha.equals(node.path("weights_sha256").asText())) {
-            throw new IllegalArgumentException("Trọng số YOLOv8n không khớp tệp đã lưu");
+        if (!"yolov8s-worldv2.pt".equals(node.path("weights_file").asText())
+                || !worldSha.equals(node.path("weights_sha256").asText())
+                || !segmenterSha.equals(node.path("segmenter_sha256").asText())) {
+            throw new IllegalArgumentException("Trọng số đếm không khớp tệp đã lưu");
         }
-        if (!"COCO".equals(node.path("dataset").asText())
-                || node.path("confidence_threshold").asDouble() != 0.25
+        if (node.path("confidence_threshold").asDouble() != 0.25
+                || node.path("min_area_fraction").asDouble() != 0.0005
                 || !"cpu".equals(node.path("device").asText())
                 || node.path("scene_verified").asBoolean(true)
                 || !(node.path("inference_ms").asDouble() > 0)
-                || node.path("note").asText().isBlank()) {
-            throw new IllegalArgumentException("Bản đếm YOLO thiếu mốc đã chốt");
+                || node.path("note").asText().isBlank()
+                || node.path("center_rule").asText().isBlank()) {
+            throw new IllegalArgumentException("Bản đếm thiếu mốc đã chốt");
         }
         JsonNode counts = node.path("counts");
         if (!counts.isObject() || counts.size() != COUNTS.size()) {
-            throw new IllegalArgumentException("counts không đúng các lớp COCO đã chốt");
+            throw new IllegalArgumentException("counts không đúng các lớp đã chốt");
         }
         Map<String, Integer> seen = new HashMap<>();
         for (String key : COUNTS) {
@@ -108,17 +114,33 @@ public class YoloCounter implements DisposableBean {
         if (!detections.isArray()) {
             throw new IllegalArgumentException("detections phải là mảng");
         }
+        int blocking = 0;
         for (JsonNode detection : detections) {
             String name = detection.path("class").asText();
             if (!seen.containsKey(name)) {
-                throw new IllegalArgumentException("Phát hiện lớp ngoài danh sách COCO đã chốt");
+                throw new IllegalArgumentException("Phát hiện lớp ngoài danh sách đã chốt");
             }
-            double confidence = detection.path("confidence").asDouble();
-            if (confidence < 0.25 || confidence > 1) {
-                throw new IllegalArgumentException("Độ tin cậy nằm ngoài ngưỡng 0,25");
+            String source = detection.path("source").asText();
+            JsonNode confidence = detection.get("confidence");
+            if ("yolov8s-worldv2".equals(source)) {
+                if (confidence == null || !confidence.isNumber() || confidence.asDouble() < 0.25 || confidence.asDouble() > 1) {
+                    throw new IllegalArgumentException("Độ tin cậy YOLO-World nằm ngoài ngưỡng 0,25");
+                }
+            } else if ("segformer-cityscapes".equals(source)) {
+                if (confidence != null && !confidence.isNull()) {
+                    throw new IllegalArgumentException("Vùng Cityscapes không có độ tin cậy từng hộp");
+                }
+            } else {
+                throw new IllegalArgumentException("Nguồn phát hiện không thuộc mô hình đã chốt");
             }
             if (!detection.path("box_px").isArray() || detection.path("box_px").size() != 4) {
                 throw new IllegalArgumentException("Hộp phát hiện không đủ bốn cạnh");
+            }
+            if (detection.path("blocks_center").asBoolean(false)) {
+                if (!"hanging_sign".equals(name) && !"traffic_sign".equals(name)) {
+                    throw new IllegalArgumentException("Chỉ biển báo mới được tính là cắt vùng giữa");
+                }
+                blocking++;
             }
             seen.put(name, seen.get(name) + 1);
         }
@@ -131,24 +153,14 @@ public class YoloCounter implements DisposableBean {
         if (!requested.isObject()) {
             throw new IllegalArgumentException("Thiếu requested");
         }
-        for (String key : List.of("person", "car", "motorcycle")) {
+        for (String key : List.of("person", "car", "motorcycle", "utility_pole", "tree")) {
             if (!requested.path(key).isIntegralNumber() || requested.path(key).asInt() != counts.path(key).asInt()) {
                 throw new IllegalArgumentException("requested." + key + " không khớp số đếm");
             }
         }
-        for (String key : UNMEASURED) {
-            if (!requested.has(key) || !requested.get(key).isNull()) {
-                throw new IllegalArgumentException(key + " không có trong YOLOv8n nên phải là null");
-            }
-        }
-        int found = 0;
-        for (JsonNode item : node.path("not_measured")) {
-            if (UNMEASURED.contains(item.path("field").asText()) && !item.path("reason").asText().isBlank()) {
-                found++;
-            }
-        }
-        if (found != UNMEASURED.size()) {
-            throw new IllegalArgumentException("Thiếu lý do cho lớp YOLO không đo");
+        if (!requested.path("sign_blocking_visibility").isIntegralNumber()
+                || requested.path("sign_blocking_visibility").asInt() != blocking) {
+            throw new IllegalArgumentException("Số biển báo cắt vùng giữa không khớp các hộp");
         }
     }
 
@@ -159,13 +171,13 @@ public class YoloCounter implements DisposableBean {
             stdin.flush();
             String line = stdout.readLine();
             if (line == null) {
-                throw new IllegalStateException("YOLOv8n đóng ống kết quả");
+                throw new IllegalStateException("Bộ đếm đóng ống kết quả");
             }
             JsonNode node = mapper.readTree(line);
             if (node.hasNonNull("error")) {
                 throw new IllegalStateException(node.get("error").asText());
             }
-            validate(node, expectedSha);
+            validate(node, worldSha, segmenterSha);
             return node;
         } catch (IllegalStateException | IllegalArgumentException exception) {
             stop();
@@ -174,7 +186,7 @@ public class YoloCounter implements DisposableBean {
                     : new IllegalStateException(exception.getMessage(), exception);
         } catch (java.io.IOException exception) {
             stop();
-            throw new IllegalStateException("Không đọc được kết quả YOLOv8n", exception);
+            throw new IllegalStateException("Không đọc được kết quả đếm", exception);
         }
     }
 
@@ -208,22 +220,23 @@ public class YoloCounter implements DisposableBean {
         }
         JsonNode ready = mapper.readTree(line);
         if (!ready.path("ready").asBoolean(false)
-                || ready.path("class_count").asInt() != 80
-                || !expectedSha.equals(ready.path("weights_sha256").asText())) {
-            throw new IllegalStateException(ready.path("error").asText("YOLOv8n không sẵn sàng"));
+                || ready.path("class_count").asInt() != 9
+                || !worldSha.equals(ready.path("weights_sha256").asText())
+                || !segmenterSha.equals(ready.path("segmenter_sha256").asText())) {
+            throw new IllegalStateException(ready.path("error").asText("Bộ đếm không sẵn sàng"));
         }
         started = true;
     }
 
-    private String exitMessage() throws java.io.IOException {
+    private String exitMessage() {
         try {
             if (process.waitFor(2, TimeUnit.SECONDS)) {
-                return "YOLOv8n thoát với mã " + process.exitValue();
+                return "Bộ đếm thoát với mã " + process.exitValue();
             }
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
         }
-        return "YOLOv8n không trả dòng sẵn sàng";
+        return "Bộ đếm không trả dòng sẵn sàng";
     }
 
     private void stop() {
@@ -236,14 +249,13 @@ public class YoloCounter implements DisposableBean {
 
     private static String readSha(Path file) {
         try {
-            String text = Files.readString(file).trim();
-            String sha = text.split("\\s+")[0];
+            String sha = Files.readString(file).trim().split("\\s+")[0];
             if (!sha.matches("[a-f0-9]{64}")) {
-                throw new IllegalStateException("Tệp SHA-256 của YOLOv8n không hợp lệ");
+                throw new IllegalStateException("Tệp SHA-256 của bộ đếm không hợp lệ");
             }
             return sha;
         } catch (java.io.IOException exception) {
-            throw new IllegalStateException("Không đọc được SHA-256 của YOLOv8n", exception);
+            throw new IllegalStateException("Không đọc được SHA-256 của bộ đếm", exception);
         }
     }
 

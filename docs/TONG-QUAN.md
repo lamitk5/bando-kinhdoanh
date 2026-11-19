@@ -79,10 +79,10 @@ Trọng số tiêu chí theo quy trình phân tích thứ bậc của Thomas L. 
 
 - Hàng đợi bất đồng bộ trên Redis.
 - WebSocket (STOMP) cập nhật trạng thái xử lý theo thời gian thực.
-- Tầng 1 chạy trên máy: YOLOv8n đếm các lớp COCO có thật, mô hình bề rộng ước lượng mét vỉa hè. Ảnh kém chất lượng bị gắn cờ và không được đếm.
-- Tầng 2 là API tư vấn. API chưa được gắn. Khi gắn, đầu vào là số liệu PostGIS và JSON YOLO, không phải ảnh.
+- Tầng 1 chạy trên máy: YOLOv8-World và SegFormer Cityscapes đếm người, xe, cây, cột điện và biển báo. Mô hình bề rộng ước lượng mét vỉa hè. Ảnh kém chất lượng bị gắn cờ và không được đếm.
+- Tầng 2 ghép câu tư vấn từ JSON đếm và điểm PostGIS. API đám mây chưa được gắn. Ảnh không được gửi đi.
 
-Đầu vào tầng 1 là ảnh chụp mặt tiền. Cột điện, cây xanh và việc biển báo che tầm nhìn không có trong YOLOv8n COCO nên để trống.
+Đầu vào tầng 1 là ảnh chụp mặt tiền. Biển báo che tầm nhìn là số biển có hộp cắt vùng giữa ảnh.
 
 ### 4. Trực quan hóa bản đồ và báo cáo (Web GIS và Analytics)
 
@@ -97,7 +97,7 @@ Trọng số tiêu chí theo quy trình phân tích thứ bậc của Thomas L. 
 | Ngôn ngữ và backend | Java 17+, Spring Boot (modular monolith), Spring Security, Spring Data JPA |
 | Cơ sở dữ liệu và bản đồ | PostgreSQL, PostGIS, OpenLayers, OpenStreetMap (Geofabrik) |
 | Bất đồng bộ và cache | Redis (hàng đợi và spatial cache), WebSocket STOMP |
-| Trí tuệ nhân tạo | YOLOv8n cục bộ cho số đếm, mô hình bề rộng cục bộ cho mét vỉa hè. API tư vấn nhận JSON, chưa được gắn |
+| Trí tuệ nhân tạo | YOLOv8-World và SegFormer Cityscapes cho số đếm, mô hình bề rộng cho mét vỉa hè. Câu tư vấn ghép từ JSON. API đám mây chưa gắn |
 | Frontend | React, Tailwind CSS, Chart.js |
 
 ## Cách kiểm chứng

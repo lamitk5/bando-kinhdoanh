@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import vn.bando.spatial.BufferRequest;
+import vn.bando.spatial.vision.CountAdvisory;
 import vn.bando.spatial.vision.VisionJobRepository;
 
 @Service
@@ -251,8 +252,13 @@ public class ScoringService {
         }
         response.put("advisory_status", advisory.path("status").asText());
         response.put("image_sent", false);
-        response.putNull("advisory_text");
-        if (!"waiting_for_api".equals(advisory.path("status").asText())) {
+        response.put("cloud_api", advisory.path("cloud_api").asText("not_attached"));
+        if (!"local_rules".equals(advisory.path("status").asText())) {
+            if (advisory.path("text").isTextual()) {
+                response.put("advisory_text", advisory.path("text").asText());
+            } else {
+                response.putNull("advisory_text");
+            }
             return;
         }
         ObjectNode input = mapper.createObjectNode();
@@ -263,7 +269,9 @@ public class ScoringService {
             input.putNull("yolo");
         }
         response.set("advisory_input", input);
-        response.put("advisory_note", "API suy luận chưa được gắn. Ảnh không được gửi. Đầu vào dành cho API là các thành phần PostGIS và JSON YOLO.");
+        String counts = advisory.path("text").asText("");
+        response.put("advisory_text", CountAdvisory.withPlace(counts, response.path("components"), response.path("spatial_score").asDouble()));
+        response.put("advisory_note", "Câu tư vấn ghép từ số đếm và điểm PostGIS. API đám mây chưa được gắn. Ảnh không được gửi.");
     }
 
     private ObjectNode matrixNode(String business) {

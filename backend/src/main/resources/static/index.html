@@ -69,7 +69,7 @@
       <button id="reject-place" type="button">Từ chối dòng vừa gửi</button>
       <p class="note" id="contribution-note"></p>
       <h2>Đếm vật thể trên ảnh</h2>
-      <p class="note">Ảnh đi qua YOLOv8n trên máy này. JSON đếm được giữ lại cho API tư vấn, khi API đó được gắn. Ảnh không được gửi lên mạng. Cột điện, cây xanh và biển báo che tầm nhìn không có trong mô hình COCO này nên để trống.</p>
+      <p class="note">Ảnh đi qua YOLOv8-World và mô hình Cityscapes trên máy này. Câu tư vấn chỉ ghép số đếm với điểm PostGIS. Ảnh không được gửi lên mạng. API đám mây chưa được gắn.</p>
       <input id="photo" type="file" accept="image/jpeg,image/png,image/webp">
       <button id="count-photo" type="button">Đếm trên ảnh</button>
       <p class="note" id="photo-note"></p>
@@ -398,7 +398,7 @@
       note.textContent = "Trạng thái " + job.status
         + ". Tư vấn: " + (advisory.status || "không có")
         + ". Ảnh đã gửi lên mạng: " + (advisory.image_sent === false ? "không" : "không rõ")
-        + ". " + (result.yolo_note || advisory.reason || job.error_message || "");
+        + ". " + (advisory.text || result.yolo_note || advisory.reason || job.error_message || "");
       host.innerHTML = "";
       const yolo = result.yolo;
       if (!yolo) {
