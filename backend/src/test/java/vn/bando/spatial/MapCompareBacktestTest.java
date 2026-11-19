@@ -1,6 +1,7 @@
 package vn.bando.spatial;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -125,6 +126,36 @@ class MapCompareBacktestTest {
         assertTrue(twitterbeans);
         assertTrue(circleK);
         assertTrue(chuaLang);
+        assertTrue(body.path("benchmark_count").asInt() > 100);
+        assertEquals(body.path("benchmark_count").asInt(), body.path("benchmarks").size());
+        assertTrue(body.path("benchmark_note").asText().contains("Không bịa"));
+        boolean addressedCircle = false;
+        boolean hoursPassedThrough = false;
+        var winmart = new ArrayList<Double>();
+        for (JsonNode place : body.path("benchmarks")) {
+            assertFalse(place.path("housenumber").asText().isBlank());
+            assertFalse(place.path("street").asText().isBlank());
+            assertFalse(place.path("brand").asText().isBlank());
+            if (!place.path("opening_hours").isNull()) {
+                hoursPassedThrough = true;
+            }
+            if (place.path("osm_url").asText().endsWith("/6688293360")) {
+                addressedCircle = true;
+                assertEquals("370", place.path("housenumber").asText());
+                assertEquals("listed_both", place.path("circle_k_list").asText());
+                assertEquals("24/7", place.path("opening_hours").asText());
+            }
+            if ("WinMart+".equals(place.path("brand").asText())) {
+                winmart.add(place.path("spatial_score_without_self").asDouble());
+            }
+        }
+        assertTrue(addressedCircle);
+        assertTrue(hoursPassedThrough);
+        for (JsonNode brand : body.path("benchmark_brands")) {
+            if ("WinMart+".equals(brand.path("brand").asText()) && "convenience".equals(brand.path("business_type").asText())) {
+                assertEquals(BacktestService.median(winmart), brand.path("median_spatial_score_without_self").asDouble(), 1e-9);
+            }
+        }
         assertTrue(body.path("question").asText().contains("không phải đối chiếu cửa hàng còn sống"));
         assertTrue(body.path("survey_rule").asText().contains("check_date"));
         assertEquals(3, body.path("former_places").size());

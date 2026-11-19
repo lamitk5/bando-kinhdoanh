@@ -80,7 +80,7 @@ class SidewalkWidthModelTest {
         assertEquals(112, node.path("test_count").asInt());
         assertEquals(128, node.path("resize").get(0).asInt());
         assertEquals(96, node.path("resize").get(1).asInt());
-        assertEquals(0.5679642857142857, model.testMaeMeters(), 1e-12);
+        assertEquals(0.6175382653061225, model.testMaeMeters(), 1e-12);
         assertEquals(1.2699672533769955, model.baselineMaeMeters(), 1e-12);
         assertTrue(model.beatsBaseline());
         assertTrue(model.testMaeMeters() < model.baselineMaeMeters());
@@ -91,6 +91,6 @@ class SidewalkWidthModelTest {
         for (int i = 0; i < mean.length; i++) {
             mean[i] = node.path("feature_mean").get(i).asDouble();
         }
-        assertEquals(2.842, model.predictMeters(mean), 1e-9);
+        assertEquals(2.505714285714286, model.predictMeters(mean), 1e-9);
     }
 }

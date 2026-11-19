@@ -1,0 +1,751 @@
+[
+  {
+    "snapshot": "2024-08-05",
+    "district": "Cầu Giấy",
+    "address": "181 Nguyễn Ngọc Vũ P. Trung Hòa Q. Cầu Giấy",
+    "number": "181",
+    "street_key": "nguyen ngoc vu"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Cầu Giấy",
+    "address": "Lô 16-D khu nhà ở thấp tầng A10 khu đô thị Nam Trung Yên P. Yên Hòa Q. Cầu Giấy",
+    "number": "16",
+    "street_key": "lo d khu nha o thap tang a"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Thanh Xuân",
+    "address": "Tòa 18T1 khu đô thị Trung Hòa P. Nhân Chính Q. Thanh Xuân Hà Nội",
+    "number": "18",
+    "street_key": "toa t khu do thi trung hoa"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Bắc Từ Liêm",
+    "address": "TMDV 11 Tòa N04 Chung cư Ecohome 3 Bắc Từ Liêm Hà Nội",
+    "number": "11",
+    "street_key": "tmdv"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Thanh Xuân",
+    "address": "93 Hoàng Văn Thái Khương Trung Thanh Xuân Hà Nội",
+    "number": "93",
+    "street_key": "hoang van thai"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Đống Đa",
+    "address": "14 Thái Hà Phường Trung Liệt Quận Đống Đa Hà Nội",
+    "number": "14",
+    "street_key": "thai ha"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Thanh Xuân",
+    "address": "B6-53 phố Triều Khúc P. Thanh Xuân Nam Q. Thanh Xuân Hà Nội",
+    "number": "6",
+    "street_key": "b trieu khuc"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Bắc Từ Liêm",
+    "address": "N03-T6 Ngoại Giao Đoàn Quận Bắc Từ Liêm Hà Nội",
+    "number": "3",
+    "street_key": "n t ngoai giao doan"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Đống Đa",
+    "address": "123-125 Tôn Đức Thắng Quận Đống Đa Hà Nội",
+    "number": "123",
+    "street_key": "ton duc thang"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Đống Đa",
+    "address": "49+51 Trần Quang Diệu Quận Đống Đa Hà Nội",
+    "number": "49",
+    "street_key": "tran quang dieu"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Thanh Xuân",
+    "address": "118 Định Công Quận Thanh Xuân Hà Nội",
+    "number": "118",
+    "street_key": "dinh cong"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Cầu Giấy",
+    "address": "15 Dương Khuê P. Mai Dịch Quận Cầu Giấy Hà Nội",
+    "number": "15",
+    "street_key": "khue"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Cầu Giấy",
+    "address": "13 C12 Tập Thể Đại Học Ngoại Ngữ Phường Dịch Vọng Hậu Quận Cầu Giấy Hà Nội",
+    "number": "13",
+    "street_key": "c tap the dai hoc ngoai ngu"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Thanh Xuân",
+    "address": "14 Khương Hạ Quận Thanh Xuân Hà Nội",
+    "number": "14",
+    "street_key": "khuong ha"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Thanh Xuân",
+    "address": "1 Lê Văn Thiêm Phường Nhân Chính Quận Thanh Xuân Hà Nội",
+    "number": "1",
+    "street_key": "le van thiem"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Đống Đa",
+    "address": "P101B+102B nhà A8 Khương Thượng Phường Trung Tự Quận Đống Đa Hà Nội",
+    "number": "101",
+    "street_key": "p b b nha a khuong thuong"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Đống Đa",
+    "address": "20 Nguyên Hồng Phường Láng Hạ Quận Đống Đa Hà Nội",
+    "number": "20",
+    "street_key": "nguyen hong"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Cầu Giấy",
+    "address": "40 Trung Hòa Phường Trung Hòa Quận Cầu Giấy Hà Nội",
+    "number": "40",
+    "street_key": "trung hoa"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Đống Đa",
+    "address": "380 Khâm Thiên Phường Thổ Quan Quận Đống Đa Hà Nội",
+    "number": "380",
+    "street_key": "kham thien"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Thanh Xuân",
+    "address": "01 Tô Vĩnh Diện Phường Khương Trung Quận Thanh Xuân Hà Nội",
+    "number": "1",
+    "street_key": "to vinh dien"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Đống Đa",
+    "address": "68 Tôn Thất Tùng Phường Khương Thượng Quận Đống Đa Hà Nội",
+    "number": "68",
+    "street_key": "ton that tung"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Thanh Xuân",
+    "address": "48-116 Nhân Hòa Phường Nhân Chính Quận Thanh Xuân Hà Nội",
+    "number": "48",
+    "street_key": "nhan hoa"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Thanh Xuân",
+    "address": "N8 – A10 Nguyễn Thị Thập Phường Nhân Chính Quận Thanh Xuân Hà Nội",
+    "number": "8",
+    "street_key": "n a nguyen thi thap"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Đống Đa",
+    "address": "848 Đường Láng Phường Láng Thượng Quận Đống Đa Tp. Hà Nội",
+    "number": "848",
+    "street_key": "lang"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Đống Đa",
+    "address": "91 Nam Đồng Phường Nam Đồng Quận Đống Đa Hà Nội Việt Nam",
+    "number": "91",
+    "street_key": "nam dong"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Thanh Xuân",
+    "address": "218 Nguyễn Huy Tưởng Phường Thanh Xuân Trung Quận Thanh Xuân Hà Nội",
+    "number": "218",
+    "street_key": "nguyen huy tuong"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Đống Đa",
+    "address": "91 Khâm Thiên Phường Khâm Thiên Quận Đống Đa Hà Nội",
+    "number": "91",
+    "street_key": "kham thien"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Cầu Giấy",
+    "address": "125 Hoàng Ngân Phường Trung Hoà Quận Cầu Giấy Hà Nội Việt Nam",
+    "number": "125",
+    "street_key": "hoang ngan"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Cầu Giấy",
+    "address": "14 Ngõ 106 Hoàng Quốc Việt Phường Nghĩa Đô Quận Cầu Giấy Hà Nội Việt Nam",
+    "number": "14",
+    "street_key": "hoang quoc viet"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Cầu Giấy",
+    "address": "18 Nguyễn Khánh Toàn Phường Quan Hoa Quận Cầu Giấy Hà Nội Việt Nam",
+    "number": "18",
+    "street_key": "nguyen khanh toan"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Đống Đa",
+    "address": "45 Hào Nam Phường Ô Chợ Dừa Quận Đống Đa Hà Nội Việt Nam",
+    "number": "45",
+    "street_key": "hao nam"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Thanh Xuân",
+    "address": "370 Nguyễn Trãi Phường Thanh Xuân Trung Quận Thanh Xuân Hà Nội Việt Nam",
+    "number": "370",
+    "street_key": "nguyen trai"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Đống Đa",
+    "address": "Số 8 Ngõ 91 Nguyễn Chí Thanh Phường Láng Hạ Quận Đống Đa Hà Nội Việt Nam",
+    "number": "8",
+    "street_key": "so"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Cầu Giấy",
+    "address": "7 Nguyễn Thị Định Phường Trung Hòa Quận Cầu Giấy Hà Nội Việt Nam",
+    "number": "7",
+    "street_key": "nguyen thi dinh"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Đống Đa",
+    "address": "33 Chùa Láng Phường Láng Thượng Quận Đống Đa Hà Nội Việt Nam",
+    "number": "33",
+    "street_key": "chua lang"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Bắc Từ Liêm",
+    "address": "252 Hoàng Quốc Việt Phường Cổ Nhuế 1 Quận Bắc Từ Liêm Hà Nội Việt Nam",
+    "number": "252",
+    "street_key": "hoang quoc viet"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Cầu Giấy",
+    "address": "31 Trần Quốc Hoàn Phường Dịch Vọng Quận Cầu Giấy Hà Nội Việt Nam",
+    "number": "31",
+    "street_key": "tran quoc hoan"
+  },
+  {
+    "snapshot": "2024-08-05",
+    "district": "Cầu Giấy",
+    "address": "78 Duy Tân Phường Dịch Vọng Hầu Quận Cầu Giấy Hà Nội Việt Nam",
+    "number": "78",
+    "street_key": "duy tan"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "33 Trần Kim Xuyến Yên Hòa Cầu Giấy",
+    "number": "33",
+    "street_key": "tran kim xuyen"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "Số 7 ngõ 34 phố Mai Anh Tuấn phường Ô Chợ Dừa quận Đống Đa",
+    "number": "7",
+    "street_key": "so mai anh tuan"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Bắc Từ Liêm",
+    "address": "N03-T2 khu đoàn Ngoại Giao phường Xuân Tảo quận Bắc Từ Liêm",
+    "number": "3",
+    "street_key": "n t khu doan ngoai giao"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "28 Nguyễn Phong Sắc tổ 9 phường Dịch Vong quận Cầu Giấy",
+    "number": "28",
+    "street_key": "nguyen phong sac"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Thanh Xuân",
+    "address": "197+198 tổ 6 Vũ Trọng Phụng phường Thanh Xuân Trung quận Thanh Xuân",
+    "number": "197",
+    "street_key": "to vu trong phung"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "Số 4 dãy L - TT Văn Hóa Nghệ thuật tổ 25 phường Mai Dịch quận Cầu Giấy",
+    "number": "4",
+    "street_key": "so day l tt van hoa nghe thuat"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "Số 01 nhà C2 khu tập thể quân đội Nam Đồng P. Nam Đồng Q. Đống Đa",
+    "number": "1",
+    "street_key": "so"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "181 Nguyễn Ngọc Vũ P. Trung Hòa Q. Cầu Giấy",
+    "number": "181",
+    "street_key": "nguyen ngoc vu"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "Lô 16-D khu nhà ở thấp tầng A10 khu đô thị Nam Trung Yên P. Yên Hòa Q. Cầu Giấy",
+    "number": "16",
+    "street_key": "lo d khu nha o thap tang a"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Thanh Xuân",
+    "address": "Tòa 18T1 khu đô thị Trung Hòa P. Nhân Chính Q. Thanh Xuân Hà Nội",
+    "number": "18",
+    "street_key": "toa t khu do thi trung hoa"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Bắc Từ Liêm",
+    "address": "TMDV 11 Tòa N04 Chung cư Ecohome 3 Bắc Từ Liêm Hà Nội",
+    "number": "11",
+    "street_key": "tmdv"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Thanh Xuân",
+    "address": "93 Hoàng Văn Thái Khương Trung Thanh Xuân Hà Nội",
+    "number": "93",
+    "street_key": "hoang van thai"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "14 Thái Hà Phường Trung Liệt Quận Đống Đa Hà Nội",
+    "number": "14",
+    "street_key": "thai ha"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Thanh Xuân",
+    "address": "B6-53 phố Triều Khúc P. Thanh Xuân Nam Q. Thanh Xuân Hà Nội",
+    "number": "6",
+    "street_key": "b trieu khuc"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "123-125 Tôn Đức Thắng Quận Đống Đa Hà Nội",
+    "number": "123",
+    "street_key": "ton duc thang"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "49+51 Trần Quang Diệu Quận Đống Đa Hà Nội",
+    "number": "49",
+    "street_key": "tran quang dieu"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Thanh Xuân",
+    "address": "118 Định Công Quận Thanh Xuân Hà Nội",
+    "number": "118",
+    "street_key": "dinh cong"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "15 Dương Khuê P. Mai Dịch Quận Cầu Giấy Hà Nội",
+    "number": "15",
+    "street_key": "khue"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "13 C12 Tập Thể Đại Học Ngoại Ngữ Phường Dịch Vọng Hậu Quận Cầu Giấy Hà Nội",
+    "number": "13",
+    "street_key": "c tap the dai hoc ngoai ngu"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Thanh Xuân",
+    "address": "14 Khương Hạ Quận Thanh Xuân Hà Nội",
+    "number": "14",
+    "street_key": "khuong ha"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Thanh Xuân",
+    "address": "1 Lê Văn Thiêm Phường Nhân Chính Quận Thanh Xuân Hà Nội",
+    "number": "1",
+    "street_key": "le van thiem"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "P101B+102B nhà A8 Khương Thượng Phường Trung Tự Quận Đống Đa Hà Nội",
+    "number": "101",
+    "street_key": "p b b nha a khuong thuong"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "20 Nguyên Hồng Phường Láng Hạ Quận Đống Đa Hà Nội",
+    "number": "20",
+    "street_key": "nguyen hong"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "40 Trung Hòa Phường Trung Hòa Quận Cầu Giấy Hà Nội",
+    "number": "40",
+    "street_key": "trung hoa"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "380 Khâm Thiên Phường Thổ Quan Quận Đống Đa Hà Nội",
+    "number": "380",
+    "street_key": "kham thien"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Thanh Xuân",
+    "address": "01 Tô Vĩnh Diện Phường Khương Trung Quận Thanh Xuân Hà Nội",
+    "number": "1",
+    "street_key": "to vinh dien"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "68 Tôn Thất Tùng Phường Khương Thượng Quận Đống Đa Hà Nội",
+    "number": "68",
+    "street_key": "ton that tung"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Thanh Xuân",
+    "address": "48-116 Nhân Hòa Phường Nhân Chính Quận Thanh Xuân Hà Nội",
+    "number": "48",
+    "street_key": "nhan hoa"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Thanh Xuân",
+    "address": "N8 – A10 Nguyễn Thị Thập Phường Nhân Chính Quận Thanh Xuân Hà Nội",
+    "number": "8",
+    "street_key": "n a nguyen thi thap"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "848 Đường Láng Phường Láng Thượng Quận Đống Đa Tp. Hà Nội",
+    "number": "848",
+    "street_key": "lang"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "91 Nam Đồng Phường Nam Đồng Quận Đống Đa Hà Nội Việt Nam",
+    "number": "91",
+    "street_key": "nam dong"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Thanh Xuân",
+    "address": "218 Nguyễn Huy Tưởng Phường Thanh Xuân Trung Quận Thanh Xuân Hà Nội",
+    "number": "218",
+    "street_key": "nguyen huy tuong"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "91 Khâm Thiên Phường Khâm Thiên Quận Đống Đa Hà Nội",
+    "number": "91",
+    "street_key": "kham thien"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "125 Hoàng Ngân Phường Trung Hoà Quận Cầu Giấy Hà Nội Việt Nam",
+    "number": "125",
+    "street_key": "hoang ngan"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "14 Ngõ 106 Hoàng Quốc Việt Phường Nghĩa Đô Quận Cầu Giấy Hà Nội Việt Nam",
+    "number": "14",
+    "street_key": "hoang quoc viet"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "18 Nguyễn Khánh Toàn Phường Quan Hoa Quận Cầu Giấy Hà Nội Việt Nam",
+    "number": "18",
+    "street_key": "nguyen khanh toan"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "45 Hào Nam Phường Ô Chợ Dừa Quận Đống Đa Hà Nội Việt Nam",
+    "number": "45",
+    "street_key": "hao nam"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Thanh Xuân",
+    "address": "370 Nguyễn Trãi Phường Thanh Xuân Trung Quận Thanh Xuân Hà Nội Việt Nam",
+    "number": "370",
+    "street_key": "nguyen trai"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "Số 8 Ngõ 91 Nguyễn Chí Thanh Phường Láng Hạ Quận Đống Đa Hà Nội Việt Nam",
+    "number": "8",
+    "street_key": "so"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "7 Nguyễn Thị Định Phường Trung Hòa Quận Cầu Giấy Hà Nội Việt Nam",
+    "number": "7",
+    "street_key": "nguyen thi dinh"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "33 Chùa Láng Phường Láng Thượng Quận Đống Đa Hà Nội Việt Nam",
+    "number": "33",
+    "street_key": "chua lang"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Bắc Từ Liêm",
+    "address": "252 Hoàng Quốc Việt Phường Cổ Nhuế 1 Quận Bắc Từ Liêm Hà Nội Việt Nam",
+    "number": "252",
+    "street_key": "hoang quoc viet"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "31 Trần Quốc Hoàn Phường Dịch Vọng Quận Cầu Giấy Hà Nội Việt Nam",
+    "number": "31",
+    "street_key": "tran quoc hoan"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "78 Duy Tân Phường Dịch Vọng Hầu Quận Cầu Giấy Hà Nội Việt Nam",
+    "number": "78",
+    "street_key": "duy tan"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "420 Đê La Thành Phường Ô Chợ Dừa Quận Đống Đa Hà Nội Việt Nam",
+    "number": "420",
+    "street_key": "de la thanh"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Thanh Xuân",
+    "address": "70 Ngụy Như Kon Tum Phường Nhân Chính Quận Thanh Xuân Hà Nội Việt Nam",
+    "number": "70",
+    "street_key": "nguy nhu kon tum"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Bắc Từ Liêm",
+    "address": "174 Phú Diễn Quận Bắc Từ Liêm Hà Nội Việt Nam",
+    "number": "174",
+    "street_key": "phu dien"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "162 Mai Dịch. P Mai Dịch Q. Cầu Giấy Hà Nội Việt Nam",
+    "number": "162",
+    "street_key": "mai dich p mai dich"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "30 Mai Anh Tuấn P. Ô Chợ Dừa Q. Đống Đa Hà Nội Việt Nam",
+    "number": "30",
+    "street_key": "mai anh tuan"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Bắc Từ Liêm",
+    "address": "CT3D KĐT Nam Cường Cổ Nhuế P. Cổ Nhuế 1 Q. Bắc Từ Liêm Hà Nội Việt Nam",
+    "number": "3",
+    "street_key": "ct d"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Bắc Từ Liêm",
+    "address": "155 Lê Văn Hiến P. Đức Thắng Q. Bắc Từ Liêm Hà Nội Việt Nam",
+    "number": "155",
+    "street_key": "le van hien"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Bắc Từ Liêm",
+    "address": "Chung cư Taseco Nguyễn Văn Huyên Q. Bắc Từ Liêm Hà Nội Việt Nam",
+    "number": "",
+    "street_key": "chung cu taseco"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "82 Nguyễn Phong Sắc P. Dịch Vọng Q. Cầu Giấy Hà Nội Việt Nam",
+    "number": "82",
+    "street_key": "nguyen phong sac"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "3 Phạm Tuấn Tài P. Dịch Vọng Hậu Q. Cầu Giấy Hà Nội Việt Nam",
+    "number": "3",
+    "street_key": "pham tuan tai"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Thanh Xuân",
+    "address": "292 Hoàng Văn Thái P. Khương Trung Q. Thanh Xuân Hà Nội Việt Nam",
+    "number": "292",
+    "street_key": "hoang van thai"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Thanh Xuân",
+    "address": "62-64 Vũ Trọng Phụng P. Thanh Xuân Trung Q. Thanh Xuân Hà Nội Việt Nam",
+    "number": "62",
+    "street_key": "vu trong phung"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Thanh Xuân",
+    "address": "288 Giải Phóng P. Phương Liệt Q. Thanh Xuân Hà Nội Việt Nam",
+    "number": "288",
+    "street_key": "giai phong"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "1 Dãy A6 khu tập thể Đại học Ngoại ngữ Trần Quốc Hoàn P. Dịch Vọng Hậu Q. Cầu Giấy Hà Nội Việt Nam",
+    "number": "1",
+    "street_key": ""
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "2 Hoàng Ngân P. Trung Hòa Q. Cầu Giấy Hà Nội Việt Nam",
+    "number": "2",
+    "street_key": "hoang ngan"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "1A Hồ Đắc Di P. Nam Đồng Q. Đống Đa Hà Nội Việt Nam",
+    "number": "1",
+    "street_key": "a ho dac di"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "105 Chùa Láng P. Láng Thượng Q. Đống Đa Hà Nội Việt Nam",
+    "number": "105",
+    "street_key": "chua lang"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "Khu Căn Hộ Somerset Hòa Bình,106 Hoàng Quốc Việt P. Nghĩa Đô Q. Cầu Giấy Hà Nội Việt Nam",
+    "number": "106",
+    "street_key": "khu can ho somerset hoa binh hoang quoc viet"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Thanh Xuân",
+    "address": "46 Lê Trọng Tấn P. Khương Mai Q. Thanh Xuân Hà Nội Việt Nam",
+    "number": "46",
+    "street_key": "le trong tan"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "177 Xuân Thủy P. Dịch Vọng Hậu Q. Cầu Giấy Hà Nội Việt Nam",
+    "number": "177",
+    "street_key": "xuan thuy"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "14 Hồ Tùng Mậu P. Mai Dịch Q. Cầu Giấy Hà Nội Việt Nam",
+    "number": "14",
+    "street_key": "ho tung mau"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "73 Chùa Láng P. Láng Thượng Q. Đống Đa Hà Nội Việt Nam",
+    "number": "73",
+    "street_key": "chua lang"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "9-1E Khu Đô Thị Trung Yên P. Trung Hòa Q. Cầu Giấy Hà Nội Việt Nam",
+    "number": "9",
+    "street_key": "e khu do thi trung yen"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Đống Đa",
+    "address": "186 Thái Thịnh P. Láng Hạ Q. Đống Đa Hà Nội Việt Nam",
+    "number": "186",
+    "street_key": "thai thinh"
+  },
+  {
+    "snapshot": "2026-07-10",
+    "district": "Cầu Giấy",
+    "address": "5 - 4A Khu Đô Thị Trung Yên P. Yên Hòa Q. Cầu Giấy Hà Nội Việt Nam",
+    "number": "5",
+    "street_key": "a khu do thi trung yen"
+  }
+]

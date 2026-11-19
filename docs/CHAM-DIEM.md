@@ -87,7 +87,9 @@ Tách mẫu bằng SHA-256 của đúng chuỗi trong cột `filename`, chốt t
 
 Lần đầu, ridge trên ảnh bilinear 32×24 có sai số kiểm tra 0,847 m. Lần chọn trên đặc trưng ô, mạng 48×36 có sai số chọn 0,719 m nhưng sai số kiểm tra 0,896 m.
 
-Cách học đang dùng đổi sang đặc trưng dải và biên trên lưới 128×96: tám dải ngang, mỗi dải có trung bình, độ lệch, ba phần trái giữa phải và bão hòa màu; mười sáu hàng có tâm biên, độ rộng biên và mép trái. Các ứng viên chốt trước là ridge trên mét, ridge trên log, histogram, và trung bình 5, 11 hoặc 21 láng giềng. Ứng viên có sai số học nhỏ hơn một nửa sai số chọn thì bị loại. Trung bình 5 láng giềng có sai số chọn 0,544 m, thấp nhất và thấp hơn 0,719 m, nên thay mô hình cũ. Sai số kiểm tra, tính một lần sau khi chọn, là 0,568 m. Sai số học 0,473 m bị lạc quan vì mỗi ảnh học nằm trong chính nhóm láng giềng của nó. Dự đoán bằng trung bình tập học thì sai 1,270 m trên cùng 112 ảnh.
+Cách học đang dùng đổi sang đặc trưng dải và biên trên lưới 128×96: tám dải ngang, mỗi dải có trung bình, độ lệch, ba phần trái giữa phải và bão hòa màu; mười sáu hàng có tâm biên, độ rộng biên và mép trái. Các ứng viên chốt trước là ridge trên mét, ridge trên log, histogram, và trung bình k láng giềng. Ứng viên có sai số học nhỏ hơn một nửa sai số chọn thì bị loại. Lần trước, k = 5 có sai số chọn 0,544 m và sai số kiểm tra 0,568 m.
+
+Lần này thêm k = 3, 7 và 9, vẫn trên cùng đặc trưng và cùng tập chọn. k = 7 có sai số chọn 0,537 m, thấp hơn 0,544 m, và sai số học 0,531 m không dưới một nửa sai số chọn, nên được thay. Sai số kiểm tra tính một lần sau khi chọn là 0,618 m. Khớp mức quy ước trên tập kiểm tra là 74,1%. Sai số này cao hơn 0,568 m của k = 5. Quy tắc chọn không được nhìn tập kiểm tra, nên mô hình đang dùng là k = 7. Dự đoán bằng trung bình tập học vẫn sai 1,270 m trên cùng 112 ảnh.
 
 Trên tập kiểm tra, mức theo quy ước mét khớp 78,6%. Nếu luôn đoán mức chiếm đa số trong tập học, là `wide`, thì khớp 53,6%. Tập không có mẫu `none`.
 
@@ -131,6 +133,20 @@ Nhóm có nguồn riêng, chấm cùng mức thuê mốc:
 | Circle K còn trong danh sách hãng | 5 | 73,4 | Có ở cả trang Circle K lưu 2024-08-05 và 2026-07-10, khớp số nhà trên OpenStreetMap. Điểm đã trừ chính cửa hàng |
 
 Năm điểm Circle K là 34,0; 65,4; 73,4; 73,7 và 85,6. Năm điểm người vẽ ghi không còn là 39,4; 41,0; 52,9; 65,2 và 75,5. Hai khoảng chồng lên nhau. Mẫu này không đủ để học một ngưỡng.
+
+Mốc so sánh có thông số là 154 cơ sở đối thủ có đủ `brand`, số nhà và tên đường. Giờ mở cửa có ở 21 cơ sở, điện thoại ở 39, website ở 42. Trường không có thẻ thì để trống. Trung vị điểm không gian sau khi trừ chính cơ sở, với các thương hiệu có từ 3 cửa hàng:
+
+| Thương hiệu | Ngành | Số cửa hàng | Trung vị |
+| --- | --- | ---: | ---: |
+| WinMart+ | Tiện lợi | 107 | 53,0 |
+| The Coffee House | Cà phê / đồ uống | 15 | 58,7 |
+| Circle K | Tiện lợi | 12 | 66,4 |
+| Highlands Coffee | Cà phê / đồ uống | 4 | 68,4 |
+| Pharmacity | Nhà thuốc | 4 | 57,2 |
+| Ding Tea | Cà phê / đồ uống | 3 | 43,9 |
+| GS25 | Tiện lợi | 3 | 75,9 |
+
+Trong 12 Circle K có số nhà, 5 có trong danh sách hãng cả ngày 05/08/2024 và 10/07/2026, 4 chỉ có ở bản 10/07/2026, 3 không khớp danh sách đã lưu. Số 74 Nguyễn Khang không có đối tượng mang số nhà đó trên bản đồ, nên không được gán tọa độ.
 
 ## Việc chưa làm
 
