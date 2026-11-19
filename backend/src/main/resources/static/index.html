@@ -69,7 +69,7 @@
       <button id="reject-place" type="button">Từ chối dòng vừa gửi</button>
       <p class="note" id="contribution-note"></p>
       <h2>Đếm vật thể trên ảnh</h2>
-      <p class="note">Ảnh đi qua YOLOv8-World và mô hình Cityscapes trên máy này. Câu tư vấn chỉ ghép số đếm với điểm PostGIS. Ảnh không được gửi lên mạng. API đám mây chưa được gắn.</p>
+      <p class="note">Ảnh đi qua YOLOv8m đa tỷ lệ, YOLO-World, SegFormer Cityscapes và Depth-Anything-V2 ngay trên máy này. Chỉ gán bề rộng vỉa hè khi kiểm định cảnh có mặt tiền công trình và mặt nền lộ rõ. Ảnh không được gửi lên mạng. API đám mây chưa được gắn.</p>
       <input id="photo" type="file" accept="image/jpeg,image/png,image/webp">
       <button id="count-photo" type="button">Đếm trên ảnh</button>
       <p class="note" id="photo-note"></p>
@@ -417,9 +417,15 @@
       const extra = document.createElement("p");
       extra.className = "note";
       const counts = yolo.counts || {};
-      extra.textContent = "Thêm từ COCO: bus " + counts.bus + ", truck " + counts.truck
-        + ", traffic_light " + counts.traffic_light + ", stop_sign " + counts.stop_sign
-        + ". Thời gian suy luận " + yolo.inference_ms + " ms trên " + yolo.device
+      const widthText = result.sidewalk_width_m === null || result.sidewalk_width_m === undefined
+        ? "không gán (" + (result.recommendation || "chưa đủ mặt tiền/vỉa hè lộ rõ") + ")"
+        : result.sidewalk_width_m + " m";
+      extra.textContent = "Phân rã ô tô (car " + counts.car + ", bus " + counts.bus + ", truck " + counts.truck
+        + "), người lái xe hai bánh (rider) " + (counts.rider || 0)
+        + ", đèn giao thông " + counts.traffic_light + ", stop_sign " + counts.stop_sign
+        + ", biển báo Cityscapes " + counts.traffic_sign + ", biển treo " + counts.hanging_sign
+        + ". Bề rộng vỉa hè: " + widthText
+        + ". Thời gian suy luận YOLO " + yolo.inference_ms + " ms (tổng " + yolo.wall_ms + " ms) trên " + yolo.device
         + ". " + (yolo.note || "");
       host.appendChild(extra);
     }

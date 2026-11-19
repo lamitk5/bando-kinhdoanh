@@ -111,46 +111,70 @@ public class VisionService {
 
     private JsonNode assessed(UUID id, String contentType, byte[] image) {
         try {
-            Assessment assessment = VisionAssessmentParser.parse(client.assess(image, contentType));
+            java.awt.image.BufferedImage decoded = decodeImage(image);
+            PhotoQuality.Verdict quality = PhotoQuality.judge(decoded);
             ObjectNode result = mapper.createObjectNode();
-            boolean poor = assessment.sidewalkCapacity() == null;
-            result.put("assessed", assessment.assessed());
+            boolean poor = quality.poor();
+            result.put("assessed", false);
             result.put("image_quality", poor ? "poor" : "ok");
-            result.set("quality_reasons", mapper.valueToTree(assessment.qualityReasons()));
+            result.set("quality_reasons", mapper.valueToTree(quality.reasons()));
             if (poor) {
+                result.put("scene_verified", false);
+                result.putNull("scene");
                 result.putNull("sidewalk_capacity");
                 result.putNull("sidewalk_score");
                 result.putNull("sidewalk_width_m");
                 result.putNull("visibility");
                 result.putNull("visibility_score");
+                result.put("recommendation", "Ảnh không đủ để ước lượng bề rộng. Không gán mức vỉa hè hay tầm nhìn.");
+                result.put("ordinal_note", "Điểm vỉa hè và tầm nhìn là thang thứ tự đã quy ước, không phải số đo mét.");
+                result.putNull("yolo");
+                result.put("yolo_note", "Ảnh không đủ chất lượng hoặc là hoa văn/nhiễu nhân tạo nên không đếm vật thể và không gán bề rộng vỉa hè.");
+                advisory(result, "not_sent", "Ảnh không đủ chất lượng mặt tiền nên không đếm và không tư vấn.", null);
             } else {
-                result.put("sidewalk_capacity", assessment.sidewalkCapacity());
-                result.put("sidewalk_score", assessment.sidewalkScore());
-                if (assessment.widthMeters() == null) {
-                    result.putNull("sidewalk_width_m");
+                JsonNode counted = yolo.count(image, contentType);
+                boolean sceneVerified = counted.path("scene_verified").asBoolean(false);
+                result.put("scene_verified", sceneVerified);
+                result.set("scene", counted.path("scene"));
+                Double acceptedWidth = null;
+                if (sceneVerified) {
+                    Assessment assessment = VisionAssessmentParser.parse(client.assess(image, contentType));
+                    result.put("assessed", assessment.assessed());
+                    result.put("sidewalk_capacity", assessment.sidewalkCapacity());
+                    result.put("sidewalk_score", assessment.sidewalkScore());
+                    if (assessment.widthMeters() == null) {
+                        result.putNull("sidewalk_width_m");
+                    } else {
+                        acceptedWidth = assessment.widthMeters();
+                        result.put("sidewalk_width_m", acceptedWidth);
+                    }
+                    result.put("recommendation", assessment.recommendation());
+                    if (assessment.visibility() != null) {
+                        result.put("visibility", assessment.visibility());
+                        result.put("visibility_score", assessment.visibilityScore());
+                        result.put("visibility_measured", true);
+                    } else {
+                        result.putNull("visibility");
+                        result.putNull("visibility_score");
+                        result.put("visibility_measured", false);
+                    }
                 } else {
-                    result.put("sidewalk_width_m", assessment.widthMeters());
-                }
-                if (assessment.visibility() == null) {
+                    result.putNull("sidewalk_capacity");
+                    result.putNull("sidewalk_score");
+                    result.putNull("sidewalk_width_m");
                     result.putNull("visibility");
                     result.putNull("visibility_score");
                     result.put("visibility_measured", false);
-                } else {
-                    result.put("visibility", assessment.visibility());
-                    result.put("visibility_score", assessment.visibilityScore());
-                    result.put("visibility_measured", true);
+                    result.put("recommendation", counted.path("scene").path("summary")
+                            .asText("Ảnh không thỏa điều kiện mặt tiền tầng trệt và vỉa hè lộ rõ nên không gán bề rộng vỉa hè."));
                 }
-            }
-            result.put("recommendation", assessment.recommendation());
-            result.put("ordinal_note", "Điểm vỉa hè và tầm nhìn là thang thứ tự đã quy ước, không phải số đo mét.");
-            if (poor) {
-                result.putNull("yolo");
-                result.put("yolo_note", "Ảnh không đủ để đếm vật thể.");
-                advisory(result, "not_sent", "Ảnh không đủ để đếm và không đủ để tư vấn.", null);
-            } else {
-                JsonNode counted = yolo.count(image, contentType);
+                result.put("ordinal_note", "Điểm vỉa hè và tầm nhìn là thang thứ tự đã quy ước, không phải số đo mét.");
                 result.set("yolo", counted);
-                advisory(result, "local_rules", "Câu tư vấn ghép từ số đếm. API đám mây chưa được gắn.", CountAdvisory.fromCounts(counted.path("requested")));
+                advisory(
+                        result,
+                        "local_rules",
+                        "Câu tư vấn đối chiếu số đếm, kiểm định cảnh mặt tiền và điểm PostGIS. API đám mây chưa được gắn.",
+                        CountAdvisory.fromVision(counted, acceptedWidth));
             }
             jobs.finish(id, poor ? "poor_quality" : "completed", mapper.writeValueAsString(result), null);
         } catch (RuntimeException exception) {
@@ -159,6 +183,10 @@ public class VisionService {
             jobs.finish(id, "failed", null, "Không ghi được kết quả ảnh");
         }
         return broadcast(id);
+    }
+
+    private static java.awt.image.BufferedImage decodeImage(byte[] image) {
+        return ImageDecoder.decode(image);
     }
 
     private void advisory(ObjectNode result, String status, String reason, String text) {
