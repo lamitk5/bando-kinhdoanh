@@ -69,7 +69,7 @@ Mỗi lần đổi trạng thái, máy chủ gửi JSON việc đó tới `/topi
 
 ## Thẩm định thị giác
 
-Nếu có `GEMINI_API_KEY` thì gọi Gemini `generateContent`. Nếu không, nhưng có `GROQ_API_KEY`, thì gọi Groq `chat/completions`. Tên mô hình bắt buộc nằm ở `GEMINI_MODEL` hoặc `GROQ_MODEL`. Khóa không được ghi log. Không có khóa thì dùng mô hình bề rộng ở mục dưới. Một PNG 1×1 kết thúc `poor_quality`, không có bề rộng.
+Ảnh không còn được gửi lên Gemini hoặc Groq, kể cả khi máy có khóa. Ảnh đủ điều kiện đi qua YOLOv8n trên máy này, rồi JSON đếm được giữ cho API tư vấn. API đó chưa được gắn, nên `advisory.status` là `waiting_for_api`, `advisory.text` là null và `image_sent` là false. Một PNG 1×1 kết thúc `poor_quality`, không có bề rộng và không có số đếm.
 
 Bộ phân tích chỉ nhận JSON có `image_quality` là `ok` hoặc `poor`, `quality_reasons`, `recommendation` không quá 500 ký tự, và khi ảnh dùng được thì `sidewalk_capacity` thuộc `none`, `narrow`, `enough`, `wide` còn `visibility` thuộc `blocked`, `partial`, `clear`. Ảnh `poor` mà vẫn kèm nhận định vỉa hè hoặc tầm nhìn bị từ chối. Ảnh `poor` thành trạng thái `poor_quality`, không được chấm như điểm 0: ảnh hỏng không phải mặt bằng xấu.
 
@@ -93,7 +93,17 @@ Lần này thêm k = 3, 7 và 9, vẫn trên cùng đặc trưng và cùng tập
 
 Trên tập kiểm tra, mức theo quy ước mét khớp 78,6%. Nếu luôn đoán mức chiếm đa số trong tập học, là `wide`, thì khớp 53,6%. Tập không có mẫu `none`.
 
-Không có khóa Gemini hoặc Groq thì pipeline gọi mô hình này. Ảnh có cạnh ngắn dưới 64 điểm, độ xám trung bình dưới 20 hoặc trên 240, hoặc phương sai dưới 50 thì thành `poor_quality` và không có bề rộng. Ngưỡng này nằm dưới phân bố 40 ảnh học đã xem trước, nơi độ xám trung bình khoảng 76–143 và phương sai trên 3000. Ảnh dùng được trả `completed` với số mét, mức quy ước, `visibility` null và `assessed` false. Khi chấm một điểm cho cà phê, nhà thuốc hoặc tiện lợi, số mét được gắn vào kết quả nhưng không thành điểm ảnh và không trộn vào điểm tổng, vì chưa có tầm nhìn. Gửi kèm `blend_weight` với ảnh này thì bị từ chối. Ảnh học ở Seoul, không phải mặt tiền bốn quận Hà Nội.
+Pipeline gọi mô hình bề rộng này trên máy, không gửi ảnh đi. Ảnh có cạnh ngắn dưới 64 điểm, độ xám trung bình dưới 20 hoặc trên 240, hoặc phương sai dưới 50 thì thành `poor_quality` và không có bề rộng. Ngưỡng này nằm dưới phân bố 40 ảnh học đã xem trước, nơi độ xám trung bình khoảng 76–143 và phương sai trên 3000. Ảnh dùng được trả `completed` với số mét, mức quy ước, `visibility` null và `assessed` false. Khi chấm một điểm cho cà phê, nhà thuốc hoặc tiện lợi, số mét được gắn vào kết quả nhưng không thành điểm ảnh và không trộn vào điểm tổng, vì chưa có tầm nhìn. Gửi kèm `blend_weight` với ảnh này thì bị từ chối. Ảnh học ở Seoul, không phải mặt tiền bốn quận Hà Nội.
+
+## Đếm vật thể bằng YOLOv8n
+
+Tệp `etl/vision/weights/yolov8n.pt` tải từ `https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.pt`. SHA-256 là `f59b3d833e2ff32e194b5bb8e08d211dc7c5bdf144b90d2c8412c47ccfc83b36`. Mô hình có 80 lớp COCO. Ngưỡng tin cậy là 0,25. Ảnh vào kích thước 640. Máy này chạy CPU với torch `2.15.0+cpu` và ultralytics `8.4.215`, không có CUDA.
+
+Trên một ảnh gradient 96×96 tạo để thử ống dẫn, lần đếm thứ hai đo được 25,7 ms phần suy luận và 27,5 ms cả lần gọi. Bộ nhớ thường trú của tiến trình là 423,7 MB. Lần gọi đầu trong cùng tiến trình mất 921,1 ms vì còn khởi động. Đây không phải thời gian trên ảnh mặt tiền và không phải VRAM.
+
+Số đếm lấy từ các lớp COCO: `person`, `car`, `motorcycle`, `bus`, `truck`, `traffic_light`, `stop_sign`. `utility_pole`, `tree` và `sign_blocking_visibility` là null. `potted plant` không được đổi thành cây. Biển dừng và đèn giao thông không được ghi là che tầm nhìn. Ảnh gradient trên cho bảy lớp đếm đều bằng 0. Đó là đầu ra của mô hình trên ảnh thử, không phải đếm xe ngoài đường.
+
+Khi chấm một điểm đã có việc ảnh `waiting_for_api`, phản hồi kèm `advisory_input` gồm thành phần PostGIS và JSON YOLO. `advisory_text` là null.
 
 ## Bản đồ, so sánh và kiểm chứng vị trí
 

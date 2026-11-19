@@ -207,6 +207,7 @@ public class ScoringService {
                 response.put("sidewalk_capacity", result.path("sidewalk_capacity").asText(null));
                 response.put("sidewalk_score", result.path("sidewalk_score").asInt());
                 response.put("vision_note", "Chỉ gắn ước lượng bề rộng. Không có tầm nhìn nên không tạo điểm ảnh và không trộn vào điểm tổng.");
+                attachAdvisory(response, result);
                 return;
             }
             throw new ResponseStatusException(
@@ -227,6 +228,7 @@ public class ScoringService {
                 .put("sidewalk", round4(imageWeights[0]))
                 .put("visibility", round4(imageWeights[1])));
         response.put("image_weight_note", "Trọng số ảnh là so sánh cặp làm việc, không đo bằng mét.");
+        attachAdvisory(response, result);
         if (!hasBlend) {
             return;
         }
@@ -237,6 +239,31 @@ public class ScoringService {
         response.put("blend_weight", blend);
         response.put("composite_score", round1(blend * spatial + (1.0 - blend) * image));
         response.put("composite_meaning", "Người gọi chọn tỷ lệ. Hệ thống không tự đặt 70/30.");
+    }
+
+    private void attachAdvisory(ObjectNode response, JsonNode result) {
+        JsonNode advisory = result.path("advisory");
+        if (!advisory.isObject()) {
+            return;
+        }
+        if (advisory.path("image_sent").asBoolean(true)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Kết quả ảnh khai báo đã gửi ảnh đi");
+        }
+        response.put("advisory_status", advisory.path("status").asText());
+        response.put("image_sent", false);
+        response.putNull("advisory_text");
+        if (!"waiting_for_api".equals(advisory.path("status").asText())) {
+            return;
+        }
+        ObjectNode input = mapper.createObjectNode();
+        input.set("postgis", response.path("components"));
+        if (result.has("yolo") && result.get("yolo").isObject()) {
+            input.set("yolo", result.get("yolo"));
+        } else {
+            input.putNull("yolo");
+        }
+        response.set("advisory_input", input);
+        response.put("advisory_note", "API suy luận chưa được gắn. Ảnh không được gửi. Đầu vào dành cho API là các thành phần PostGIS và JSON YOLO.");
     }
 
     private ObjectNode matrixNode(String business) {

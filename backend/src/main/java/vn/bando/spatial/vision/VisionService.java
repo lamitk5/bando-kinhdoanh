@@ -29,6 +29,7 @@ public class VisionService {
 
     private final VisionJobRepository jobs;
     private final VisionClient client;
+    private final YoloCounter yolo;
     private final StringRedisTemplate redis;
     private final SimpMessagingTemplate messaging;
     private final ObjectMapper mapper;
@@ -36,11 +37,13 @@ public class VisionService {
     public VisionService(
             VisionJobRepository jobs,
             VisionClient client,
+            YoloCounter yolo,
             StringRedisTemplate redis,
             SimpMessagingTemplate messaging,
             ObjectMapper mapper) {
         this.jobs = jobs;
         this.client = client;
+        this.yolo = yolo;
         this.redis = redis;
         this.messaging = messaging;
         this.mapper = mapper;
@@ -140,6 +143,14 @@ public class VisionService {
             }
             result.put("recommendation", assessment.recommendation());
             result.put("ordinal_note", "Điểm vỉa hè và tầm nhìn là thang thứ tự đã quy ước, không phải số đo mét.");
+            if (poor) {
+                result.putNull("yolo");
+                result.put("yolo_note", "Ảnh không đủ để đếm vật thể.");
+                advisory(result, "not_sent", "Ảnh không đủ để đưa sang tầng tư vấn.");
+            } else {
+                result.set("yolo", yolo.count(image, contentType));
+                advisory(result, "waiting_for_api", "API suy luận chưa được gắn. Ảnh không được gửi. Đầu vào sẽ là PostGIS và JSON YOLO.");
+            }
             jobs.finish(id, poor ? "poor_quality" : "completed", mapper.writeValueAsString(result), null);
         } catch (RuntimeException exception) {
             jobs.finish(id, "failed", null, clip(exception.getMessage()));
@@ -147,6 +158,14 @@ public class VisionService {
             jobs.finish(id, "failed", null, "Không ghi được kết quả ảnh");
         }
         return broadcast(id);
+    }
+
+    private void advisory(ObjectNode result, String status, String reason) {
+        ObjectNode advisory = result.putObject("advisory");
+        advisory.put("status", status);
+        advisory.put("image_sent", false);
+        advisory.putNull("text");
+        advisory.put("reason", reason);
     }
 
     private JsonNode broadcast(UUID id) {

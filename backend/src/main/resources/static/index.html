@@ -68,6 +68,12 @@
       <button id="approve-place" type="button">Duyệt dòng vừa gửi</button>
       <button id="reject-place" type="button">Từ chối dòng vừa gửi</button>
       <p class="note" id="contribution-note"></p>
+      <h2>Đếm vật thể trên ảnh</h2>
+      <p class="note">Ảnh đi qua YOLOv8n trên máy này. JSON đếm được giữ lại cho API tư vấn, khi API đó được gắn. Ảnh không được gửi lên mạng. Cột điện, cây xanh và biển báo che tầm nhìn không có trong mô hình COCO này nên để trống.</p>
+      <input id="photo" type="file" accept="image/jpeg,image/png,image/webp">
+      <button id="count-photo" type="button">Đếm trên ảnh</button>
+      <p class="note" id="photo-note"></p>
+      <div id="photo-table"></div>
       <h2>Kiểm chứng vị trí</h2>
       <button id="backtest" type="button">Chạy trên dữ liệu đã nạp</button>
       <p class="note" id="backtest-note"></p>
@@ -357,6 +363,66 @@
       host.appendChild(sourced);
       host.appendChild(brands);
     };
+
+    document.querySelector("#count-photo").addEventListener("click", () => {
+      const file = document.querySelector("#photo").files[0];
+      const note = document.querySelector("#photo-note");
+      const host = document.querySelector("#photo-table");
+      if (!file) {
+        note.textContent = "Chưa chọn ảnh.";
+        return;
+      }
+      const body = new FormData();
+      body.append("image", file);
+      note.textContent = "Đang đếm trên máy này.";
+      host.innerHTML = "";
+      fetch("/api/vision/jobs", { method: "POST", body }).then(response => response.json()).then(created => {
+        const id = created.id;
+        const wait = () => fetch("/api/vision/jobs/" + id).then(response => response.json()).then(job => {
+          if (job.status === "queued" || job.status === "running") {
+            note.textContent = "Trạng thái " + job.status + ".";
+            setTimeout(wait, 700);
+            return;
+          }
+          renderPhoto(job);
+        });
+        wait();
+      }).catch(error => { note.textContent = error.message; });
+    });
+
+    function renderPhoto(job) {
+      const note = document.querySelector("#photo-note");
+      const host = document.querySelector("#photo-table");
+      const result = job.result || {};
+      const advisory = result.advisory || {};
+      note.textContent = "Trạng thái " + job.status
+        + ". Tư vấn: " + (advisory.status || "không có")
+        + ". Ảnh đã gửi lên mạng: " + (advisory.image_sent === false ? "không" : "không rõ")
+        + ". " + (result.yolo_note || advisory.reason || job.error_message || "");
+      host.innerHTML = "";
+      const yolo = result.yolo;
+      if (!yolo) {
+        return;
+      }
+      const table = document.createElement("table");
+      table.innerHTML = "<tr><th>Hạng</th><th>Số đếm</th></tr>";
+      const requested = yolo.requested || {};
+      ["motorcycle", "car", "person", "utility_pole", "tree", "sign_blocking_visibility"].forEach(key => {
+        const row = document.createElement("tr");
+        const value = requested[key];
+        row.innerHTML = "<td>" + key + "</td><td>" + (value === null || value === undefined ? "trống" : value) + "</td>";
+        table.appendChild(row);
+      });
+      host.appendChild(table);
+      const extra = document.createElement("p");
+      extra.className = "note";
+      const counts = yolo.counts || {};
+      extra.textContent = "Thêm từ COCO: bus " + counts.bus + ", truck " + counts.truck
+        + ", traffic_light " + counts.traffic_light + ", stop_sign " + counts.stop_sign
+        + ". Thời gian suy luận " + yolo.inference_ms + " ms trên " + yolo.device
+        + ". " + (yolo.note || "");
+      host.appendChild(extra);
+    }
 
     loadMap().catch(error => { document.querySelector("#count").textContent = error.message; });
   </script>

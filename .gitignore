@@ -1,6 +1,7 @@
 data/raw/
 data/work/
 data/models/
+.venv-yolo/
 __pycache__/
 *.pbf
 backend/target/
