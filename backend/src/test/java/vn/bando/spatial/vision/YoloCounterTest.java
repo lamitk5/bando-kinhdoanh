@@ -150,6 +150,30 @@ class YoloCounterTest {
             PhotoQuality.Verdict verdict = PhotoQuality.judge(photo);
             assertFalse(verdict.poor(), name + " " + verdict.reasons());
         }
+
+        BufferedImage color = ImageIO.read(fixture("highlands-ha-noi.jpg").toFile());
+        BufferedImage gray = new BufferedImage(color.getWidth(), color.getHeight(), BufferedImage.TYPE_INT_RGB);
+        for (int y = 0; y < color.getHeight(); y++) {
+            for (int x = 0; x < color.getWidth(); x++) {
+                int rgb = color.getRGB(x, y);
+                int luma = (((rgb >> 16) & 0xff) * 299 + ((rgb >> 8) & 0xff) * 587 + (rgb & 0xff) * 114) / 1000;
+                gray.setRGB(x, y, (luma << 16) | (luma << 8) | luma);
+            }
+        }
+        PhotoQuality.Verdict grayVerdict = PhotoQuality.judge(gray);
+        assertFalse(grayVerdict.poor(), grayVerdict.reasons().toString());
+
+        BufferedImage noisyRamp = new BufferedImage(640, 480, BufferedImage.TYPE_INT_RGB);
+        java.util.Random rampNoise = new java.util.Random(7L);
+        for (int y = 0; y < 480; y++) {
+            for (int x = 0; x < 640; x++) {
+                int luma = (int) Math.round(x * 255.0 / 639.0 + rampNoise.nextGaussian() * 5.0);
+                luma = Math.max(0, Math.min(255, luma));
+                noisyRamp.setRGB(x, y, (luma << 16) | (luma << 8) | luma);
+            }
+        }
+        PhotoQuality.Verdict rampVerdict = PhotoQuality.judge(noisyRamp);
+        assertTrue(rampVerdict.poor(), rampVerdict.reasons().toString());
     }
 
     @Test

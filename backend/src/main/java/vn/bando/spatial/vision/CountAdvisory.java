@@ -53,7 +53,7 @@ public final class CountAdvisory {
         boolean verified = yolo.path("scene_verified").asBoolean(false);
         JsonNode scene = yolo.path("scene");
         if (verified && sidewalkWidthMeters != null) {
-            sceneClause = "Kiểm định cảnh đạt (công trình dải mặt tiền %s, vỉa hè lộ rõ %s), ước lượng bề rộng vỉa hè %s m trên vùng vỉa hè đã cắt (±0,62 m là MAE kiểm tra của 514 mẫu Seoul, chưa phải sai số đo tại Hà Nội)."
+            sceneClause = "Kiểm định cảnh đạt (công trình dải mặt tiền %s, vỉa hè lộ rõ %s), ước lượng bề rộng vỉa hè %s m trên vùng vỉa hè đã cắt (±0,62 m là MAE của 112 ảnh kiểm tra trong bộ 514 mẫu Seoul, chưa phải sai số đo tại Hà Nội)."
                     .formatted(
                             percent(scene.path("building_ratio").asDouble()),
                             percent(scene.path("sidewalk_ratio").asDouble()),

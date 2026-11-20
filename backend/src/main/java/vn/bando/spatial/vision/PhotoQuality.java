@@ -64,13 +64,85 @@ public final class PhotoQuality {
         if (width >= 32 && height >= 32 && std >= 1.0 && flatPixelFraction(grayGrid, width, height) > 0.50) {
             reasons.add("Ảnh đồ họa phẳng hoặc hình vẽ nhân tạo, không phải ảnh chụp mặt tiền");
         }
-        if (width >= 48 && height >= 48 && quantizedColorCount(image) < 220) {
+        if (width >= 48 && height >= 48 && quantizedColorCount(image) < 220 && !grayPhotograph(image)) {
             reasons.add("Ảnh có quá ít màu sau khi thu nhỏ, giống đồ họa hoặc sóng tổng hợp, không phải ảnh chụp mặt tiền");
         }
         if (width >= 48 && height >= 48 && periodicFlatField(grayGrid, width, height)) {
             reasons.add("Ảnh là dải sóng tuần hoàn một chiều, không phải ảnh chụp mặt tiền");
         }
+        if (width >= 48 && height >= 48 && oneWayRamp(grayGrid, width, height)) {
+            reasons.add("Ảnh là dải sáng một chiều, không phải ảnh chụp mặt tiền");
+        }
         return new Verdict(!reasons.isEmpty(), List.copyOf(reasons));
+    }
+
+    /** Ảnh xám có nhiều mức sáng vẫn là ảnh chụp. Đồ họa vài mảng màu không đi vào nhánh này. */
+    static boolean grayPhotograph(BufferedImage image) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+        int stepX = Math.max(1, width / 80);
+        int stepY = Math.max(1, height / 80);
+        long chroma = 0;
+        int samples = 0;
+        java.util.HashSet<Integer> levels = new java.util.HashSet<>();
+        for (int y = 0; y < height; y += stepY) {
+            for (int x = 0; x < width; x += stepX) {
+                int rgb = image.getRGB(x, y);
+                int red = (rgb >> 16) & 0xff;
+                int green = (rgb >> 8) & 0xff;
+                int blue = rgb & 0xff;
+                chroma += Math.abs(red - green) + Math.abs(green - blue);
+                int luma = (red * 299 + green * 587 + blue * 114) / 1000;
+                levels.add(luma / 16);
+                samples++;
+            }
+        }
+        return samples > 0 && chroma / samples < 18 && levels.size() >= 10;
+    }
+
+    static boolean oneWayRamp(double[][] gray, int width, int height) {
+        int stepX = Math.max(1, width / 48);
+        int stepY = Math.max(1, height / 48);
+        int samples = 0;
+        double sumX = 0;
+        double sumY = 0;
+        double sumV = 0;
+        double sumXX = 0;
+        double sumYY = 0;
+        double sumVV = 0;
+        double sumXV = 0;
+        double sumYV = 0;
+        for (int y = 0; y < height; y += stepY) {
+            double ny = y / (double) Math.max(1, height - 1);
+            for (int x = 0; x < width; x += stepX) {
+                double nx = x / (double) Math.max(1, width - 1);
+                double value = gray[y][x];
+                sumX += nx;
+                sumY += ny;
+                sumV += value;
+                sumXX += nx * nx;
+                sumYY += ny * ny;
+                sumVV += value * value;
+                sumXV += nx * value;
+                sumYV += ny * value;
+                samples++;
+            }
+        }
+        if (samples < 16) {
+            return false;
+        }
+        return Math.abs(correlation(samples, sumX, sumV, sumXX, sumVV, sumXV)) >= 0.92
+                || Math.abs(correlation(samples, sumY, sumV, sumYY, sumVV, sumYV)) >= 0.92;
+    }
+
+    private static double correlation(int n, double sumA, double sumB, double sumAA, double sumBB, double sumAB) {
+        double cov = sumAB / n - (sumA / n) * (sumB / n);
+        double varA = sumAA / n - (sumA / n) * (sumA / n);
+        double varB = sumBB / n - (sumB / n) * (sumB / n);
+        if (varA < 1e-8 || varB < 1e-8) {
+            return 0;
+        }
+        return cov / Math.sqrt(varA * varB);
     }
 
     static int quantizedColorCount(BufferedImage image) {

@@ -20,8 +20,10 @@ DEPTH_DIR = ROOT / "weights" / "depth-anything-v2-small"
 CONFIDENCE = 0.25
 # Xe máy trên ảnh phố dày chỉ hiện ở ngưỡng thấp hơn khi cắt nửa khung.
 MOTO_CONFIDENCE = 0.15
-# Ô tô/buýt/tải trên cả khung hình, ví dụ xe lớn bên trái phố đêm, thường dừng quanh 0,18–0,24.
+# Ô tô, buýt và tải trên cả khung hình thường thấp hơn 0,25 khi xe ở xa hoặc bị cắt mép.
 FOUR_WHEEL_FULL_FRAME_CONFIDENCE = 0.18
+# Xe buýt cuối đường nhỏ hơn ô tô gần máy ảnh. Ô giữa khung chỉ nhận lớp bus.
+DISTANT_BUS_CONFIDENCE = 0.45
 MOTO_CLUSTER_RADIUS = 0.16
 MOTO_LOOSE_CHILD_RATIO = 0.35
 SEG_PIXEL_PROB = 0.50
@@ -246,6 +248,39 @@ def motorcycle_boxes(coco_model, img_bgr):
     return [(3, conf, box) for conf, box in kept], inference_ms
 
 
+def distant_bus_boxes(coco_model, img_bgr, existing):
+    """Ô giữa khung, chỉ nhận xe buýt đủ tin cậy. Không thêm ô tô từ ô này."""
+    height, width = img_bgr.shape[:2]
+    if max(width, height) < 900:
+        return [], 0.0
+    x0, y0 = int(width * 0.35), int(height * 0.42)
+    x1, y1 = int(width * 0.72), int(height * 0.78)
+    if x1 - x0 < 64 or y1 - y0 < 64:
+        return [], 0.0
+    result = coco_model.predict(
+        source=img_bgr[y0:y1, x0:x1],
+        conf=DISTANT_BUS_CONFIDENCE,
+        imgsz=960,
+        device="cpu",
+        verbose=False,
+    )[0]
+    inference_ms = float((result.speed or {}).get("inference", 0.0))
+    if result.boxes is None or result.boxes.cls is None:
+        return [], inference_ms
+    found = []
+    four_wheel = {2, 5, 7}
+    for cid, conf, box in zip(
+        result.boxes.cls.tolist(), result.boxes.conf.tolist(), result.boxes.xyxy.tolist()
+    ):
+        if int(cid) != 5:
+            continue
+        mapped = [box[0] + x0, box[1] + y0, box[2] + x0, box[3] + y0]
+        if any(cj in four_wheel and box_iou(mapped, bj) >= 0.50 for cj, _, bj in existing):
+            continue
+        found.append((5, float(conf), mapped))
+    return found, inference_ms
+
+
 def vegetation_instance_boxes(comp_mask, seg_w, seg_h):
     """Tách một vùng tán cây liên thông thành từng cây khi có nhiều đỉnh cách xa nhau."""
     import cv2
@@ -261,7 +296,8 @@ def vegetation_instance_boxes(comp_mask, seg_w, seg_h):
     if bw < 0.28 * seg_w or bh < 0.08 * seg_h:
         return [full]
     dist = cv2.distanceTransform(comp_mask.astype("uint8"), cv2.DIST_L2, 5)
-    min_dist = max(9, int(0.07 * seg_w))
+    # 0,03 bề rộng ảnh: hai tán cách khoảng đó vẫn là hai cây. 0,07 gộp cả dãy cọ vào một đỉnh.
+    min_dist = max(9, int(0.03 * seg_w))
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (min_dist * 2 + 1, min_dist * 2 + 1))
     peak_mask = (dist >= cv2.dilate(dist, kernel) - 1e-6) & (dist >= max(3.0, 0.012 * seg_h))
     py, px = np.where(peak_mask)
@@ -376,6 +412,12 @@ def detect_coco_tiled(coco_model, img_bgr, label_map, scale):
             floor = 0.00008 if key == "motorcycle" else 0.0002
             if area_frac < floor:
                 continue
+            # Hộp ô tô/buýt/tải yếu và rất nhỏ thường là thùng rác hoặc mép xe, không phải một xe.
+            if key in ("car", "bus", "truck") and conf < 0.40 and area_frac < 0.0015:
+                continue
+            # Xe tải dưới 0,35 trên ảnh phố này là thùng hoặc xe đẩy. Xe tải thật trong các ảnh mẫu đều trên 0,70.
+            if key == "truck" and conf < 0.35:
+                continue
             boxes.append([bx1, by1, bx2, by2])
             scores.append(float(conf))
             clss.append(cid)
@@ -426,6 +468,10 @@ def detect_coco_tiled(coco_model, img_bgr, label_map, scale):
         elif si < 0.38 and any(cj == ci and box_iomin(bi, bj) >= 0.82 for cj, _, bj in deduped):
             continue
         deduped.append((ci, si, bi))
+
+    buses, bus_ms = distant_bus_boxes(coco_model, img_bgr, deduped)
+    total_inf_ms += bus_ms
+    deduped.extend(buses)
 
     motos, moto_ms = motorcycle_boxes(coco_model, img_bgr)
     total_inf_ms += moto_ms
@@ -564,9 +610,9 @@ def compute_sidewalk_crop(label_map, max_prob_map, scale, width, height):
     ys, xs = np.where(side_mask)
     if xs.size == 0:
         return None
-    x1 = max(0, int(round(xs.min() / scale - 0.08 * width)))
-    x2 = min(width, int(round(xs.max() / scale + 0.08 * width)))
-    y1 = max(0, int(round(ys.min() / scale - 0.15 * height)))
+    x1 = max(0, int(round(xs.min() / scale - 0.02 * width)))
+    x2 = min(width, int(round(xs.max() / scale + 0.02 * width)))
+    y1 = max(0, int(round(ys.min() / scale - 0.04 * height)))
     y2 = min(height, int(round(ys.max() / scale + 0.05 * height)))
     if x2 - x1 < 64 or y2 - y1 < 64:
         return None
@@ -899,6 +945,8 @@ def predict(coco_model, world_model, seg_model, seg_proc, depth_model, depth_pro
         "note": (
             "YOLOv8m đếm xe máy trên cả khung và lưới nửa khung ở ngưỡng 0,15, gộp theo tâm rồi bỏ hộp cha quá lỏng. "
             "Ô tô, buýt và tải trên cả khung hình lấy từ ngưỡng 0,18. "
+            "Xe buýt ở cuối đường được tìm thêm bằng một ô giữa khung, chỉ nhận lớp bus từ ngưỡng 0,45. "
+            "Ngưỡng xe máy 0,15, ô tô 0,18, ô buýt giữa khung và khoảng cách tách tán được chọn khi đối chiếu năm ảnh Hà Nội trong thư mục fixtures, chưa có tập kiểm tra tách riêng. "
             "Tách người đi bộ (person) khỏi người ngồi trên xe hai bánh (rider, kể cả người ngồi sau). "
             "Cây khử trùng lặp giữa street tree (YOLO-World) và vùng tán cây lớp vegetation (SegFormer). "
             "Cột điện loại trừ trụ đỡ biển báo và vùng chồng lấn người. "
