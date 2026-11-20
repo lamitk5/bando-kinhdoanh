@@ -109,8 +109,10 @@ class LocalSidewalkVisionClientTest {
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                int color = varied ? (x * 4 + y * 9) & 0xff : 0x808080;
-                image.setRGB(x, y, (color << 16) | (color << 8) | color);
+                int gray = varied ? (x * 4 + y * 9) & 0xff : 0x80;
+                int red = varied ? (gray + (x % 17) * 13) & 0xff : gray;
+                int blue = varied ? (gray + (y % 13) * 17) & 0xff : gray;
+                image.setRGB(x, y, (red << 16) | (gray << 8) | blue);
             }
         }
         ByteArrayOutputStream out = new ByteArrayOutputStream();

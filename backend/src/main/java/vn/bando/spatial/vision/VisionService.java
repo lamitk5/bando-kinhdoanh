@@ -1,8 +1,12 @@
 package vn.bando.spatial.vision;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.UUID;
+
+import javax.imageio.ImageIO;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -138,7 +142,8 @@ public class VisionService {
                 result.set("scene", counted.path("scene"));
                 Double acceptedWidth = null;
                 if (sceneVerified) {
-                    Assessment assessment = VisionAssessmentParser.parse(client.assess(image, contentType));
+                    byte[] widthImage = sidewalkCropJpeg(decoded, counted.path("scene").path("sidewalk_crop_px"), image);
+                    Assessment assessment = VisionAssessmentParser.parse(client.assess(widthImage, "image/jpeg"));
                     result.put("assessed", assessment.assessed());
                     result.put("sidewalk_capacity", assessment.sidewalkCapacity());
                     result.put("sidewalk_score", assessment.sidewalkScore());
@@ -185,8 +190,34 @@ public class VisionService {
         return broadcast(id);
     }
 
-    private static java.awt.image.BufferedImage decodeImage(byte[] image) {
+    private static BufferedImage decodeImage(byte[] image) {
         return ImageDecoder.decode(image);
+    }
+
+    /** Cắt đúng vùng vỉa hè SegFormer đã trả, rồi mới đưa vào mô hình bề rộng. */
+    private static byte[] sidewalkCropJpeg(BufferedImage decoded, JsonNode crop, byte[] original) {
+        if (decoded == null || !crop.isArray() || crop.size() != 4) {
+            return original;
+        }
+        int width = decoded.getWidth();
+        int height = decoded.getHeight();
+        int x1 = Math.max(0, Math.min(width - 1, crop.get(0).asInt()));
+        int y1 = Math.max(0, Math.min(height - 1, crop.get(1).asInt()));
+        int x2 = Math.max(x1 + 1, Math.min(width, crop.get(2).asInt()));
+        int y2 = Math.max(y1 + 1, Math.min(height, crop.get(3).asInt()));
+        if (x2 - x1 < 64 || y2 - y1 < 64) {
+            return original;
+        }
+        BufferedImage sub = decoded.getSubimage(x1, y1, x2 - x1, y2 - y1);
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            if (!ImageIO.write(sub, "jpg", out) || out.size() == 0) {
+                return original;
+            }
+            return out.toByteArray();
+        } catch (java.io.IOException exception) {
+            return original;
+        }
     }
 
     private void advisory(ObjectNode result, String status, String reason, String text) {
