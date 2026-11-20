@@ -38,7 +38,7 @@ public final class CountAdvisory {
         int pedestrians = integer(requested, "person");
         int riders = counts.path("rider").isIntegralNumber() ? counts.path("rider").asInt() : 0;
         String personLabel = riders > 0
-                ? "%d người đi bộ (tách riêng %d người điều khiển xe hai bánh)".formatted(pedestrians, riders)
+                ? "%d người đi bộ (tách riêng %d người ngồi trên xe hai bánh, kể cả người ngồi sau)".formatted(pedestrians, riders)
                 : "%d người đi bộ".formatted(pedestrians);
 
         int totalSigns = counts.path("stop_sign").asInt(0)
@@ -53,7 +53,7 @@ public final class CountAdvisory {
         boolean verified = yolo.path("scene_verified").asBoolean(false);
         JsonNode scene = yolo.path("scene");
         if (verified && sidewalkWidthMeters != null) {
-            sceneClause = "Kiểm định cảnh đạt (công trình dải mặt tiền %s, vỉa hè lộ rõ %s), ước lượng bề rộng vỉa hè %s m (±0,62 m, MAE kiểm tra trên 514 mẫu Seoul)."
+            sceneClause = "Kiểm định cảnh đạt (công trình dải mặt tiền %s, vỉa hè lộ rõ %s), ước lượng bề rộng vỉa hè %s m trên vùng vỉa hè đã cắt (±0,62 m là MAE kiểm tra của 514 mẫu Seoul, chưa phải sai số đo tại Hà Nội)."
                     .formatted(
                             percent(scene.path("building_ratio").asDouble()),
                             percent(scene.path("sidewalk_ratio").asDouble()),

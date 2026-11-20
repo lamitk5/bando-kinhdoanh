@@ -1,0 +1,63 @@
+{
+  "method": "Đếm bằng mắt trên ảnh gốc, chia ba băng ngang không chồng (dưới 62%, 40–62%, 12–40% chiều cao) để một xe không bị cộng hai lần. Cận dưới là số vật thể tách được trong các băng đó. Đây không phải hộp bao và không phải số đo mét vỉa hè. Ảnh Sai Ying Pun và cột điện ngoài bốn quận không nằm trong tập nhãn Hà Nội. Nhãn Seoul không được dùng làm đáp án đếm.",
+  "images": [
+    {
+      "file": "xe-may-pho-ha-noi.jpg",
+      "place": "phố Hà Nội",
+      "license": "CC BY-SA 2.0, Hector Garcia, Wikimedia Commons",
+      "motorcycle_min": 32,
+      "motorcycle_max": 70,
+      "tree_min": 3,
+      "tree_max": 10,
+      "person_min": 8,
+      "person_max": 45,
+      "scene_verified": false,
+      "count_note": "Băng giữa một mình đã hơn 20 xe máy đỗ. Băng trên có thêm dãy xe nhỏ phía xa và vài xe đang đi, không trùng băng giữa. Cận dưới 32 đã trừ xe bị cắt ngang ranh băng. Cây tách được gồm thân sơn sọc, cây trụi trước nhà vàng và ít nhất một tán nữa."
+    },
+    {
+      "file": "pho-ha-noi.jpg",
+      "place": "phố Hà Nội ban đêm",
+      "license": "CC BY-SA 2.0, Hector Garcia, Wikimedia Commons",
+      "motorcycle_min": 8,
+      "motorcycle_max": 40,
+      "vehicle_min": 1,
+      "person_min": 8,
+      "scene_verified": false,
+      "count_note": "Có một xe lớn bên trái (buýt hoặc tải) nên tổng car+bus+truck phải ít nhất 1. Xe máy đang chạy và đỗ hai bên."
+    },
+    {
+      "file": "highlands-ha-noi.jpg",
+      "place": "Highlands Coffee, Hà Nội",
+      "license": "CC BY-SA 4.0, Phan Minh Tuấn, Wikimedia Commons",
+      "motorcycle_min": 3,
+      "motorcycle_max": 4,
+      "vehicle_min": 1,
+      "tree_min": 1,
+      "scene_verified": true,
+      "count_note": "Ba xe máy trước quán. Không gán số mét vỉa hè vì không có thước đo tại chỗ."
+    },
+    {
+      "file": "dong-tac-dong-da.jpg",
+      "place": "phố Đông Tác, Đống Đa",
+      "license": "CC BY-SA 4.0, User:Ltn12345, Wikimedia Commons",
+      "motorcycle_min": 8,
+      "motorcycle_max": 30,
+      "vehicle_min": 3,
+      "person_min": 2,
+      "tree_min": 3,
+      "tree_max": 8,
+      "scene_verified": false,
+      "count_note": "Ít nhất hai người đi bộ tách khỏi người ngồi trên xe (áo xanh lá và người đi cạnh). Ba tán cây tách: cây lớn bên trái, tán bên phải và cây giữa phố."
+    },
+    {
+      "file": "cau-giay-ha-noi.jpg",
+      "place": "đường Cầu Giấy, dưới cầu cạn",
+      "license": "CC BY-SA 4.0, User:Ltn12345, Wikimedia Commons",
+      "motorcycle_min": 6,
+      "motorcycle_max": 16,
+      "vehicle_min": 2,
+      "scene_verified": false,
+      "count_note": "Không phải mặt tiền tầng trệt. Xe máy trên lòng đường và ô tô, xe buýt phía xa."
+    }
+  ]
+}

@@ -6,9 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Random;
+import java.util.zip.CRC32;
 
 import javax.imageio.ImageIO;
 
@@ -110,6 +112,65 @@ class YoloCounterTest {
     }
 
     @Test
+    void sineWaveAndFlatCartoonAreRejectedWhileHanoiFixturesStayPhotographs() throws Exception {
+        BufferedImage sine = new BufferedImage(320, 240, BufferedImage.TYPE_INT_RGB);
+        for (int y = 0; y < 240; y++) {
+            for (int x = 0; x < 320; x++) {
+                int v = (int) Math.round(128 + 110 * Math.sin(2 * Math.PI * x / 16.0));
+                v = Math.max(0, Math.min(255, v));
+                sine.setRGB(x, y, (v << 16) | (v << 8) | v);
+            }
+        }
+        PhotoQuality.Verdict sineVerdict = PhotoQuality.judge(sine);
+        assertTrue(sineVerdict.poor(), sineVerdict.reasons().toString());
+
+        BufferedImage flat = new BufferedImage(320, 240, BufferedImage.TYPE_INT_RGB);
+        for (int y = 0; y < 240; y++) {
+            for (int x = 0; x < 320; x++) {
+                int color = y < 80 ? 0x5aa0dc : (y < 170 ? 0xb4aa96 : 0x46464b);
+                if (y > 100 && y < 150 && x > 40 && x < 260) {
+                    color = 0xd23232;
+                }
+                flat.setRGB(x, y, color);
+            }
+        }
+        PhotoQuality.Verdict flatVerdict = PhotoQuality.judge(flat);
+        assertTrue(flatVerdict.poor(), flatVerdict.reasons().toString());
+        assertTrue(flatVerdict.reasons().stream().anyMatch(reason -> reason.contains("quá ít màu")));
+
+        for (String name : java.util.List.of(
+                "xe-may-pho-ha-noi.jpg",
+                "pho-ha-noi.jpg",
+                "highlands-ha-noi.jpg",
+                "dong-tac-dong-da.jpg",
+                "cau-giay-ha-noi.jpg",
+                "cot-dien.jpg",
+                "bien-bao-che-mat-tien.jpg")) {
+            BufferedImage photo = ImageIO.read(fixture(name).toFile());
+            PhotoQuality.Verdict verdict = PhotoQuality.judge(photo);
+            assertFalse(verdict.poor(), name + " " + verdict.reasons());
+        }
+    }
+
+    @Test
+    void pngAndWebpExifOrientationSixMatchTheJpegRotation() throws Exception {
+        BufferedImage photo = ImageIO.read(fixture("highlands-ha-noi.jpg").toFile());
+        byte[] png = pngWithOrientation6(photo);
+        assertEquals(6, ImageDecoder.orientation(png));
+        BufferedImage pngDecoded = ImageDecoder.decode(png);
+        assertEquals(photo.getHeight(), pngDecoded.getWidth());
+        assertEquals(photo.getWidth(), pngDecoded.getHeight());
+
+        ByteArrayOutputStream webpOut = new ByteArrayOutputStream();
+        assertTrue(ImageIO.write(photo, "webp", webpOut));
+        byte[] webp = webpWithExifOrientation6(webpOut.toByteArray());
+        assertEquals(6, ImageDecoder.orientation(webp));
+        BufferedImage webpDecoded = ImageDecoder.decode(webp);
+        assertEquals(photo.getHeight(), webpDecoded.getWidth());
+        assertEquals(photo.getWidth(), webpDecoded.getHeight());
+    }
+
+    @Test
     void streetStorefrontViaductAndPoleFixturesProduceMeasuredCountsAndSceneVerification() throws Exception {
         YoloCounter counter = new YoloCounter(mapper);
         try {
@@ -178,6 +239,8 @@ class YoloCounterTest {
         node.put("segmenter_sha256", SEGMENTER);
         node.put("depth_sha256", DEPTH);
         node.put("confidence_threshold", 0.25);
+        node.put("motorcycle_confidence_threshold", 0.15);
+        node.put("four_wheel_confidence_threshold", 0.18);
         node.put("min_area_fraction", 0.0005);
         node.put("device", "cpu");
         node.put("inference_ms", 12.5);
@@ -221,6 +284,77 @@ class YoloCounterTest {
         out[1] = jpeg[1];
         System.arraycopy(app1, 0, out, 2, app1.length);
         System.arraycopy(jpeg, 2, out, 2 + app1.length, jpeg.length - 2);
+        return out;
+    }
+
+    private static byte[] tiffOrientation6() {
+        return new byte[] {
+                'M', 'M', 0x00, 0x2a, 0x00, 0x00, 0x00, 0x08,
+                0x00, 0x01,
+                0x01, 0x12, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x06, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00
+        };
+    }
+
+    private static byte[] pngWithOrientation6(BufferedImage photo) throws Exception {
+        ByteArrayOutputStream raw = new ByteArrayOutputStream();
+        assertTrue(ImageIO.write(photo, "png", raw));
+        byte[] png = raw.toByteArray();
+        byte[] tiff = tiffOrientation6();
+        byte[] chunk = new byte[12 + tiff.length];
+        chunk[0] = (byte) ((tiff.length >> 24) & 0xff);
+        chunk[1] = (byte) ((tiff.length >> 16) & 0xff);
+        chunk[2] = (byte) ((tiff.length >> 8) & 0xff);
+        chunk[3] = (byte) (tiff.length & 0xff);
+        chunk[4] = 'e';
+        chunk[5] = 'X';
+        chunk[6] = 'I';
+        chunk[7] = 'f';
+        System.arraycopy(tiff, 0, chunk, 8, tiff.length);
+        CRC32 crc = new CRC32();
+        crc.update(chunk, 4, 4 + tiff.length);
+        long value = crc.getValue();
+        chunk[8 + tiff.length] = (byte) ((value >> 24) & 0xff);
+        chunk[9 + tiff.length] = (byte) ((value >> 16) & 0xff);
+        chunk[10 + tiff.length] = (byte) ((value >> 8) & 0xff);
+        chunk[11 + tiff.length] = (byte) (value & 0xff);
+        int iend = png.length - 12;
+        byte[] out = new byte[png.length + chunk.length];
+        System.arraycopy(png, 0, out, 0, iend);
+        System.arraycopy(chunk, 0, out, iend, chunk.length);
+        System.arraycopy(png, iend, out, iend + chunk.length, 12);
+        return out;
+    }
+
+    private static byte[] webpWithExifOrientation6(byte[] webp) {
+        byte[] tiff = tiffOrientation6();
+        byte[] payload = new byte[6 + tiff.length];
+        payload[0] = 'E';
+        payload[1] = 'x';
+        payload[2] = 'i';
+        payload[3] = 'f';
+        payload[4] = 0;
+        payload[5] = 0;
+        System.arraycopy(tiff, 0, payload, 6, tiff.length);
+        int padded = payload.length + (payload.length & 1);
+        byte[] chunk = new byte[8 + padded];
+        chunk[0] = 'E';
+        chunk[1] = 'X';
+        chunk[2] = 'I';
+        chunk[3] = 'F';
+        chunk[4] = (byte) (payload.length & 0xff);
+        chunk[5] = (byte) ((payload.length >> 8) & 0xff);
+        chunk[6] = (byte) ((payload.length >> 16) & 0xff);
+        chunk[7] = (byte) ((payload.length >> 24) & 0xff);
+        System.arraycopy(payload, 0, chunk, 8, payload.length);
+        byte[] out = new byte[webp.length + chunk.length];
+        System.arraycopy(webp, 0, out, 0, webp.length);
+        System.arraycopy(chunk, 0, out, webp.length, chunk.length);
+        int riffSize = out.length - 8;
+        out[4] = (byte) (riffSize & 0xff);
+        out[5] = (byte) ((riffSize >> 8) & 0xff);
+        out[6] = (byte) ((riffSize >> 16) & 0xff);
+        out[7] = (byte) ((riffSize >> 24) & 0xff);
         return out;
     }
 

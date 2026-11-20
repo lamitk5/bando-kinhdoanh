@@ -29,8 +29,19 @@ final class ImageDecoder {
         if (raw == null) {
             throw new IllegalStateException("Không đọc được ảnh JPEG, PNG hoặc WebP.");
         }
-        int orientation = jpegExifOrientation(bytes);
-        return applyOrientation(raw, orientation);
+        return applyOrientation(raw, orientation(bytes));
+    }
+
+    static int orientation(byte[] bytes) {
+        int jpeg = jpegExifOrientation(bytes);
+        if (jpeg != 1) {
+            return jpeg;
+        }
+        int png = pngExifOrientation(bytes);
+        if (png != 1) {
+            return png;
+        }
+        return webpExifOrientation(bytes);
     }
 
     static int jpegExifOrientation(byte[] b) {
@@ -97,6 +108,95 @@ final class ImageDecoder {
                 return 1;
             }
             pos += segLen;
+        }
+        return 1;
+    }
+
+    static int pngExifOrientation(byte[] b) {
+        byte[] sig = new byte[] {(byte) 137, 80, 78, 71, 13, 10, 26, 10};
+        if (b.length < 24) {
+            return 1;
+        }
+        for (int i = 0; i < sig.length; i++) {
+            if (b[i] != sig[i]) {
+                return 1;
+            }
+        }
+        int pos = 8;
+        while (pos + 8 <= b.length) {
+            int len = ((b[pos] & 0xff) << 24) | ((b[pos + 1] & 0xff) << 16)
+                    | ((b[pos + 2] & 0xff) << 8) | (b[pos + 3] & 0xff);
+            if (len < 0 || pos + 12L + len > b.length) {
+                return 1;
+            }
+            String type = new String(b, pos + 4, 4, java.nio.charset.StandardCharsets.US_ASCII);
+            if ("eXIf".equals(type)) {
+                return orientationInTiff(b, pos + 8, len);
+            }
+            if ("IEND".equals(type)) {
+                return 1;
+            }
+            pos += 12 + len;
+        }
+        return 1;
+    }
+
+    static int webpExifOrientation(byte[] b) {
+        if (b.length < 16 || b[0] != 'R' || b[1] != 'I' || b[2] != 'F' || b[3] != 'F'
+                || b[8] != 'W' || b[9] != 'E' || b[10] != 'B' || b[11] != 'P') {
+            return 1;
+        }
+        int pos = 12;
+        while (pos + 8 <= b.length) {
+            String fourcc = new String(b, pos, 4, java.nio.charset.StandardCharsets.US_ASCII);
+            int size = (b[pos + 4] & 0xff) | ((b[pos + 5] & 0xff) << 8)
+                    | ((b[pos + 6] & 0xff) << 16) | ((b[pos + 7] & 0xff) << 24);
+            int start = pos + 8;
+            if (size < 0 || start + (long) size > b.length) {
+                return 1;
+            }
+            if ("EXIF".equals(fourcc)) {
+                int tiff = start;
+                int tiffLen = size;
+                if (size >= 6 && b[start] == 'E' && b[start + 1] == 'x' && b[start + 2] == 'i' && b[start + 3] == 'f') {
+                    tiff = start + 6;
+                    tiffLen = size - 6;
+                }
+                return orientationInTiff(b, tiff, tiffLen);
+            }
+            pos = start + size + (size & 1);
+        }
+        return 1;
+    }
+
+    private static int orientationInTiff(byte[] b, int offset, int length) {
+        if (length < 8 || offset < 0 || offset + length > b.length) {
+            return 1;
+        }
+        ByteOrder order;
+        if (b[offset] == 'I' && b[offset + 1] == 'I') {
+            order = ByteOrder.LITTLE_ENDIAN;
+        } else if (b[offset] == 'M' && b[offset + 1] == 'M') {
+            order = ByteOrder.BIG_ENDIAN;
+        } else {
+            return 1;
+        }
+        ByteBuffer buf = ByteBuffer.wrap(b, offset, length).slice().order(order);
+        int ifdOffset = buf.getInt(4);
+        if (ifdOffset < 8 || ifdOffset + 2 > length) {
+            return 1;
+        }
+        int entries = buf.getShort(ifdOffset) & 0xffff;
+        for (int i = 0; i < entries; i++) {
+            int entryPos = ifdOffset + 2 + i * 12;
+            if (entryPos + 12 > length) {
+                break;
+            }
+            int tag = buf.getShort(entryPos) & 0xffff;
+            if (tag == 0x0112) {
+                int val = buf.getShort(entryPos + 8) & 0xffff;
+                return (val >= 1 && val <= 8) ? val : 1;
+            }
         }
         return 1;
     }

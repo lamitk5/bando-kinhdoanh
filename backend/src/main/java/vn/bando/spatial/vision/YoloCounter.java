@@ -99,6 +99,16 @@ public class YoloCounter implements DisposableBean {
         lineReader.shutdownNow();
     }
 
+    static double minimumDetectorConfidence(String name) {
+        if ("motorcycle".equals(name)) {
+            return 0.15;
+        }
+        if ("car".equals(name) || "bus".equals(name) || "truck".equals(name)) {
+            return 0.18;
+        }
+        return 0.25;
+    }
+
     static void validate(JsonNode node, String cocoSha, String worldSha, String segmenterSha, String depthSha) {
         if (node == null || !node.isObject() || node.hasNonNull("error") || node.path("ready").asBoolean(false)) {
             throw new IllegalArgumentException("Bộ đếm không trả bản đếm");
@@ -111,6 +121,8 @@ public class YoloCounter implements DisposableBean {
             throw new IllegalArgumentException("Trọng số đếm không khớp tệp đã lưu");
         }
         if (node.path("confidence_threshold").asDouble() != 0.25
+                || node.path("motorcycle_confidence_threshold").asDouble() != 0.15
+                || node.path("four_wheel_confidence_threshold").asDouble() != 0.18
                 || node.path("min_area_fraction").asDouble() != 0.0005
                 || !"cpu".equals(node.path("device").asText())
                 || !node.path("scene_verified").isBoolean()
@@ -155,8 +167,9 @@ public class YoloCounter implements DisposableBean {
             String source = detection.path("source").asText();
             JsonNode confidence = detection.get("confidence");
             if (DETECTOR_SOURCES.contains(source)) {
-                if (confidence == null || !confidence.isNumber() || confidence.asDouble() < 0.25 || confidence.asDouble() > 1) {
-                    throw new IllegalArgumentException("Độ tin cậy YOLO nằm ngoài ngưỡng 0,25");
+                double floor = minimumDetectorConfidence(name);
+                if (confidence == null || !confidence.isNumber() || confidence.asDouble() < floor || confidence.asDouble() > 1) {
+                    throw new IllegalArgumentException("Độ tin cậy YOLO của " + name + " nằm ngoài ngưỡng đã chốt");
                 }
             } else if ("segformer-cityscapes".equals(source)) {
                 if (confidence == null || !confidence.isNumber() || confidence.asDouble() < 0.45 || confidence.asDouble() > 1) {
