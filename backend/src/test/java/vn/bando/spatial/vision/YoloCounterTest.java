@@ -174,6 +174,37 @@ class YoloCounterTest {
         }
         PhotoQuality.Verdict rampVerdict = PhotoQuality.judge(noisyRamp);
         assertTrue(rampVerdict.poor(), rampVerdict.reasons().toString());
+
+        BufferedImage saw = new BufferedImage(64, 64, BufferedImage.TYPE_INT_RGB);
+        for (int y = 0; y < 64; y++) {
+            for (int x = 0; x < 64; x++) {
+                int sawGray = (x * 4 + y * 9) & 0xff;
+                int red = (sawGray + (x % 17) * 13) & 0xff;
+                int blue = (sawGray + (y % 13) * 17) & 0xff;
+                saw.setRGB(x, y, (red << 16) | (sawGray << 8) | blue);
+            }
+        }
+        PhotoQuality.Verdict sawVerdict = PhotoQuality.judge(saw);
+        assertTrue(sawVerdict.poor(), sawVerdict.reasons().toString());
+
+        BufferedImage longSine = new BufferedImage(640, 480, BufferedImage.TYPE_INT_RGB);
+        java.util.Random sineNoise = new java.util.Random(3L);
+        for (int y = 0; y < 480; y++) {
+            for (int x = 0; x < 640; x++) {
+                int luma = (int) Math.round(128 + 110 * Math.sin(2 * Math.PI * x / 100.0) + sineNoise.nextGaussian() * 3.0);
+                luma = Math.max(0, Math.min(255, luma));
+                longSine.setRGB(x, y, (luma << 16) | (luma << 8) | luma);
+            }
+        }
+        PhotoQuality.Verdict longSineVerdict = PhotoQuality.judge(longSine);
+        assertTrue(longSineVerdict.poor(), longSineVerdict.reasons().toString());
+
+        BufferedImage scaled = new BufferedImage(color.getWidth() * 2, color.getHeight() * 2, BufferedImage.TYPE_INT_RGB);
+        java.awt.Graphics2D pen = scaled.createGraphics();
+        pen.drawImage(color, 0, 0, scaled.getWidth(), scaled.getHeight(), null);
+        pen.dispose();
+        PhotoQuality.Verdict scaledVerdict = PhotoQuality.judge(scaled);
+        assertFalse(scaledVerdict.poor(), scaledVerdict.reasons().toString());
     }
 
     @Test

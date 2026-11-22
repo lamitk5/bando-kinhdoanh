@@ -87,7 +87,12 @@ class LocalSidewalkVisionClientTest {
     @Test
     void aVariedPhotoReturnsMetersWithoutVisibility() throws Exception {
         LocalSidewalkVisionClient client = client();
-        VisionAssessmentParser.Assessment assessment = VisionAssessmentParser.parse(client.assess(png(64, 64, true), "image/png"));
+        java.nio.file.Path photo = java.nio.file.Path.of("etl/vision/fixtures/highlands-ha-noi.jpg");
+        if (!java.nio.file.Files.isRegularFile(photo)) {
+            photo = java.nio.file.Path.of("..", "etl", "vision", "fixtures", "highlands-ha-noi.jpg");
+        }
+        VisionAssessmentParser.Assessment assessment = VisionAssessmentParser.parse(
+                client.assess(java.nio.file.Files.readAllBytes(photo), "image/jpeg"));
         assertFalse(assessment.assessed());
         assertEquals(WidthBand.of(assessment.widthMeters()), assessment.sidewalkCapacity());
         assertEquals(null, assessment.visibility());

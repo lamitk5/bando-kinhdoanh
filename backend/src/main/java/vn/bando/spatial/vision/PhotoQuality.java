@@ -73,6 +73,9 @@ public final class PhotoQuality {
         if (width >= 48 && height >= 48 && oneWayRamp(grayGrid, width, height)) {
             reasons.add("Ảnh là dải sáng một chiều, không phải ảnh chụp mặt tiền");
         }
+        if (width >= 48 && height >= 48 && repeatedStep(grayGrid, width, height)) {
+            reasons.add("Ảnh là thang sáng lặp đều, không phải ảnh chụp mặt tiền");
+        }
         return new Verdict(!reasons.isEmpty(), List.copyOf(reasons));
     }
 
@@ -145,6 +148,43 @@ public final class PhotoQuality {
         return cov / Math.sqrt(varA * varB);
     }
 
+    static boolean repeatedStep(double[][] gray, int width, int height) {
+        return axisRepeated(gray, width, height, true) || axisRepeated(gray, width, height, false);
+    }
+
+    private static boolean axisRepeated(double[][] gray, int width, int height, boolean horizontal) {
+        int[] counts = new int[256];
+        int samples = 0;
+        int stepY = Math.max(1, height / 48);
+        int stepX = Math.max(1, width / 48);
+        int stride = Math.max(1, Math.min(width, height) / 640);
+        if (horizontal) {
+            for (int y = 0; y < height; y += stepY) {
+                for (int x = 0; x + stride < width; x += stepX) {
+                    int delta = Math.abs((int) Math.round(gray[y][x + stride] - gray[y][x]));
+                    counts[Math.min(255, delta)]++;
+                    samples++;
+                }
+            }
+        } else {
+            for (int y = 0; y + stride < height; y += stepY) {
+                for (int x = 0; x < width; x += stepX) {
+                    int delta = Math.abs((int) Math.round(gray[y + stride][x] - gray[y][x]));
+                    counts[Math.min(255, delta)]++;
+                    samples++;
+                }
+            }
+        }
+        if (samples < 16) {
+            return false;
+        }
+        int peak = 0;
+        for (int count : counts) {
+            peak = Math.max(peak, count);
+        }
+        return peak >= samples * 0.80;
+    }
+
     static int quantizedColorCount(BufferedImage image) {
         int width = image.getWidth();
         int height = image.getHeight();
@@ -190,8 +230,11 @@ public final class PhotoQuality {
         double vertical = axisAutocorr(gray, width, height, false);
         double horizontalDiff = meanAbsNeighbor(gray, width, height, true);
         double verticalDiff = meanAbsNeighbor(gray, width, height, false);
-        return (horizontal > 0.72 && verticalDiff < 0.12 * Math.max(1.0, horizontalDiff))
-                || (vertical > 0.72 && horizontalDiff < 0.12 * Math.max(1.0, verticalDiff));
+        boolean oneAxis = (horizontal > 0.72 && verticalDiff < 0.45 * Math.max(1.0, horizontalDiff))
+                || (vertical > 0.72 && horizontalDiff < 0.45 * Math.max(1.0, verticalDiff));
+        // Sóng chéo dao động trên cả hai trục. Ảnh phố thật không đồng thời tuần hoàn cả hai hướng.
+        boolean bothAxes = horizontal > 0.75 && vertical > 0.75;
+        return oneAxis || bothAxes;
     }
 
     private static double axisAutocorr(double[][] gray, int width, int height, boolean horizontal) {
@@ -220,10 +263,8 @@ public final class PhotoQuality {
             return 0;
         }
         double best = 0;
-        for (int lag : new int[] {8, 12, 16, 24, 32}) {
-            if (lag >= n / 2) {
-                continue;
-            }
+        int maxLag = Math.max(5, n / 3);
+        for (int lag = 4; lag < maxLag; lag++) {
             double corr = 0;
             for (int i = 0; i < n - lag; i++) {
                 corr += samples[i] * samples[i + lag];
@@ -357,19 +398,21 @@ public final class PhotoQuality {
     }
 
     private static double meanAbsoluteLaplacian(double[][] gray, int width, int height) {
+        // Bước theo cạnh ngắn để ảnh phóng to không bị coi là mờ chỉ vì các điểm kề nhau gần nhau hơn.
+        int stride = Math.max(1, Math.min(width, height) / 640);
         double sum = 0;
         int count = 0;
-        for (int y = 1; y < height - 1; y++) {
-            for (int x = 1; x < width - 1; x++) {
+        for (int y = stride; y < height - stride; y += stride) {
+            for (int x = stride; x < width - stride; x += stride) {
                 double lap = Math.abs(4 * gray[y][x]
-                        - gray[y][x - 1]
-                        - gray[y][x + 1]
-                        - gray[y - 1][x]
-                        - gray[y + 1][x]);
+                        - gray[y][x - stride]
+                        - gray[y][x + stride]
+                        - gray[y - stride][x]
+                        - gray[y + stride][x]);
                 sum += lap;
                 count++;
             }
         }
-        return sum / count;
+        return count == 0 ? 0 : sum / count;
     }
 }

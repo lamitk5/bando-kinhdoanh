@@ -248,6 +248,22 @@ def motorcycle_boxes(coco_model, img_bgr):
     return [(3, conf, box) for conf, box in kept], inference_ms
 
 
+def person_sits_on(person, moto):
+    """Người ngồi trên xe có tâm nằm trên hộp xe và phần dưới người chạm xe. Người đứng cạnh xe thì không."""
+    px1, py1, px2, py2 = person
+    mx1, my1, mx2, my2 = moto
+    person_cx = 0.5 * (px1 + px2)
+    slack = 0.15 * max(1.0, px2 - px1)
+    if person_cx < mx1 - slack or person_cx > mx2 + slack:
+        return False
+    overlap_y = min(py2, my2) - max(py1, my1)
+    if overlap_y < 0.25 * max(1.0, my2 - my1):
+        return False
+    if my2 < py1 + 0.45 * max(1.0, py2 - py1):
+        return False
+    return True
+
+
 def distant_bus_boxes(coco_model, img_bgr, existing):
     """Ô giữa khung, chỉ nhận xe buýt đủ tin cậy. Không thêm ô tô từ ô này."""
     height, width = img_bgr.shape[:2]
@@ -508,7 +524,12 @@ def detect_coco_tiled(coco_model, img_bgr, label_map, scale):
                 ):
                     straddles_moto = True
                     break
-            if straddles_moto or (rider_px > ped_px and rider_frac >= 0.15):
+            seated = any(person_sits_on(bi, mb) for mb in moto_boxes)
+            # Người đứng cạnh dãy xe thường cao và hẹp. Lớp rider của Cityscapes hay tô nhầm họ.
+            tall_bystander = (ph / pw) >= 1.85 and not seated
+            if straddles_moto or seated or (
+                rider_px > ped_px and rider_frac >= 0.15 and not tall_bystander
+            ):
                 cname = "rider"
         cleaned.append((cname, si, bi, "yolov8m"))
     return cleaned, total_inf_ms
@@ -946,7 +967,13 @@ def predict(coco_model, world_model, seg_model, seg_proc, depth_model, depth_pro
             "YOLOv8m đếm xe máy trên cả khung và lưới nửa khung ở ngưỡng 0,15, gộp theo tâm rồi bỏ hộp cha quá lỏng. "
             "Ô tô, buýt và tải trên cả khung hình lấy từ ngưỡng 0,18. "
             "Xe buýt ở cuối đường được tìm thêm bằng một ô giữa khung, chỉ nhận lớp bus từ ngưỡng 0,45. "
-            "Ngưỡng xe máy 0,15, ô tô 0,18, ô buýt giữa khung và khoảng cách tách tán được chọn khi đối chiếu năm ảnh Hà Nội trong thư mục fixtures, chưa có tập kiểm tra tách riêng. "
+            "Ngưỡng xe máy 0,15, bán kính gộp tâm 0,16, tỷ lệ hộp cha 0,35, ô tô 0,18, "
+            "ô buýt giữa khung (ngang 0,35–0,72, dọc 0,42–0,78, ngưỡng 0,45), "
+            "xe tải dưới 0,35, hộp xe yếu dưới 0,40 nếu nhỏ hơn 0,15% ảnh, "
+            "lề cắt vỉa hè 2% ngang, 4% phía trên và 5% phía dưới, tỷ lệ mặt tiền 0,12, "
+            "khoảng cách tách tán 0,03 bề rộng ảnh, "
+            "và quy tắc người ngồi trên xe (tâm cách mép hộp xe 0,15 bề rộng người, chồng dọc 0,25, người đứng cao hẹp từ 1,85) "
+            "được chọn khi đối chiếu năm ảnh Hà Nội trong thư mục fixtures, chưa có tập kiểm tra tách riêng. "
             "Tách người đi bộ (person) khỏi người ngồi trên xe hai bánh (rider, kể cả người ngồi sau). "
             "Cây khử trùng lặp giữa street tree (YOLO-World) và vùng tán cây lớp vegetation (SegFormer). "
             "Cột điện loại trừ trụ đỡ biển báo và vùng chồng lấn người. "
