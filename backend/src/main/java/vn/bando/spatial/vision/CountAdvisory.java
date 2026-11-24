@@ -22,10 +22,14 @@ public final class CountAdvisory {
     }
 
     public static String fromVision(JsonNode yolo, Double sidewalkWidthMeters) {
-        return coreVisionClause(yolo, sidewalkWidthMeters) + " Không kết luận doanh thu.";
+        return fromVision(yolo, sidewalkWidthMeters, true);
     }
 
-    private static String coreVisionClause(JsonNode yolo, Double sidewalkWidthMeters) {
+    public static String fromVision(JsonNode yolo, Double sidewalkWidthMeters, boolean widthFromCrop) {
+        return coreVisionClause(yolo, sidewalkWidthMeters, widthFromCrop) + " Không kết luận doanh thu.";
+    }
+
+    private static String coreVisionClause(JsonNode yolo, Double sidewalkWidthMeters, boolean widthFromCrop) {
         JsonNode requested = yolo.path("requested");
         JsonNode counts = yolo.path("counts");
         int cars = integer(requested, "car");
@@ -53,11 +57,15 @@ public final class CountAdvisory {
         boolean verified = yolo.path("scene_verified").asBoolean(false);
         JsonNode scene = yolo.path("scene");
         if (verified && sidewalkWidthMeters != null) {
-            sceneClause = "Kiểm định cảnh đạt (công trình dải mặt tiền %s, vỉa hè lộ rõ %s), ước lượng bề rộng vỉa hè %s m trên vùng vỉa hè đã cắt (±0,62 m là MAE của 112 ảnh kiểm tra trong bộ 514 mẫu Seoul, chưa phải sai số đo tại Hà Nội)."
+            String region = widthFromCrop
+                    ? "trên vùng vỉa hè đã cắt"
+                    : "trên cả khung hình vì vùng cắt không dùng được";
+            sceneClause = "Kiểm định cảnh đạt (công trình dải mặt tiền %s, vỉa hè lộ rõ %s), ước lượng bề rộng vỉa hè %s m %s (±0,62 m là MAE của 112 ảnh kiểm tra trong bộ 514 mẫu Seoul, chưa phải sai số đo tại Hà Nội)."
                     .formatted(
                             percent(scene.path("building_ratio").asDouble()),
                             percent(scene.path("sidewalk_ratio").asDouble()),
-                            comma2(sidewalkWidthMeters));
+                            comma2(sidewalkWidthMeters),
+                            region);
         } else if (scene.isObject() && !scene.path("summary").asText().isBlank()) {
             sceneClause = scene.path("summary").asText();
         } else {
@@ -90,7 +98,8 @@ public final class CountAdvisory {
         Double width = visionResult.path("sidewalk_width_m").isNumber()
                 ? visionResult.path("sidewalk_width_m").asDouble()
                 : null;
-        String base = coreVisionClause(yolo, width);
+        boolean fromCrop = !visionResult.has("width_from_crop") || visionResult.path("width_from_crop").asBoolean(true);
+        String base = coreVisionClause(yolo, width, fromCrop);
 
         JsonNode requested = yolo.path("requested");
         JsonNode counts = yolo.path("counts");

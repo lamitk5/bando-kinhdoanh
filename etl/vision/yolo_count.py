@@ -369,14 +369,7 @@ def detect_coco_tiled(coco_model, img_bgr, label_map, scale):
             for x0 in (0, width - tw):
                 crops.append((x0, y0, x0 + tw, y0 + th, False))
         crops.append((0, int(height * 0.18), width, int(height * 0.72), False))
-    # Ảnh phố Hà Nội rộng: thêm bốn ô giữa và dưới để xe máy nhỏ không bị co về 640.
-    if max(width, height) >= 1400:
-        tw = int(width * 0.58)
-        th = int(height * 0.38)
-        y_lo = int(height * 0.28)
-        for y0 in (y_lo, max(y_lo, height - th)):
-            for x0 in (0, max(0, width - tw)):
-                crops.append((x0, y0, min(width, x0 + tw), min(height, y0 + th), False))
+    # Xe máy không đi qua các ô này. Ô riêng của xe máy nằm ở motorcycle_boxes.
 
     batch = [img_bgr[y0:y1, x0:x1] for (x0, y0, x1, y1, _) in crops]
     results = coco_model.predict(
@@ -971,6 +964,7 @@ def predict(coco_model, world_model, seg_model, seg_proc, depth_model, depth_pro
             "ô buýt giữa khung (ngang 0,35–0,72, dọc 0,42–0,78, ngưỡng 0,45), "
             "xe tải dưới 0,35, hộp xe yếu dưới 0,40 nếu nhỏ hơn 0,15% ảnh, "
             "lề cắt vỉa hè 2% ngang, 4% phía trên và 5% phía dưới, tỷ lệ mặt tiền 0,12, "
+            "trần cầu cạn khi độ chênh sâu từ 0,25, "
             "khoảng cách tách tán 0,03 bề rộng ảnh, "
             "và quy tắc người ngồi trên xe (tâm cách mép hộp xe 0,15 bề rộng người, chồng dọc 0,25, người đứng cao hẹp từ 1,85) "
             "được chọn khi đối chiếu năm ảnh Hà Nội trong thư mục fixtures, chưa có tập kiểm tra tách riêng. "

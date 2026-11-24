@@ -67,7 +67,7 @@ public final class LocalSidewalkVisionClient implements VisionClient {
     }
 
     private String recommendation(double meters, String band) {
-        return "Ước lượng bề rộng %s m trên vùng vỉa hè đã cắt (±%s m là MAE của 112 ảnh kiểm tra trong bộ 514 mẫu vỉa hè Seoul, chưa phải sai số đo tại Hà Nội). Không đo tầm nhìn. Mức %s là quy ước mét, không phải nhãn người chấm."
+        return "Ước lượng bề rộng %s m trên ảnh đưa vào mô hình (±%s m là MAE của 112 ảnh kiểm tra trong bộ 514 mẫu vỉa hè Seoul, chưa phải sai số đo tại Hà Nội). Không đo tầm nhìn. Mức %s là quy ước mét, không phải nhãn người chấm."
                 .formatted(comma2(meters), comma2(model.testMaeMeters()), band);
     }
 

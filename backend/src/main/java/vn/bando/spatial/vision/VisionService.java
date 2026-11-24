@@ -141,9 +141,11 @@ public class VisionService {
                 result.put("scene_verified", sceneVerified);
                 result.set("scene", counted.path("scene"));
                 Double acceptedWidth = null;
+                boolean widthFromCrop = false;
                 if (sceneVerified) {
-                    byte[] widthImage = sidewalkCropJpeg(decoded, counted.path("scene").path("sidewalk_crop_px"), image);
-                    Assessment assessment = VisionAssessmentParser.parse(client.assess(widthImage, "image/jpeg"));
+                    SidewalkJpeg widthImage = sidewalkCropJpeg(decoded, counted.path("scene").path("sidewalk_crop_px"), image);
+                    widthFromCrop = widthImage.cropped();
+                    Assessment assessment = VisionAssessmentParser.parse(client.assess(widthImage.bytes(), "image/jpeg"));
                     result.put("assessed", assessment.assessed());
                     result.put("sidewalk_capacity", assessment.sidewalkCapacity());
                     result.put("sidewalk_score", assessment.sidewalkScore());
@@ -173,13 +175,14 @@ public class VisionService {
                     result.put("recommendation", counted.path("scene").path("summary")
                             .asText("Ảnh không thỏa điều kiện mặt tiền tầng trệt và vỉa hè lộ rõ nên không gán bề rộng vỉa hè."));
                 }
+                result.put("width_from_crop", widthFromCrop);
                 result.put("ordinal_note", "Điểm vỉa hè và tầm nhìn là thang thứ tự đã quy ước, không phải số đo mét.");
                 result.set("yolo", counted);
                 advisory(
                         result,
                         "local_rules",
                         "Câu tư vấn đối chiếu số đếm, kiểm định cảnh mặt tiền và điểm PostGIS. API đám mây chưa được gắn.",
-                        CountAdvisory.fromVision(counted, acceptedWidth));
+                        CountAdvisory.fromVision(counted, acceptedWidth, sceneVerified && widthFromCrop));
             }
             jobs.finish(id, poor ? "poor_quality" : "completed", mapper.writeValueAsString(result), null);
         } catch (RuntimeException exception) {
@@ -194,10 +197,13 @@ public class VisionService {
         return ImageDecoder.decode(image);
     }
 
+    private record SidewalkJpeg(byte[] bytes, boolean cropped) {
+    }
+
     /** Cắt đúng vùng vỉa hè SegFormer đã trả, rồi mới đưa vào mô hình bề rộng. */
-    private static byte[] sidewalkCropJpeg(BufferedImage decoded, JsonNode crop, byte[] original) {
+    private static SidewalkJpeg sidewalkCropJpeg(BufferedImage decoded, JsonNode crop, byte[] original) {
         if (decoded == null || !crop.isArray() || crop.size() != 4) {
-            return original;
+            return new SidewalkJpeg(original, false);
         }
         int width = decoded.getWidth();
         int height = decoded.getHeight();
@@ -206,17 +212,17 @@ public class VisionService {
         int x2 = Math.max(x1 + 1, Math.min(width, crop.get(2).asInt()));
         int y2 = Math.max(y1 + 1, Math.min(height, crop.get(3).asInt()));
         if (x2 - x1 < 64 || y2 - y1 < 64) {
-            return original;
+            return new SidewalkJpeg(original, false);
         }
         BufferedImage sub = decoded.getSubimage(x1, y1, x2 - x1, y2 - y1);
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             if (!ImageIO.write(sub, "jpg", out) || out.size() == 0) {
-                return original;
+                return new SidewalkJpeg(original, false);
             }
-            return out.toByteArray();
+            return new SidewalkJpeg(out.toByteArray(), true);
         } catch (java.io.IOException exception) {
-            return original;
+            return new SidewalkJpeg(original, false);
         }
     }
 

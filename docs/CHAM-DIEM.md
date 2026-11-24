@@ -108,7 +108,7 @@ Số đếm dưới đây lấy từ `etl/vision/yolo_count.py` trên CPU ngày 
 - `bien-bao-che-mat-tien.jpg` (ảnh chức năng, không thuộc nhãn đếm Hà Nội): `scene_verified = false`, `sidewalk_width_m = null`, 1 xe máy, 10 ô tô và 1 xe tải, 19 người đi bộ (tách 1 `rider`), 1 biển đứng chắn trực diện trước nền công trình.
 - `dong-tac-dong-da.jpg` (ngã tư Đông Tác, Đống Đa, CC BY-SA 4.0): `scene_verified = false`, `sidewalk_width_m = null`, 16 xe máy, 6 ô tô, 2 người đi bộ (người quần xanh ở tiền cảnh là `person` độ tin cậy 0,908; tách riêng 8 `rider`), 1 cột điện, 6 cây, 0 biển chắn.
 - `cot-dien.jpg` (ảnh chức năng, không thuộc nhãn đếm Hà Nội): `scene_verified = false`, `sidewalk_width_m = null`, 1 cột điện, 7 cây, 2 biển báo, 0 biển chắn.
-- `xe-may-pho-ha-noi.jpg` (CC BY-SA 2.0): `scene_verified = false`, `sidewalk_width_m = null`, 34 xe máy, 1 xe tải, 22 người đi bộ (tách 5 `rider`), 6 cây, 0 biển chắn.
+- `xe-may-pho-ha-noi.jpg` (CC BY-SA 2.0): `scene_verified = false`, `sidewalk_width_m = null`, 34 xe máy, 1 xe tải, 18 người đi bộ (tách 5 `rider`), 6 cây, 0 biển chắn.
 - `cau-giay-ha-noi.jpg` (dưới gầm cầu cạn đường Cầu Giấy, CC BY-SA 4.0): `scene_verified = false` (trần cầu cạn chênh sâu `+59,6%`), `sidewalk_width_m = null`, 9 xe máy, 3 ô tô và 1 xe buýt, 2 người đi bộ (tách 10 `rider`), 6 cây.
 - `etl/vision/score_hanoi_counts.py` trên năm ảnh có nhãn mắt Hà Nội: 146/146 mục, điểm khớp nhãn **100,0**. Đây là điểm khớp khoảng đếm bằng mắt, chưa phải điểm ba giám khảo.
 - Ảnh sóng sine một chiều, đồ họa ba dải phẳng, gradient, bàn cờ, nhiễu hạt và hoa văn đồng nhất bị chặn tại `PhotoQuality` trước khi đếm. PNG và WebP gắn EXIF orientation 6 được xoay cùng chiều với JPEG.
@@ -119,6 +119,7 @@ Quá trình chấm độc lập bởi ba giám khảo trên API đang chạy ng�
 - Lúc 10:52 ngày 20/11, vòng đếm lại trên đúng nhãn mắt năm ảnh Hà Nội (không dùng nhãn Seoul và không dùng ảnh Sai Ying Pun làm đáp án đếm) khớp 146/146, điểm **100,0**. Xe máy phố dày 34 (khoảng 32–70), Highlands vẫn 3, cây phố dày 5 và Đông Tác 5. Đây là điểm khớp nhãn mắt, chưa phải điểm giám khảo.
 - Lúc 14:47 ngày 20/11, ba giám khảo độc lập chấm cây làm việc sau khi đã sửa xe buýt Cầu Giấy, tách tán Highlands, cổng ảnh xám và câu MAE. Điểm **88, 92 và 91**, trung bình cộng **271/3 = 90,3**. Dưới 95 nên không duyệt. Các điểm trừ còn lại là tách người đi bộ với người ngồi trên xe ở phố đông, và một số ngưỡng được chọn trên đúng năm ảnh mẫu.
 - Lúc 23:07 ngày 22/11, người đứng cạnh xe không còn bị gọi là người ngồi trên xe khi hộp người cao và hẹp mà tâm không nằm trên xe. Đông Tác: người quần xanh là `person`. Phố xe máy: 5 `rider`. Phố đêm: 6 `rider`. Ba giám khảo chấm **84, 100 và 84**, trung bình **268/3 = 89,3**. Dưới 95 nên không duyệt. Hạ ngưỡng xe máy còn 0,10 chỉ ra mảnh của xe đã đếm.
+- Lúc 18:25 ngày 24/11, bỏ bốn ô cắt trên ảnh rộng vì các ô đó không nhận lớp xe máy. Bảy ảnh mẫu đều xong dưới 8 giây. Phố xe máy còn 34 xe máy, 18 người đi bộ, 5 người ngồi trên xe. Câu tư vấn nói «đã cắt» khi vùng cắt được dùng, và «cả khung hình» khi vùng cắt không dùng được. Ba giám khảo chấm **100, 95 và 72**, trung bình **267/3 = 89,0**. Dưới 95 nên không duyệt. Điểm 72 trừ vì ước lượng mắt cao hơn 34 xe máy và vì JSON đếm chưa kèm số mét; số mét vẫn do mô hình Java gắn khi cảnh đạt.
 
 ## Bản đồ, so sánh và kiểm chứng vị trí
 
