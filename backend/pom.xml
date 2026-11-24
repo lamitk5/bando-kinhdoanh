@@ -15,7 +15,7 @@
     <artifactId>spatial</artifactId>
     <version>0.1.0</version>
     <name>bando-spatial</name>
-    <description>Đọc dữ liệu không gian đã nạp và cache bản tóm tắt trên Redis.</description>
+    <description>Đọc dữ liệu không gian, chấm điểm vị trí và xếp hàng thẩm định ảnh.</description>
 
     <properties>
         <java.version>17</java.version>
@@ -35,9 +35,23 @@
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.sejda.imageio</groupId>
+            <artifactId>webp-imageio</artifactId>
+            <version>0.1.6</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

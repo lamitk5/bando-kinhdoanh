@@ -1,12 +1,16 @@
 package vn.bando.spatial.data;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.server.ResponseStatusException;
 
 import vn.bando.spatial.OsmRefs;
 import vn.bando.spatial.api.SpatialModels.CategoryCount;
@@ -23,7 +27,8 @@ public class SpatialRepository {
     private static final List<String> REQUIRED_GIST = List.of(
             "district_geom_gix",
             "poi_geom_gix",
-            "road_geom_gix"
+            "road_geom_gix",
+            "road_arterial_geog_gix"
     );
 
     private final JdbcTemplate jdbc;
@@ -147,6 +152,102 @@ public class SpatialRepository {
                 },
                 limit
         );
+    }
+
+    public String bufferProfile(double lon, double lat, String businessType) {
+        try {
+            return jdbc.queryForObject(
+                    "SELECT buffer_profile(?, ?, ?)::text",
+                    String.class,
+                    lon,
+                    lat,
+                    businessType
+            );
+        } catch (DataAccessException exception) {
+            throw mapSqlState(exception);
+        }
+    }
+
+    public String submitContribution(
+            String name,
+            String category,
+            double lon,
+            double lat,
+            String note,
+            String submitter) {
+        try {
+            return jdbc.queryForObject(
+                    "SELECT submit_poi_contribution(?, ?, ?, ?, ?, ?)::text",
+                    String.class,
+                    name,
+                    category,
+                    lon,
+                    lat,
+                    note,
+                    submitter
+            );
+        } catch (DataAccessException exception) {
+            throw mapSqlState(exception);
+        }
+    }
+
+    public String decideContribution(long id, String decision, String note, String reviewer) {
+        try {
+            return jdbc.queryForObject(
+                    "SELECT decide_poi_contribution(?, ?, ?, ?)::text",
+                    String.class,
+                    id,
+                    decision,
+                    note,
+                    reviewer
+            );
+        } catch (DataAccessException exception) {
+            throw mapSqlState(exception);
+        }
+    }
+
+    public long contributionEpoch() {
+        Long epoch = jdbc.queryForObject("SELECT epoch FROM contribution_epoch WHERE id = 1", Long.class);
+        if (epoch == null) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Chưa có mốc đóng góp");
+        }
+        return epoch;
+    }
+
+    public String listContributions(String status) {
+        try {
+            return jdbc.queryForObject(
+                    "SELECT list_poi_contributions(?)::text",
+                    String.class,
+                    status
+            );
+        } catch (DataAccessException exception) {
+            throw mapSqlState(exception);
+        }
+    }
+
+    private static RuntimeException mapSqlState(DataAccessException exception) {
+        Throwable cause = exception.getMostSpecificCause();
+        if (cause instanceof SQLException sql) {
+            String state = sql.getSQLState();
+            if ("22023".equals(state)) {
+                return new ResponseStatusException(HttpStatus.BAD_REQUEST, firstLine(cause.getMessage()), exception);
+            }
+            if ("02000".equals(state)) {
+                return new ResponseStatusException(HttpStatus.NOT_FOUND, firstLine(cause.getMessage()), exception);
+            }
+            if ("P0001".equals(state)) {
+                return new ResponseStatusException(HttpStatus.CONFLICT, firstLine(cause.getMessage()), exception);
+            }
+        }
+        return exception;
+    }
+
+    private static String firstLine(String message) {
+        if (message == null || message.isBlank()) {
+            return "Yêu cầu không xử lý được";
+        }
+        return message.split("\\R", 2)[0];
     }
 
     public HealthResponse health(String redisStatus) {

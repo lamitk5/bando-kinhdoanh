@@ -13,5 +13,18 @@ spring:
       port: 6379
   jackson:
     property-naming-strategy: SNAKE_CASE
+  servlet:
+    multipart:
+      max-file-size: 4MB
+      max-request-size: 5MB
 server:
   port: 8080
+  error:
+    include-message: always
+vision:
+  worker:
+    enabled: true
+bando:
+  reviewer:
+    name: ${BANDO_REVIEWER_NAME:}
+    token: ${BANDO_REVIEWER_TOKEN:}
