@@ -17,7 +17,8 @@ Câu xác nhận hợp lệ gồm các ý như: "ok", "duyệt", "chức năng n
 ## Quy tắc cập nhật
 
 - Mỗi lần xong một hạng mục, ghi một dòng nhật ký: ngày giờ Việt Nam (UTC+7), hạng mục, trạng thái `chờ duyệt`, và cách kiểm tra.
-- Không tự đổi `chờ duyệt` thành `thành công`. Chỉ khi người phụ trách xác nhận chức năng ổn thì lần làm việc sau mới ghi `thành công`.
+- Vòng đã có đủ ba giám khảo, và cả ba điểm đều trên 95, được ghi `thành công` ngay. Vòng có một điểm từ 95 trở xuống, hoặc chưa đủ ba người chấm, giữ `chờ duyệt`.
+- Ngoài quy tắc ba giám khảo, không tự đổi `chờ duyệt` thành `thành công`. Chỉ khi người phụ trách xác nhận chức năng ổn thì lần làm việc sau mới ghi `thành công`.
 - Nếu người phụ trách yêu cầu sửa khi chưa duyệt, chuyển `cần sửa`, làm lại, rồi đưa về `chờ duyệt`.
 - Một hạng mục `thành công` bị yêu cầu sửa thì trở lại `cần sửa` cho đến khi được duyệt lại.
 
@@ -43,6 +44,7 @@ Ghi từ trên xuống dưới, mục mới nhất ở đầu. Tài liệu tổn
 
 | Thời điểm (UTC+7) | Hạng mục | Trạng thái | Cách kiểm tra |
 | --- | --- | --- | --- |
+| 2026-11-24 20:46 | Duyệt những vòng cả ba giám khảo đều trên 95 | `thành công` | Vòng 20:27 cùng ngày, điểm 100, 97 và 100, đã `thành công`. Các vòng 18:25 (100, 95, 72), 23:07 ngày 22/11 (84, 100, 84), 14:47 ngày 20/11 (88, 92, 91) và các vòng mục 9 (75, 74, 52 rồi 64, 63, 70) còn ít nhất một điểm từ 95 trở xuống, nên giữ `chờ duyệt`. |
 | 2026-11-24 20:27 | Tách dãy xe đỗ và ba giám khảo đều chấm trên 95 | `thành công` | Phố xe máy 47 xe, Highlands 3 xe máy và 4 ô tô, Đông Tác 5 ô tô, Cầu Giấy 1 xe buýt. Ba giám khảo chấm 100, 97 và 100. Cả ba trên 95 nên duyệt vòng đếm này. `mvn -Dtest=YoloCounterTest test` trong `backend`. |
 | 2026-11-24 18:25 | Bỏ ô cắt không đếm xe máy và ba giám khảo chấm lại | `chờ duyệt` | Mỗi ảnh trong bảy ảnh mẫu có `wall_ms` dưới 8 giây. Phố xe máy vẫn 34 xe máy và 5 người ngồi trên xe, người đi bộ còn 18. Câu tư vấn chỉ nói «đã cắt» khi vùng cắt được dùng. Ba giám khảo chấm 100, 95 và 72, trung bình 267/3 = 89,0. Dưới 95 nên không duyệt. |
 | 2026-11-24 18:13 | Đặt Circle K 74 Nguyễn Khang bằng nội suy số nhà và chốt mẫu 11 điểm | `chờ duyệt` | `GET /api/backtest` có `sourced_panel_count` 11, `closed_group_count` 6, `brand_listed_count` 5. Điểm Circle K báo đã ngừng nằm gần `21,021910`, `105,799888`, `osm_url` null, `coordinate_method` nhắc node `11458943616`. `panel_finding` nói hai khoảng điểm có chồng nhau hay không. Đây không phải khảo sát 15 cửa hàng đã đóng tại chỗ. |
