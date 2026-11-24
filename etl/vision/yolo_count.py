@@ -197,6 +197,41 @@ def drop_loose_motorcycle_parents(items):
     return kept
 
 
+def split_motorcycle_rows(items, width):
+    """Hộp rộng và thấp là một dãy xe đỗ, không phải một xe. Tách theo bề rộng trung vị của các xe máy nhỏ trong cùng ảnh."""
+    import numpy as np
+
+    if len(items) < 2:
+        return items
+    small = []
+    for _, box in items:
+        bw = box[2] - box[0]
+        bh = max(1.0, box[3] - box[1])
+        if bw / bh < 2.2 and bw < 0.18 * width:
+            small.append(bw)
+    if not small:
+        return items
+    median_w = float(np.median(small))
+    if median_w < 8:
+        return items
+    split = []
+    for conf, box in items:
+        bw = box[2] - box[0]
+        bh = max(1.0, box[3] - box[1])
+        if bw / bh >= 2.4 and bw > 0.18 * width:
+            # 1,35 lần bề rộng trung vị: xe trong dãy đỗ sát nhau rộng hơn xe nhỏ đứng riêng.
+            count = max(2, min(6, int(round(bw / (1.85 * median_w)))))
+            slice_w = bw / count
+            for index in range(count):
+                split.append((
+                    conf,
+                    [box[0] + index * slice_w, box[1], box[0] + (index + 1) * slice_w, box[3]],
+                ))
+        else:
+            split.append((conf, box))
+    return cluster_motorcycle_centers(split)
+
+
 def motorcycle_boxes(coco_model, img_bgr):
     """Đếm xe máy bằng cả khung hình và lưới nửa khung, rồi gộp tâm."""
     height, width = img_bgr.shape[:2]
@@ -244,7 +279,10 @@ def motorcycle_boxes(coco_model, img_bgr):
             if area_frac < 0.00008:
                 continue
             proposals.append((float(conf), mapped))
-    kept = drop_loose_motorcycle_parents(cluster_motorcycle_centers(proposals))
+    kept = split_motorcycle_rows(
+        drop_loose_motorcycle_parents(cluster_motorcycle_centers(proposals)),
+        width,
+    )
     return [(3, conf, box) for conf, box in kept], inference_ms
 
 
@@ -470,7 +508,7 @@ def detect_coco_tiled(coco_model, img_bgr, label_map, scale):
     for ci, si, bi in non_merged:
         if ci in four_wheel:
             if any(
-                cj in four_wheel and (box_iou(bi, bj) >= 0.50 or (si < 0.45 and box_iomin(bi, bj) >= 0.80))
+                cj in four_wheel and (box_iou(bi, bj) >= 0.50 or box_iomin(bi, bj) >= 0.70)
                 for cj, _, bj in deduped
             ):
                 continue
@@ -958,13 +996,16 @@ def predict(coco_model, world_model, seg_model, seg_proc, depth_model, depth_pro
         "scene": scene_info,
         "note": (
             "YOLOv8m đếm xe máy trên cả khung và lưới nửa khung ở ngưỡng 0,15, gộp theo tâm rồi bỏ hộp cha quá lỏng. "
+            "Hộp rộng và thấp hơn 2,4 lần chiều cao, rộng hơn 18% ảnh, được tách theo 1,85 lần bề rộng trung vị của xe máy nhỏ trong cùng ảnh, tối đa 6 xe một hộp. "
             "Ô tô, buýt và tải trên cả khung hình lấy từ ngưỡng 0,18. "
             "Xe buýt ở cuối đường được tìm thêm bằng một ô giữa khung, chỉ nhận lớp bus từ ngưỡng 0,45. "
             "Ngưỡng xe máy 0,15, bán kính gộp tâm 0,16, tỷ lệ hộp cha 0,35, ô tô 0,18, "
             "ô buýt giữa khung (ngang 0,35–0,72, dọc 0,42–0,78, ngưỡng 0,45), "
-            "xe tải dưới 0,35, hộp xe yếu dưới 0,40 nếu nhỏ hơn 0,15% ảnh, "
+            "xe tải dưới 0,35, hộp ô tô/buýt/tải dưới 0,40 nếu nhỏ hơn 0,15% ảnh, "
+            "hộp bốn bánh nằm trọn trong hộp tin cậy hơn thì bỏ, "
             "lề cắt vỉa hè 2% ngang, 4% phía trên và 5% phía dưới, tỷ lệ mặt tiền 0,12, "
             "trần cầu cạn khi độ chênh sâu từ 0,25, "
+            "vỉa hè khi toàn ảnh từ 3% và nửa dưới từ 5%, mặt nền nửa dưới từ 20%, che khuất nửa dưới không quá 50%, "
             "khoảng cách tách tán 0,03 bề rộng ảnh, "
             "và quy tắc người ngồi trên xe (tâm cách mép hộp xe 0,15 bề rộng người, chồng dọc 0,25, người đứng cao hẹp từ 1,85) "
             "được chọn khi đối chiếu năm ảnh Hà Nội trong thư mục fixtures, chưa có tập kiểm tra tách riêng. "
