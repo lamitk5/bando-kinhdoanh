@@ -128,5 +128,17 @@
     "osm_id": 6715369161,
     "basis": "Số 91 Nam Đồng có trong danh sách Circle K lưu ngày 2024-08-05 và 2026-07-10, khớp số nhà trên OpenStreetMap.",
     "source_url": "https://web.archive.org/web/20260710175657/https://www.circlek.com.vn/vi/store-locator/"
+  },
+  {
+    "name": "Circle K",
+    "business_type": "convenience",
+    "district": "Cầu Giấy",
+    "lat": 21.021910,
+    "lon": 105.799888,
+    "outcome": "reported_closed",
+    "remove_self": false,
+    "coordinate_method": "Số 74 chưa được vẽ. Điểm đặt bằng cách lùi đúng một khoảng từ số 78 (node 11458943616) về phía ngược với số 80 (node 11458943617) trên phố Nguyễn Khang. Điểm cách tim đường way 1287978626 khoảng 4 m.",
+    "basis": "Báo Sức khỏe và Đời sống ghi cửa hàng 74–76 Nguyễn Khang thông báo ngừng hoạt động từ ngày 19/6/2024. Tọa độ là nội suy số nhà, không phải điểm GPS đo tại cửa.",
+    "source_url": "https://phapluat.suckhoedoisong.vn/cua-hang-tien-loi-circle-k-so-74-nguyen-khang-dong-cua-sau-phan-anh-cua-gia-dinh-va-xa-hoi-57162.html"
   }
 ]

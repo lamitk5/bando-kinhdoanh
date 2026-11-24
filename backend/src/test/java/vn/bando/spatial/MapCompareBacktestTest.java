@@ -94,7 +94,7 @@ class MapCompareBacktestTest {
     @Test
     void backtestUsesTwelveNamedShopsAndDoesNotClaimClosures() throws Exception {
         JsonNode body = get("/api/backtest");
-        assertTrue(body.path("limitation").asText().contains("không đủ 10–15"));
+        assertTrue(body.path("limitation").asText().contains("không phải khảo sát 15 cửa hàng đã đóng tại chỗ"));
         assertTrue(body.path("training_rejection").asText().contains("Grab"));
         assertEquals(5, body.path("mapper_absent_count").asInt());
         assertEquals(5, body.path("brand_listed_count").asInt());
@@ -156,16 +156,24 @@ class MapCompareBacktestTest {
                 assertEquals(BacktestService.median(winmart), brand.path("median_spatial_score_without_self").asDouble(), 1e-9);
             }
         }
-        assertTrue(body.path("question").asText().contains("không phải đối chiếu cửa hàng còn sống"));
-        assertEquals(1, body.path("unlocated_closures").size());
-        JsonNode unlocated = body.path("unlocated_closures").get(0);
-        assertEquals("Circle K", unlocated.path("name").asText());
-        assertEquals("Cầu Giấy", unlocated.path("district").asText());
-        assertTrue(unlocated.path("spatial_score").isNull());
-        assertTrue(unlocated.path("lat").isNull());
-        assertTrue(unlocated.path("source_url").asText().startsWith("https://"));
-        assertTrue(unlocated.path("reason_unscored").asText().contains("74"));
-        assertTrue(body.path("unlocated_note").asText().contains("Không gán tọa độ"));
+        assertTrue(body.path("question").asText().contains("khoảng điểm chồng nhau"));
+        assertEquals(0, body.path("unlocated_closures").size());
+        assertEquals(11, body.path("sourced_panel_count").asInt());
+        assertEquals(6, body.path("closed_group_count").asInt());
+        assertTrue(body.path("panel_finding").asText().contains("ngưỡng"));
+        boolean newsClosure = false;
+        for (JsonNode place : body.path("sourced_places")) {
+            if ("reported_closed".equals(place.path("outcome").asText())) {
+                newsClosure = true;
+                assertEquals("Circle K", place.path("name").asText());
+                assertEquals(21.021910, place.path("lat").asDouble(), 0.0002);
+                assertEquals(105.799888, place.path("lon").asDouble(), 0.0002);
+                assertTrue(place.path("coordinate_method").asText().contains("11458943616"));
+                assertTrue(place.path("osm_url").isNull());
+                assertTrue(place.path("spatial_score").isNumber());
+            }
+        }
+        assertTrue(newsClosure);
         assertTrue(body.path("survey_rule").asText().contains("check_date"));
         assertEquals(3, body.path("former_places").size());
         boolean formerConvenience = false;

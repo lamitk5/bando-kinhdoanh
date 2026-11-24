@@ -1,13 +1,1 @@
-[
-  {
-    "name": "Circle K",
-    "business_type": "convenience",
-    "district": "Cầu Giấy",
-    "address": "74–76 Nguyễn Khang, phường Yên Hòa",
-    "outcome": "reported_closed",
-    "closed_on": "2024-06-19",
-    "basis": "Báo Sức khỏe và Đời sống ghi cửa hàng dán thông báo ngừng hoạt động từ ngày 19/6/2024 và chuyển đi nơi khác.",
-    "source_url": "https://phapluat.suckhoedoisong.vn/cua-hang-tien-loi-circle-k-so-74-nguyen-khang-dong-cua-sau-phan-anh-cua-gia-dinh-va-xa-hoi-57162.html",
-    "reason_unscored": "OpenStreetMap không có đối tượng mang số nhà 74 Nguyễn Khang, nên không gán tọa độ và không chấm điểm."
-  }
-]
+[]

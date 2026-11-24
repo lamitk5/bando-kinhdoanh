@@ -328,14 +328,12 @@
       const former = (body.former_places || []).map(place =>
         place.district + " " + place.lifecycle_key + "=" + place.lifecycle_value + " điểm " + place.spatial_score
       ).join("; ");
-      const absentMedian = body.mapper_absent_median_spatial_score;
       const listedMedian = body.brand_listed_median_spatial_score;
       document.querySelector("#backtest-note").textContent = body.limitation + " " + body.training_rejection + " "
-        + body.sourced_note + " " + body.question
-        + " Trung vị nhóm người vẽ ghi không còn là " + absentMedian
+        + body.sourced_note + " " + body.question + " " + (body.panel_finding || "")
+        + " Trung vị nhóm không còn là " + body.closed_group_median_spatial_score
         + ". Trung vị nhóm Circle K còn trong danh sách hãng là " + listedMedian + "."
-        + (former ? " Điểm từng mang thẻ tiện lợi: " + former + "." : "")
-        + (body.unlocated_note ? " " + body.unlocated_note : "");
+        + (former ? " Điểm từng mang thẻ tiện lợi: " + former + "." : "");
       const table = document.createElement("table");
       table.innerHTML = "<tr><th>Ngành</th><th>Cơ sở có tên</th><th>Trung vị, đã trừ chính nó</th><th>Khoảng một phần tư</th><th>Trung vị 60 điểm lưới</th><th>Có ngày xem</th></tr>";
       body.businesses.forEach(item => {
@@ -350,7 +348,8 @@
       sourced.innerHTML = "<tr><th>Điểm có nguồn</th><th>Quận</th><th>Nhóm</th><th>Điểm để so</th></tr>";
       (body.sourced_places || []).forEach(place => {
         const row = document.createElement("tr");
-        row.innerHTML = "<td><a href=\"" + place.osm_url + "\">" + place.name + "</a></td><td>"
+        const href = place.osm_url || place.source_url;
+        row.innerHTML = "<td><a href=\"" + href + "\">" + place.name + "</a></td><td>"
           + place.district + "</td><td>" + place.outcome + "</td><td>" + place.spatial_score_for_compare + "</td>";
         sourced.appendChild(row);
       });

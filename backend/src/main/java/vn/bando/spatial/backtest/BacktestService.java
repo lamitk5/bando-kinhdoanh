@@ -34,9 +34,9 @@ public class BacktestService {
         List<Observed> named = namedShops();
         List<Observed> grid = gridPoints();
         ObjectNode body = mapper.createObjectNode();
-        body.put("limitation", "Bảng poi đã nạp không có thẻ disused. File vietnam-latest.osm.pbf mốc 2026-11-15T21:22:28Z, kể cả quán ăn, cà phê, nhà thuốc và cửa hàng trống, chỉ có 3 điểm trong bốn quận mang thẻ tiện lợi đã ngừng. Không có cà phê hay nhà thuốc mang thẻ tương ứng. Cả ba không có tên. check_date là ngày người vẽ bản đồ ghi đã xem, không phải số năm hoạt động. Chỉ một quán cà phê có start_date. Circle K số 74 Nguyễn Khang có bài báo ngày 19/6/2024 về việc ngừng hoạt động, nhưng bản đồ không có số nhà đó nên không được chấm. Đây không đủ 10–15 cửa hàng đã đóng và không phải khảo sát hiện trường.");
+        body.put("limitation", "Bảng poi đã nạp không có thẻ disused. File vietnam-latest.osm.pbf mốc 2026-11-15T21:22:28Z chỉ có 3 điểm tiện lợi từng ngừng trong bốn quận, không có tên. Mẫu đang chấm là các điểm trong sourced_places: lời người vẽ khi xóa, Circle K còn trong danh sách hãng cả hai mốc, và Circle K 74 Nguyễn Khang được đặt bằng nội suy giữa số 78 và số 80 đã vẽ trên cùng phố. Đây không phải khảo sát 15 cửa hàng đã đóng tại chỗ.");
         body.put("training_rejection", "Đối chiếu vietnam-210101.osm.pbf mốc 2021-01-01T21:42:03Z với bản 2026-11-15 có hàng trăm node ngành biến mất trong bốn quận. Lời changeset khi xóa phần lớn là Adding POIs của Grab hoặc cập nhật cửa hàng WinMart+. Tập đó không được dùng để huấn luyện và không được gọi là cửa hàng đã đóng.");
-        body.put("question", "Mọi cơ sở có tên đang có trên bản đồ có điểm không gian khác lưới trong bốn quận hay không. Đây không phải đối chiếu cửa hàng còn sống với cửa hàng đã đóng.");
+        body.put("question", "Nhóm không còn và nhóm Circle K còn trong danh sách hãng có khoảng điểm chồng nhau hay không.");
         body.put("shop_rule", "Mọi cơ sở đối thủ có tên. Điểm đã trừ chính cơ sở khỏi vòng 500 m.");
         body.put("grid_rule", "Mỗi quận 15 điểm ST_GeneratePoints nằm trong ranh, seed 1. Cùng lưới được chấm cho cả ba ngành.");
         body.put("survey_rule", "Nhóm check_date là cơ sở có thẻ ngày người vẽ ghi đã xem. Thẻ được giữ nguyên, không suy ra tuổi cửa hàng.");
@@ -164,6 +164,7 @@ public class BacktestService {
         var rows = body.putArray("sourced_places");
         var absent = new ArrayList<Double>();
         var listed = new ArrayList<Double>();
+        var closed = new ArrayList<Double>();
         for (JsonNode place : catalog) {
             double lat = place.path("lat").asDouble();
             double lon = place.path("lon").asDouble();
@@ -185,22 +186,46 @@ public class BacktestService {
             row.put("outcome", place.path("outcome").asText());
             row.put("basis", place.path("basis").asText());
             row.put("source_url", place.path("source_url").asText());
-            row.put("osm_url", OsmRefs.url(place.path("osm_type").asText(), place.path("osm_id").asLong()));
+            if (place.path("osm_id").asLong() > 0) {
+                row.put("osm_url", OsmRefs.url(place.path("osm_type").asText(), place.path("osm_id").asLong()));
+            } else {
+                row.putNull("osm_url");
+            }
+            if (place.path("coordinate_method").asText().isBlank()) {
+                row.putNull("coordinate_method");
+            } else {
+                row.put("coordinate_method", place.path("coordinate_method").asText());
+            }
             row.put("lat", scored.path("lat").asDouble());
             row.put("lon", scored.path("lon").asDouble());
             row.put("spatial_score", scored.path("spatial_score").asDouble());
             row.put("spatial_score_for_compare", compare);
-            if ("mapper_absent".equals(place.path("outcome").asText())) {
+            String outcome = place.path("outcome").asText();
+            if ("mapper_absent".equals(outcome)) {
                 absent.add(compare);
-            } else if ("brand_listed".equals(place.path("outcome").asText())) {
+                closed.add(compare);
+            } else if ("reported_closed".equals(outcome)) {
+                closed.add(compare);
+            } else if ("brand_listed".equals(outcome)) {
                 listed.add(compare);
             }
         }
-        body.put("sourced_note", "mapper_absent là lời người vẽ khi xóa điểm, không phải khảo sát cửa hàng đã đóng. brand_listed là Circle K còn trong danh sách hãng ở cả hai mốc 2024-08-05 và 2026-07-10 và khớp số nhà trên bản đồ. Năm điểm và năm điểm không đủ nhóm 10–15 cửa hàng đã đóng.");
+        body.put("sourced_note", "mapper_absent là lời người vẽ khi xóa điểm. reported_closed là cửa hàng có bài báo, tọa độ nội suy giữa hai số nhà đã vẽ trên cùng phố. brand_listed là Circle K còn trong danh sách hãng ở cả hai mốc 2024-08-05 và 2026-07-10 và khớp số nhà trên bản đồ.");
         body.put("mapper_absent_count", absent.size());
         body.put("mapper_absent_median_spatial_score", median(absent));
+        body.put("reported_closed_count", closed.size() - absent.size());
+        body.put("closed_group_count", closed.size());
+        body.put("closed_group_median_spatial_score", median(closed));
         body.put("brand_listed_count", listed.size());
         body.put("brand_listed_median_spatial_score", median(listed));
+        body.put("sourced_panel_count", rows.size());
+        boolean overlap = !closed.isEmpty() && !listed.isEmpty()
+                && java.util.Collections.min(closed) <= java.util.Collections.max(listed)
+                && java.util.Collections.min(listed) <= java.util.Collections.max(closed);
+        body.put("score_ranges_overlap", overlap);
+        body.put("panel_finding", overlap
+                ? "Khoảng điểm của nhóm không còn và nhóm còn trong danh sách hãng chồng lên nhau. Mẫu này không tách được hai nhóm bằng một ngưỡng điểm."
+                : "Khoảng điểm của nhóm không còn và nhóm còn trong danh sách hãng không chồng lên nhau.");
     }
 
     private void unlocated(ObjectNode body) {
@@ -221,7 +246,7 @@ public class BacktestService {
             row.putNull("lon");
             row.putNull("spatial_score");
         }
-        body.put("unlocated_note", "Các dòng này có nguồn về việc ngừng hoạt động nhưng không có số nhà trên OpenStreetMap. Không gán tọa độ giữa đường và không chấm điểm.");
+        body.put("unlocated_note", "Không còn cửa hàng có bài báo mà thiếu mốc số nhà. Circle K 74 Nguyễn Khang đã được đặt bằng nội suy giữa số 78 và số 80.");
     }
 
     private void benchmarks(ObjectNode body) {
