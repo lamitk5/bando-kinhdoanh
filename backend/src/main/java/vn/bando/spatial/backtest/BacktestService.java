@@ -34,7 +34,7 @@ public class BacktestService {
         List<Observed> named = namedShops();
         List<Observed> grid = gridPoints();
         ObjectNode body = mapper.createObjectNode();
-        body.put("limitation", "Bảng poi đã nạp không có thẻ disused. File vietnam-latest.osm.pbf mốc 2026-11-15T21:22:28Z, kể cả quán ăn, cà phê, nhà thuốc và cửa hàng trống, chỉ có 3 điểm trong bốn quận mang thẻ tiện lợi đã ngừng. Không có cà phê hay nhà thuốc mang thẻ tương ứng. Cả ba không có tên. check_date là ngày người vẽ bản đồ ghi đã xem, không phải số năm hoạt động. Chỉ một quán cà phê có start_date. Đây không đủ 10–15 cửa hàng đã đóng và không phải khảo sát hiện trường.");
+        body.put("limitation", "Bảng poi đã nạp không có thẻ disused. File vietnam-latest.osm.pbf mốc 2026-11-15T21:22:28Z, kể cả quán ăn, cà phê, nhà thuốc và cửa hàng trống, chỉ có 3 điểm trong bốn quận mang thẻ tiện lợi đã ngừng. Không có cà phê hay nhà thuốc mang thẻ tương ứng. Cả ba không có tên. check_date là ngày người vẽ bản đồ ghi đã xem, không phải số năm hoạt động. Chỉ một quán cà phê có start_date. Circle K số 74 Nguyễn Khang có bài báo ngày 19/6/2024 về việc ngừng hoạt động, nhưng bản đồ không có số nhà đó nên không được chấm. Đây không đủ 10–15 cửa hàng đã đóng và không phải khảo sát hiện trường.");
         body.put("training_rejection", "Đối chiếu vietnam-210101.osm.pbf mốc 2021-01-01T21:42:03Z với bản 2026-11-15 có hàng trăm node ngành biến mất trong bốn quận. Lời changeset khi xóa phần lớn là Adding POIs của Grab hoặc cập nhật cửa hàng WinMart+. Tập đó không được dùng để huấn luyện và không được gọi là cửa hàng đã đóng.");
         body.put("question", "Mọi cơ sở có tên đang có trên bản đồ có điểm không gian khác lưới trong bốn quận hay không. Đây không phải đối chiếu cửa hàng còn sống với cửa hàng đã đóng.");
         body.put("shop_rule", "Mọi cơ sở đối thủ có tên. Điểm đã trừ chính cơ sở khỏi vòng 500 m.");
@@ -90,6 +90,7 @@ public class BacktestService {
         }
         former(body);
         sourced(body);
+        unlocated(body);
         benchmarks(body);
         return body;
     }
@@ -200,6 +201,27 @@ public class BacktestService {
         body.put("mapper_absent_median_spatial_score", median(absent));
         body.put("brand_listed_count", listed.size());
         body.put("brand_listed_median_spatial_score", median(listed));
+    }
+
+    private void unlocated(ObjectNode body) {
+        JsonNode catalog = readResource("/backtest/unlocated_closures.json", "Thiếu danh sách cửa hàng có nguồn nhưng không có tọa độ");
+        var rows = body.putArray("unlocated_closures");
+        for (JsonNode place : catalog) {
+            ObjectNode row = rows.addObject();
+            row.put("name", place.path("name").asText());
+            row.put("business_type", place.path("business_type").asText());
+            row.put("district", place.path("district").asText());
+            row.put("address", place.path("address").asText());
+            row.put("outcome", place.path("outcome").asText());
+            row.put("closed_on", place.path("closed_on").asText());
+            row.put("basis", place.path("basis").asText());
+            row.put("source_url", place.path("source_url").asText());
+            row.put("reason_unscored", place.path("reason_unscored").asText());
+            row.putNull("lat");
+            row.putNull("lon");
+            row.putNull("spatial_score");
+        }
+        body.put("unlocated_note", "Các dòng này có nguồn về việc ngừng hoạt động nhưng không có số nhà trên OpenStreetMap. Không gán tọa độ giữa đường và không chấm điểm.");
     }
 
     private void benchmarks(ObjectNode body) {

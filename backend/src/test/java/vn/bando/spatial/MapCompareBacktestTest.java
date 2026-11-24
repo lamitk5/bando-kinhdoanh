@@ -157,6 +157,15 @@ class MapCompareBacktestTest {
             }
         }
         assertTrue(body.path("question").asText().contains("không phải đối chiếu cửa hàng còn sống"));
+        assertEquals(1, body.path("unlocated_closures").size());
+        JsonNode unlocated = body.path("unlocated_closures").get(0);
+        assertEquals("Circle K", unlocated.path("name").asText());
+        assertEquals("Cầu Giấy", unlocated.path("district").asText());
+        assertTrue(unlocated.path("spatial_score").isNull());
+        assertTrue(unlocated.path("lat").isNull());
+        assertTrue(unlocated.path("source_url").asText().startsWith("https://"));
+        assertTrue(unlocated.path("reason_unscored").asText().contains("74"));
+        assertTrue(body.path("unlocated_note").asText().contains("Không gán tọa độ"));
         assertTrue(body.path("survey_rule").asText().contains("check_date"));
         assertEquals(3, body.path("former_places").size());
         boolean formerConvenience = false;

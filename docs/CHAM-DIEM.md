@@ -171,8 +171,8 @@ Mốc so sánh có thông số là 154 cơ sở đối thủ có đủ `brand`, 
 | Ding Tea | Cà phê / đồ uống | 3 | 43,9 |
 | GS25 | Tiện lợi | 3 | 75,9 |
 
-Trong 12 Circle K có số nhà, 5 có trong danh sách hãng cả ngày 05/08/2024 và 10/07/2026, 4 chỉ có ở bản 10/07/2026, 3 không khớp danh sách đã lưu. Số 74 Nguyễn Khang không có đối tượng mang số nhà đó trên bản đồ, nên không được gán tọa độ.
+Trong 12 Circle K có số nhà, 5 có trong danh sách hãng cả ngày 05/08/2024 và 10/07/2026, 4 chỉ có ở bản 10/07/2026, 3 không khớp danh sách đã lưu. Số 74 Nguyễn Khang không có đối tượng mang số nhà đó trên bản đồ, nên không được gán tọa độ. Báo Sức khỏe và Đời sống ngày 20/6/2024 ghi cửa hàng Circle K tại 74–76 Nguyễn Khang, phường Yên Hòa, Cầu Giấy, thông báo ngừng hoạt động từ 19/6/2024. Dòng này nằm trong `unlocated_closures`, không có điểm không gian.
 
 ## Việc chưa làm
 
-Chưa có phiếu chuyên gia, chưa có doanh thu để thành ROI, chưa có tài khoản người duyệt, và chưa có nhãn tầm nhìn hay ảnh mặt tiền Hà Nội đã gán mức. Chưa có danh sách cửa hàng đã đóng cửa để đối chiếu.
+Chưa có phiếu chuyên gia, chưa có doanh thu để thành ROI, và chưa có tài khoản người duyệt riêng từng người. Mã duyệt dùng chung đã có. Chưa có nhãn tầm nhìn hay ảnh mặt tiền Hà Nội đã gán mức. Chưa đủ 10–15 cửa hàng đã đóng có tọa độ để đối chiếu.

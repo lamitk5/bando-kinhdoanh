@@ -328,9 +328,14 @@
       const former = (body.former_places || []).map(place =>
         place.district + " " + place.lifecycle_key + "=" + place.lifecycle_value + " điểm " + place.spatial_score
       ).join("; ");
+      const absentMedian = body.mapper_absent_median_spatial_score;
+      const listedMedian = body.brand_listed_median_spatial_score;
       document.querySelector("#backtest-note").textContent = body.limitation + " " + body.training_rejection + " "
         + body.sourced_note + " " + body.question
-        + (former ? " Điểm từng mang thẻ tiện lợi: " + former + "." : "");
+        + " Trung vị nhóm người vẽ ghi không còn là " + absentMedian
+        + ". Trung vị nhóm Circle K còn trong danh sách hãng là " + listedMedian + "."
+        + (former ? " Điểm từng mang thẻ tiện lợi: " + former + "." : "")
+        + (body.unlocated_note ? " " + body.unlocated_note : "");
       const table = document.createElement("table");
       table.innerHTML = "<tr><th>Ngành</th><th>Cơ sở có tên</th><th>Trung vị, đã trừ chính nó</th><th>Khoảng một phần tư</th><th>Trung vị 60 điểm lưới</th><th>Có ngày xem</th></tr>";
       body.businesses.forEach(item => {
@@ -357,10 +362,19 @@
           + brand.count + "</td><td>" + brand.median_spatial_score_without_self + "</td>";
         brands.appendChild(row);
       });
+      const unlocated = document.createElement("table");
+      unlocated.innerHTML = "<tr><th>Có nguồn, chưa có tọa độ</th><th>Địa chỉ</th><th>Ngày ngừng</th><th>Vì sao không chấm</th></tr>";
+      (body.unlocated_closures || []).forEach(place => {
+        const row = document.createElement("tr");
+        row.innerHTML = "<td><a href=\"" + place.source_url + "\">" + place.name + "</a></td><td>"
+          + place.address + "</td><td>" + place.closed_on + "</td><td>" + place.reason_unscored + "</td>";
+        unlocated.appendChild(row);
+      });
       const host = document.querySelector("#backtest-table");
       host.innerHTML = "";
       host.appendChild(table);
       host.appendChild(sourced);
+      host.appendChild(unlocated);
       host.appendChild(brands);
     };
 
