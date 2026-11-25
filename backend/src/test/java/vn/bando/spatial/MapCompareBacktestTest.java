@@ -157,29 +157,26 @@ class MapCompareBacktestTest {
             }
         }
         assertTrue(body.path("question").asText().contains("khoảng điểm chồng nhau"));
-        assertEquals(3, body.path("unlocated_closures").size());
-        assertEquals(0, body.path("unlocated_in_study_count").asInt());
-        assertTrue(body.path("unlocated_note").asText().contains("7056055192"));
-        int namedOutside = 0;
-        for (JsonNode place : body.path("unlocated_closures")) {
-            assertTrue(place.path("lat").isNull());
-            assertTrue(place.path("lon").isNull());
-            assertTrue(place.path("spatial_score").isNull());
-            assertTrue(place.path("closed_on").isNull());
-            assertFalse(place.path("inside_study").asBoolean());
-            assertEquals("The Coffee House", place.path("name").asText());
-            assertEquals("2024-08-08", place.path("article_date").asText());
-            assertTrue(place.path("osm_url").asText().startsWith("https://www.openstreetmap.org/node/"));
-            assertTrue(place.path("reason_unscored").asText().contains("ngoài bốn quận"));
-            namedOutside++;
-        }
-        assertEquals(3, namedOutside);
-        assertEquals(12, body.path("sourced_panel_count").asInt());
-        assertEquals(7, body.path("closed_group_count").asInt());
+        assertEquals(1, body.path("unlocated_closures").size());
+        assertEquals(1, body.path("unlocated_in_study_count").asInt());
+        assertTrue(body.path("unlocated_note").asText().contains("An Khang"));
+        JsonNode anKhang = body.path("unlocated_closures").get(0);
+        assertEquals("Nhà thuốc An Khang", anKhang.path("name").asText());
+        assertEquals("pharmacy", anKhang.path("business_type").asText());
+        assertEquals("2025-05-19", anKhang.path("article_date").asText());
+        assertTrue(anKhang.path("inside_study").asBoolean());
+        assertTrue(anKhang.path("lat").isNull());
+        assertTrue(anKhang.path("spatial_score").isNull());
+        assertTrue(anKhang.path("closed_on").isNull());
+        assertTrue(anKhang.path("osm_url").isNull());
+        assertTrue(anKhang.path("source_url").asText().contains("cafebiz.vn"));
+        assertTrue(anKhang.path("reason_unscored").asText().contains("số nhà"));
+        assertEquals(11, body.path("sourced_panel_count").asInt());
+        assertEquals(6, body.path("closed_group_count").asInt());
         assertTrue(body.path("panel_finding").asText().contains("ngưỡng"));
         boolean newsClosure = false;
-        boolean coffeeHouse = false;
         for (JsonNode place : body.path("sourced_places")) {
+            assertFalse("The Coffee House".equals(place.path("name").asText()));
             if ("reported_closed".equals(place.path("outcome").asText()) && "Circle K".equals(place.path("name").asText())) {
                 newsClosure = true;
                 assertEquals(21.021910, place.path("lat").asDouble(), 0.0002);
@@ -188,20 +185,8 @@ class MapCompareBacktestTest {
                 assertTrue(place.path("osm_url").isNull());
                 assertTrue(place.path("spatial_score").isNumber());
             }
-            if (place.path("osm_url").asText().endsWith("/7056055192")) {
-                coffeeHouse = true;
-                assertEquals("The Coffee House", place.path("name").asText());
-                assertEquals("reported_closed", place.path("outcome").asText());
-                assertEquals("Thanh Xuân", place.path("district").asText());
-                assertEquals(20.9950390, place.path("lat").asDouble(), 0.0000001);
-                assertEquals(105.8057340, place.path("lon").asDouble(), 0.0000001);
-                assertTrue(place.path("coordinate_method").asText().contains("số 47"));
-                assertTrue(place.path("spatial_score").isNumber());
-                assertTrue(place.path("spatial_score_for_compare").isNumber());
-            }
         }
         assertTrue(newsClosure);
-        assertTrue(coffeeHouse);
         assertTrue(body.path("survey_rule").asText().contains("check_date"));
         assertEquals(3, body.path("former_places").size());
         boolean formerConvenience = false;

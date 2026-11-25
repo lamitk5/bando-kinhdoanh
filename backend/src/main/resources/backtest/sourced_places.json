@@ -140,19 +140,5 @@
     "coordinate_method": "Số 74 chưa được vẽ. Điểm đặt bằng cách lùi đúng một khoảng từ số 78 (node 11458943616) về phía ngược với số 80 (node 11458943617) trên phố Nguyễn Khang. Điểm cách tim đường way 1287978626 khoảng 4 m.",
     "basis": "Báo Sức khỏe và Đời sống ghi cửa hàng 74–76 Nguyễn Khang thông báo ngừng hoạt động từ ngày 19/6/2024. Tọa độ là nội suy số nhà, không phải điểm GPS đo tại cửa.",
     "source_url": "https://phapluat.suckhoedoisong.vn/cua-hang-tien-loi-circle-k-so-74-nguyen-khang-dong-cua-sau-phan-anh-cua-gia-dinh-va-xa-hoi-57162.html"
-  },
-  {
-    "name": "The Coffee House",
-    "business_type": "cafe_drink",
-    "district": "Thanh Xuân",
-    "lat": 20.9950390,
-    "lon": 105.8057340,
-    "outcome": "reported_closed",
-    "remove_self": true,
-    "osm_type": "N",
-    "osm_id": 7056055192,
-    "coordinate_method": "VnExpress ngày 8/8/2024 chỉ ghi phố Nguyễn Tuân, không ghi số nhà. Trong bốn quận chỉ có node 7056055192 mang thương hiệu The Coffee House trên phố này, số 47, sửa lần cuối 2020-07-09, vẫn còn thẻ amenity=cafe. Điểm lấy từ node đó. Điểm để so trừ một đối thủ vì node này vẫn nằm trong bản đồ đang nạp.",
-    "basis": "VnExpress ngày 8/8/2024 dẫn lời CEO Ngô Nguyên Kha và ghi chi nhánh Nguyễn Tuân đã đóng trước ngày bài báo. Không có ngày đóng. Không phải điểm GPS đo tại cửa.",
-    "source_url": "https://vnexpress.net/the-coffee-house-dung-kinh-doanh-tai-da-nang-va-can-tho-4779226.html"
   }
 ]
