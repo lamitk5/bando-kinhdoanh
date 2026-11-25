@@ -157,15 +157,28 @@ class MapCompareBacktestTest {
             }
         }
         assertTrue(body.path("question").asText().contains("khoảng điểm chồng nhau"));
-        assertEquals(0, body.path("unlocated_closures").size());
+        assertEquals(1, body.path("unlocated_closures").size());
+        assertEquals(1, body.path("unlocated_in_study_count").asInt());
+        assertTrue(body.path("unlocated_note").asText().contains("An Khang"));
+        JsonNode anKhang = body.path("unlocated_closures").get(0);
+        assertEquals("Nhà thuốc An Khang", anKhang.path("name").asText());
+        assertEquals("pharmacy", anKhang.path("business_type").asText());
+        assertEquals("2025-05-19", anKhang.path("article_date").asText());
+        assertTrue(anKhang.path("inside_study").asBoolean());
+        assertTrue(anKhang.path("lat").isNull());
+        assertTrue(anKhang.path("spatial_score").isNull());
+        assertTrue(anKhang.path("closed_on").isNull());
+        assertTrue(anKhang.path("osm_url").isNull());
+        assertTrue(anKhang.path("source_url").asText().contains("cafebiz.vn"));
+        assertTrue(anKhang.path("reason_unscored").asText().contains("số nhà"));
         assertEquals(11, body.path("sourced_panel_count").asInt());
         assertEquals(6, body.path("closed_group_count").asInt());
         assertTrue(body.path("panel_finding").asText().contains("ngưỡng"));
         boolean newsClosure = false;
         for (JsonNode place : body.path("sourced_places")) {
-            if ("reported_closed".equals(place.path("outcome").asText())) {
+            assertFalse("The Coffee House".equals(place.path("name").asText()));
+            if ("reported_closed".equals(place.path("outcome").asText()) && "Circle K".equals(place.path("name").asText())) {
                 newsClosure = true;
-                assertEquals("Circle K", place.path("name").asText());
                 assertEquals(21.021910, place.path("lat").asDouble(), 0.0002);
                 assertEquals(105.799888, place.path("lon").asDouble(), 0.0002);
                 assertTrue(place.path("coordinate_method").asText().contains("11458943616"));

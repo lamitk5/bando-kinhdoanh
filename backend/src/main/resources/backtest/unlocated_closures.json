@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "name": "Nhà thuốc An Khang",
+    "business_type": "pharmacy",
+    "district": "Hà Nội",
+    "address": "không có số nhà trong bài báo",
+    "outcome": "reported_closed",
+    "inside_study": true,
+    "article_date": "2025-05-19",
+    "basis": "CafeBiz ngày 19/5/2025 dẫn báo cáo Q&Me: chuỗi Nhà thuốc An Khang của Thế Giới Di Động không còn cửa hàng tại Hà Nội, và trang thương hiệu không còn liệt kê chi nhánh Hà Nội. Bài không ghi số nhà và không ghi ngày đóng từng cửa.",
+    "source_url": "https://cafebiz.vn/an-khang-dong-cua-toan-bo-diem-ban-ha-noi-giac-mo-mo-2000-nha-thuoc-cua-the-gioi-di-dong-dang-o-dau-176250519143719206.chn",
+    "reason_unscored": "Bài báo nói cả chuỗi đã rời Hà Nội, không nêu số nhà. OpenStreetMap không có node thương hiệu An Khang trong bốn quận, nên không chấm."
+  }
+]

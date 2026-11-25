@@ -175,6 +175,8 @@ Mốc so sánh có thông số là 154 cơ sở đối thủ có đủ `brand`, 
 
 Trong 12 Circle K có số nhà, 5 có trong danh sách hãng cả ngày 05/08/2024 và 10/07/2026, 4 chỉ có ở bản 10/07/2026, 3 không khớp danh sách đã lưu. Số 74 Nguyễn Khang không có node riêng. Số 78 là node `11458943616`, số 80 là node `11458943617`. Cửa hàng 74–76 được đặt bằng cách lùi đúng một khoảng từ số 78 về phía ngược với số 80, ra `21,021910` và `105,799888`, cách tim đường way `1287978626` khoảng 4 m. Báo Sức khỏe và Đời sống ngày 20/6/2024 ghi cửa hàng thông báo ngừng hoạt động từ 19/6/2024. Đây là nội suy số nhà, không phải điểm GPS đo tại cửa.
 
+CafeBiz ngày 19/5/2025 dẫn báo cáo Q&Me: chuỗi Nhà thuốc An Khang của Thế Giới Di Động không còn cửa hàng tại Hà Nội, và trang thương hiệu không còn liệt kê chi nhánh Hà Nội. Bài không ghi số nhà. OpenStreetMap không có node thương hiệu An Khang trong bốn quận. Dòng này nằm trong `unlocated_closures`, `lat` và `spatial_score` đều null. The Coffee House không còn trong mẫu kiểm chứng.
+
 ## Việc chưa làm
 
-Chưa có phiếu chuyên gia, chưa có doanh thu để thành ROI, và chưa có tài khoản người duyệt riêng từng người. Mã duyệt dùng chung đã có. Chưa có nhãn tầm nhìn hay ảnh mặt tiền Hà Nội đã gán mức. Mẫu kiểm chứng có nguồn là 11 điểm, trong đó 6 điểm không còn. Đây không phải khảo sát 15 cửa hàng đã đóng tại chỗ.
+Chưa có phiếu chuyên gia, chưa có doanh thu để thành ROI, và chưa có tài khoản người duyệt riêng từng người. Mã duyệt dùng chung đã có. Chưa có nhãn tầm nhìn hay ảnh mặt tiền Hà Nội đã gán mức. Mẫu kiểm chứng có nguồn là 11 điểm đã chấm, trong đó 6 điểm không còn. Nhà thuốc An Khang có bài báo về việc rời Hà Nội nhưng không có số nhà, nên chưa chấm. Đây không phải khảo sát 15 cửa hàng đã đóng tại chỗ.
