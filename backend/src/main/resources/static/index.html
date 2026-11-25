@@ -363,13 +363,13 @@
         brands.appendChild(row);
       });
       const unlocated = document.createElement("table");
-      unlocated.innerHTML = "<tr><th>Có nguồn, chưa có tọa độ</th><th>Địa chỉ</th><th>Quận</th><th>Trong bốn quận</th><th>Ngày bài báo</th><th>Vì sao không chấm</th></tr>";
+      unlocated.innerHTML = "<tr><th>Có nguồn, không chấm</th><th>Địa chỉ trên bản đồ</th><th>Quận</th><th>Node khớp tên</th><th>Vì sao không chấm</th></tr>";
       (body.unlocated_closures || []).forEach(place => {
         const row = document.createElement("tr");
+        const node = place.osm_url ? "<a href=\"" + place.osm_url + "\">mở</a>" : "không có";
         row.innerHTML = "<td><a href=\"" + place.source_url + "\">" + place.name + "</a></td><td>"
-          + place.address + "</td><td>" + place.district + "</td><td>"
-          + (place.inside_study ? "có" : "không") + "</td><td>"
-          + (place.article_date || "không ghi") + "</td><td>" + place.reason_unscored + "</td>";
+          + place.address + "</td><td>" + place.district + "</td><td>" + node + "</td><td>"
+          + place.reason_unscored + "</td>";
         unlocated.appendChild(row);
       });
       const host = document.querySelector("#backtest-table");

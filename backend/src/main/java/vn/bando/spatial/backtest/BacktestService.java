@@ -34,7 +34,7 @@ public class BacktestService {
         List<Observed> named = namedShops();
         List<Observed> grid = gridPoints();
         ObjectNode body = mapper.createObjectNode();
-        body.put("limitation", "Bảng poi đã nạp không có thẻ disused. File vietnam-latest.osm.pbf mốc 2026-11-15T21:22:28Z chỉ có 3 điểm tiện lợi từng ngừng trong bốn quận, không có tên. Mẫu đang chấm là các điểm trong sourced_places: lời người vẽ khi xóa, Circle K còn trong danh sách hãng cả hai mốc, và Circle K 74 Nguyễn Khang được đặt bằng nội suy giữa số 78 và số 80 đã vẽ trên cùng phố. Đây không phải khảo sát 15 cửa hàng đã đóng tại chỗ.");
+        body.put("limitation", "Bảng poi đã nạp không có thẻ disused. File vietnam-latest.osm.pbf mốc 2026-11-15T21:22:28Z chỉ có 3 điểm tiện lợi từng ngừng trong bốn quận, không có tên. Mẫu đang chấm là các điểm trong sourced_places: lời người vẽ khi xóa, Circle K còn trong danh sách hãng cả hai mốc, Circle K 74 Nguyễn Khang nội suy giữa số 78 và số 80, và The Coffee House phố Nguyễn Tuân tại node 7056055192 vì là node duy nhất khớp thương hiệu với tên phố. Đây không phải khảo sát 15 cửa hàng đã đóng tại chỗ.");
         body.put("training_rejection", "Đối chiếu vietnam-210101.osm.pbf mốc 2021-01-01T21:42:03Z với bản 2026-11-15 có hàng trăm node ngành biến mất trong bốn quận. Lời changeset khi xóa phần lớn là Adding POIs của Grab hoặc cập nhật cửa hàng WinMart+. Tập đó không được dùng để huấn luyện và không được gọi là cửa hàng đã đóng.");
         body.put("question", "Nhóm không còn và nhóm Circle K còn trong danh sách hãng có khoảng điểm chồng nhau hay không.");
         body.put("shop_rule", "Mọi cơ sở đối thủ có tên. Điểm đã trừ chính cơ sở khỏi vòng 500 m.");
@@ -210,7 +210,7 @@ public class BacktestService {
                 listed.add(compare);
             }
         }
-        body.put("sourced_note", "mapper_absent là lời người vẽ khi xóa điểm. reported_closed là cửa hàng có bài báo, tọa độ nội suy giữa hai số nhà đã vẽ trên cùng phố. brand_listed là Circle K còn trong danh sách hãng ở cả hai mốc 2024-08-05 và 2026-07-10 và khớp số nhà trên bản đồ.");
+        body.put("sourced_note", "mapper_absent là lời người vẽ khi xóa điểm. reported_closed là cửa hàng có bài báo. Circle K 74 Nguyễn Khang dùng nội suy số nhà. The Coffee House Nguyễn Tuân dùng node duy nhất khớp thương hiệu và tên phố; bài báo không ghi số nhà. brand_listed là Circle K còn trong danh sách hãng ở cả hai mốc 2024-08-05 và 2026-07-10 và khớp số nhà trên bản đồ.");
         body.put("mapper_absent_count", absent.size());
         body.put("mapper_absent_median_spatial_score", median(absent));
         body.put("reported_closed_count", closed.size() - absent.size());
@@ -244,11 +244,16 @@ public class BacktestService {
             row.put("basis", place.path("basis").asText());
             row.put("source_url", place.path("source_url").asText());
             row.put("reason_unscored", place.path("reason_unscored").asText());
+            if (place.path("osm_id").asLong() > 0) {
+                row.put("osm_url", OsmRefs.url(place.path("osm_type").asText(), place.path("osm_id").asLong()));
+            } else {
+                row.putNull("osm_url");
+            }
             row.putNull("lat");
             row.putNull("lon");
             row.putNull("spatial_score");
         }
-        body.put("unlocated_note", "VnExpress ngày 8/8/2024 gọi tên bốn chi nhánh The Coffee House theo phố, không có số nhà và không có ngày đóng, nên không chấm điểm. Chỉ phố Nguyễn Tuân nằm trong bốn quận. Circle K 74 Nguyễn Khang đã được đặt bằng nội suy giữa số 78 và số 80.");
+        body.put("unlocated_note", "Ba chi nhánh The Coffee House còn lại có đúng một node khớp tên nhưng nằm ngoài bốn quận, nên không chấm. Phố Nguyễn Tuân đã chuyển sang mẫu đang chấm qua node 7056055192. Circle K 74 Nguyễn Khang đã được đặt bằng nội suy giữa số 78 và số 80.");
         body.put("unlocated_in_study_count", countInStudy(catalog));
     }
 

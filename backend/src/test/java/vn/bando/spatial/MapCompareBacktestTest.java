@@ -157,47 +157,51 @@ class MapCompareBacktestTest {
             }
         }
         assertTrue(body.path("question").asText().contains("khoảng điểm chồng nhau"));
-        assertEquals(4, body.path("unlocated_closures").size());
-        assertEquals(1, body.path("unlocated_in_study_count").asInt());
-        assertTrue(body.path("unlocated_note").asText().contains("Nguyễn Tuân"));
-        int namedInStudy = 0;
+        assertEquals(3, body.path("unlocated_closures").size());
+        assertEquals(0, body.path("unlocated_in_study_count").asInt());
+        assertTrue(body.path("unlocated_note").asText().contains("7056055192"));
         int namedOutside = 0;
         for (JsonNode place : body.path("unlocated_closures")) {
             assertTrue(place.path("lat").isNull());
             assertTrue(place.path("lon").isNull());
             assertTrue(place.path("spatial_score").isNull());
             assertTrue(place.path("closed_on").isNull());
+            assertFalse(place.path("inside_study").asBoolean());
             assertEquals("The Coffee House", place.path("name").asText());
             assertEquals("2024-08-08", place.path("article_date").asText());
-            assertTrue(place.path("source_url").asText().startsWith("https://vnexpress.net/"));
-            assertTrue(place.path("reason_unscored").asText().contains("số nhà"));
-            if ("phố Nguyễn Tuân".equals(place.path("address").asText())) {
-                namedInStudy++;
-                assertTrue(place.path("inside_study").asBoolean());
-                assertEquals("Thanh Xuân", place.path("district").asText());
-            } else {
-                namedOutside++;
-                assertFalse(place.path("inside_study").asBoolean());
-            }
+            assertTrue(place.path("osm_url").asText().startsWith("https://www.openstreetmap.org/node/"));
+            assertTrue(place.path("reason_unscored").asText().contains("ngoài bốn quận"));
+            namedOutside++;
         }
-        assertEquals(1, namedInStudy);
         assertEquals(3, namedOutside);
-        assertEquals(11, body.path("sourced_panel_count").asInt());
-        assertEquals(6, body.path("closed_group_count").asInt());
+        assertEquals(12, body.path("sourced_panel_count").asInt());
+        assertEquals(7, body.path("closed_group_count").asInt());
         assertTrue(body.path("panel_finding").asText().contains("ngưỡng"));
         boolean newsClosure = false;
+        boolean coffeeHouse = false;
         for (JsonNode place : body.path("sourced_places")) {
-            if ("reported_closed".equals(place.path("outcome").asText())) {
+            if ("reported_closed".equals(place.path("outcome").asText()) && "Circle K".equals(place.path("name").asText())) {
                 newsClosure = true;
-                assertEquals("Circle K", place.path("name").asText());
                 assertEquals(21.021910, place.path("lat").asDouble(), 0.0002);
                 assertEquals(105.799888, place.path("lon").asDouble(), 0.0002);
                 assertTrue(place.path("coordinate_method").asText().contains("11458943616"));
                 assertTrue(place.path("osm_url").isNull());
                 assertTrue(place.path("spatial_score").isNumber());
             }
+            if (place.path("osm_url").asText().endsWith("/7056055192")) {
+                coffeeHouse = true;
+                assertEquals("The Coffee House", place.path("name").asText());
+                assertEquals("reported_closed", place.path("outcome").asText());
+                assertEquals("Thanh Xuân", place.path("district").asText());
+                assertEquals(20.9950390, place.path("lat").asDouble(), 0.0000001);
+                assertEquals(105.8057340, place.path("lon").asDouble(), 0.0000001);
+                assertTrue(place.path("coordinate_method").asText().contains("số 47"));
+                assertTrue(place.path("spatial_score").isNumber());
+                assertTrue(place.path("spatial_score_for_compare").isNumber());
+            }
         }
         assertTrue(newsClosure);
+        assertTrue(coffeeHouse);
         assertTrue(body.path("survey_rule").asText().contains("check_date"));
         assertEquals(3, body.path("former_places").size());
         boolean formerConvenience = false;
