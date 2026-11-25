@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.pdfbox.Loader;
@@ -52,7 +53,9 @@ class MapCompareBacktestTest {
         assertEquals(400, rest.getForEntity("/api/map/points?west=105&south=20&east=106&north=22&business_type=cafe_drink", String.class).getStatusCode().value());
         JsonNode districts = get("/api/map/districts");
         assertEquals(4, districts.path("features").size());
-        assertEquals(200, rest.getForEntity("/", String.class).getStatusCode().value());
+        ResponseEntity<String> home = rest.getForEntity("/", String.class);
+        assertEquals(200, home.getStatusCode().value());
+        assertTrue(home.getBody().contains("Còn mặt bằng trên bản đồ"));
     }
 
     @Test
@@ -154,6 +157,56 @@ class MapCompareBacktestTest {
         for (JsonNode brand : body.path("benchmark_brands")) {
             if ("WinMart+".equals(brand.path("brand").asText()) && "convenience".equals(brand.path("business_type").asText())) {
                 assertEquals(BacktestService.median(winmart), brand.path("median_spatial_score_without_self").asDouble(), 1e-9);
+            }
+        }
+        assertEquals(body.path("open_premises_count").asInt(), body.path("open_premises").size());
+        assertTrue(body.path("open_premises_count").asInt() >= body.path("benchmark_count").asInt());
+        assertTrue(body.path("open_premises_note").asText().contains("không phải khảo sát cửa còn mở"));
+        assertTrue(body.path("open_premises_note").asText().contains("không bịa tọa độ"));
+        int brandedPremises = 0;
+        int stillListed = 0;
+        boolean premisesCircle = false;
+        var typeCounts = new HashMap<String, Integer>();
+        var typeScores = new HashMap<String, List<Double>>();
+        for (JsonNode place : body.path("open_premises")) {
+            assertFalse(place.path("housenumber").asText().isBlank());
+            assertFalse(place.path("street").asText().isBlank());
+            assertTrue(place.path("spatial_score_without_self").isNumber());
+            assertTrue(place.path("osm_url").asText().startsWith("https://www.openstreetmap.org/"));
+            typeCounts.merge(place.path("business_type").asText(), 1, Integer::sum);
+            typeScores.computeIfAbsent(place.path("business_type").asText(), key -> new ArrayList<>())
+                    .add(place.path("spatial_score_without_self").asDouble());
+            if (!place.path("brand").isNull() && !place.path("brand").asText().isBlank()) {
+                brandedPremises++;
+            }
+            if (place.path("circle_k_list").isNull()) {
+                assertTrue(place.path("still_on_brand_list").isNull());
+            } else if (place.path("still_on_brand_list").asBoolean()) {
+                stillListed++;
+                assertTrue(place.path("circle_k_list").asText().equals("listed_both")
+                        || place.path("circle_k_list").asText().equals("listed_2026_only"));
+            }
+            if (place.path("osm_url").asText().endsWith("/6688293360")) {
+                premisesCircle = true;
+                assertEquals("listed_both", place.path("circle_k_list").asText());
+                assertTrue(place.path("still_on_brand_list").asBoolean());
+                assertEquals("370", place.path("housenumber").asText());
+                assertEquals("Circle K", place.path("name").asText());
+            }
+        }
+        assertTrue(premisesCircle);
+        assertEquals(body.path("benchmark_count").asInt(), brandedPremises);
+        assertEquals(stillListed, body.path("open_premises_still_on_brand_list_count").asInt());
+        assertTrue(stillListed >= 5);
+        for (JsonNode type : body.path("open_premises_by_type")) {
+            String business = type.path("business_type").asText();
+            int count = typeCounts.getOrDefault(business, 0);
+            assertEquals(count, type.path("count").asInt());
+            if (count > 0) {
+                assertEquals(
+                        BacktestService.median(typeScores.get(business)),
+                        type.path("median_spatial_score_without_self").asDouble(),
+                        1e-9);
             }
         }
         assertTrue(body.path("question").asText().contains("khoảng điểm chồng nhau"));

@@ -91,7 +91,7 @@ public class BacktestService {
         former(body);
         sourced(body);
         unlocated(body);
-        benchmarks(body);
+        premises(body);
         return body;
     }
 
@@ -257,40 +257,52 @@ public class BacktestService {
         body.put("unlocated_in_study_count", countInStudy(catalog));
     }
 
-    private void benchmarks(ObjectNode body) {
+    private void premises(ObjectNode body) {
         JsonNode scale = scoring.referenceNode();
         var circleLists = circleListSnapshots();
+        var premises = body.putArray("open_premises");
         var places = body.putArray("benchmarks");
         var byBrand = new java.util.LinkedHashMap<String, List<Double>>();
-        for (Addressed place : addressedBrands()) {
+        var byType = new java.util.LinkedHashMap<String, List<Double>>();
+        int stillListed = 0;
+        for (Addressed place : addressedPremises()) {
             JsonNode indicators = read(place.indicators());
             double withoutSelf = scoring.score(place.businessType(), indicators, scale, true);
-            ObjectNode row = places.addObject();
-            row.put("district", place.district());
-            row.put("name", place.name());
-            row.put("brand", place.brand());
-            row.put("business_type", place.businessType());
-            row.put("housenumber", place.housenumber());
-            row.put("street", place.street());
-            putOptional(row, "opening_hours", place.openingHours());
-            putOptional(row, "phone", place.phone());
-            putOptional(row, "website", place.website());
-            putOptional(row, "check_date", place.checkDate());
-            putOptional(row, "start_date", place.startDate());
-            row.put("osm_url", OsmRefs.url(place.osmType(), place.osmId()));
-            row.put("lat", place.lat());
-            row.put("lon", place.lon());
-            row.put("attractor_density_per_km2", indicators.path("attractor_density_per_km2").asDouble());
-            row.put("competitor_count", indicators.path("competitor_count").asInt());
-            row.put("arterial_distance_m", indicators.path("arterial_distance_m").asDouble());
-            row.put("spatial_score_without_self", withoutSelf);
+            String listStatus = null;
+            Boolean stillOnBrandList = null;
             if ("circle k".equals(fold(place.brand()))) {
-                row.put("circle_k_list", circleLists.getOrDefault(circleKey(place.district(), place.housenumber(), place.street()), "not_in_saved_lists"));
-            } else {
-                row.putNull("circle_k_list");
+                listStatus = circleLists.getOrDefault(
+                        circleKey(place.district(), place.housenumber(), place.street()),
+                        "not_in_saved_lists");
+                stillOnBrandList = "listed_both".equals(listStatus) || "listed_2026_only".equals(listStatus);
+                if (stillOnBrandList) {
+                    stillListed++;
+                }
             }
-            byBrand.computeIfAbsent(place.brand() + "\n" + place.businessType(), key -> new ArrayList<>()).add(withoutSelf);
+            ObjectNode row = premises.addObject();
+            fillAddressed(row, place, indicators, withoutSelf, listStatus, stillOnBrandList);
+            byType.computeIfAbsent(place.businessType(), key -> new ArrayList<>()).add(withoutSelf);
+            if (place.brand() != null && !place.brand().isBlank()) {
+                ObjectNode brandRow = places.addObject();
+                fillAddressed(brandRow, place, indicators, withoutSelf, listStatus, stillOnBrandList);
+                byBrand.computeIfAbsent(place.brand() + "\n" + place.businessType(), key -> new ArrayList<>()).add(withoutSelf);
+            }
         }
+        var types = body.putArray("open_premises_by_type");
+        for (String business : new String[] {"cafe_drink", "pharmacy", "convenience"}) {
+            List<Double> scores = byType.getOrDefault(business, List.of());
+            ObjectNode block = types.addObject();
+            block.put("business_type", business);
+            block.put("count", scores.size());
+            if (scores.isEmpty()) {
+                block.putNull("median_spatial_score_without_self");
+            } else {
+                block.put("median_spatial_score_without_self", median(scores));
+            }
+        }
+        body.put("open_premises_count", premises.size());
+        body.put("open_premises_still_on_brand_list_count", stillListed);
+        body.put("open_premises_note", "Mỗi dòng là một cơ sở đối thủ còn trong bản đồ OpenStreetMap mốc 2026-11-15, có số nhà và tên đường, nằm trong bốn quận. Điểm đã trừ chính cơ sở khỏi vòng 500 m. Đây là mặt bằng còn được vẽ, không phải khảo sát cửa còn mở tại chỗ. still_on_brand_list chỉ gắn cho Circle K khi số nhà khớp danh sách hãng còn lưu ngày 2026-07-10. Thương hiệu khác không có danh sách đã lưu nên trường đó là null. Địa chỉ chỉ có trong danh sách hãng mà bản đồ không có số nhà thì không bịa tọa độ và không nằm trong bảng này.");
         var brands = body.putArray("benchmark_brands");
         byBrand.entrySet().stream()
                 .sorted(java.util.Map.Entry.<String, List<Double>>comparingByValue(java.util.Comparator.comparingInt(List::size)).reversed())
@@ -304,6 +316,39 @@ public class BacktestService {
                 });
         body.put("benchmark_count", places.size());
         body.put("benchmark_note", "Mỗi dòng là một cơ sở đối thủ có brand, số nhà và tên đường trên OpenStreetMap. Giờ mở cửa, điện thoại, website, check_date và start_date chỉ xuất hiện khi thẻ đó có trong dữ liệu; không có thì để null. circle_k_list đối chiếu số nhà và tên đường với trang Circle K lưu ngày 2024-08-05 và 2026-07-10. Không bịa thông số còn thiếu.");
+    }
+
+    private void fillAddressed(
+            ObjectNode row,
+            Addressed place,
+            JsonNode indicators,
+            double withoutSelf,
+            String listStatus,
+            Boolean stillOnBrandList) {
+        row.put("district", place.district());
+        putOptional(row, "name", place.name());
+        putOptional(row, "brand", place.brand());
+        row.put("business_type", place.businessType());
+        row.put("housenumber", place.housenumber());
+        row.put("street", place.street());
+        putOptional(row, "opening_hours", place.openingHours());
+        putOptional(row, "phone", place.phone());
+        putOptional(row, "website", place.website());
+        putOptional(row, "check_date", place.checkDate());
+        putOptional(row, "start_date", place.startDate());
+        row.put("osm_url", OsmRefs.url(place.osmType(), place.osmId()));
+        row.put("lat", place.lat());
+        row.put("lon", place.lon());
+        row.put("attractor_density_per_km2", indicators.path("attractor_density_per_km2").asDouble());
+        row.put("competitor_count", indicators.path("competitor_count").asInt());
+        row.put("arterial_distance_m", indicators.path("arterial_distance_m").asDouble());
+        row.put("spatial_score_without_self", withoutSelf);
+        putOptional(row, "circle_k_list", listStatus);
+        if (stillOnBrandList == null) {
+            row.putNull("still_on_brand_list");
+        } else {
+            row.put("still_on_brand_list", stillOnBrandList);
+        }
     }
 
     private static int countInStudy(JsonNode catalog) {
@@ -370,11 +415,11 @@ public class BacktestService {
         return normalized;
     }
 
-    private List<Addressed> addressedBrands() {
+    private List<Addressed> addressedPremises() {
         return jdbc.query(
                 """
-                SELECT d.name AS district, p.business_type, p.name, p.osm_type, p.osm_id,
-                       btrim(p.tags ->> 'brand') AS brand,
+                SELECT d.name AS district, p.business_type, nullif(btrim(p.name), '') AS name, p.osm_type, p.osm_id,
+                       nullif(btrim(p.tags ->> 'brand'), '') AS brand,
                        btrim(p.tags ->> 'addr:housenumber') AS housenumber,
                        btrim(p.tags ->> 'addr:street') AS street,
                        nullif(btrim(p.tags ->> 'opening_hours'), '') AS opening_hours,
@@ -392,10 +437,9 @@ public class BacktestService {
                 FROM poi AS p
                 JOIN district AS d ON d.id = p.district_id
                 WHERE p.role = 'competitor'
-                  AND nullif(btrim(p.tags ->> 'brand'), '') IS NOT NULL
                   AND nullif(btrim(p.tags ->> 'addr:housenumber'), '') IS NOT NULL
                   AND nullif(btrim(p.tags ->> 'addr:street'), '') IS NOT NULL
-                ORDER BY p.tags ->> 'brand', d.name, p.osm_id
+                ORDER BY p.business_type, d.name, p.osm_id
                 """,
                 (rs, row) -> new Addressed(
                         rs.getString("district"),
