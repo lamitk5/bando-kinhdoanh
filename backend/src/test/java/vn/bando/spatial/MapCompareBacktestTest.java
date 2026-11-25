@@ -157,7 +157,31 @@ class MapCompareBacktestTest {
             }
         }
         assertTrue(body.path("question").asText().contains("khoảng điểm chồng nhau"));
-        assertEquals(0, body.path("unlocated_closures").size());
+        assertEquals(4, body.path("unlocated_closures").size());
+        assertEquals(1, body.path("unlocated_in_study_count").asInt());
+        assertTrue(body.path("unlocated_note").asText().contains("Nguyễn Tuân"));
+        int namedInStudy = 0;
+        int namedOutside = 0;
+        for (JsonNode place : body.path("unlocated_closures")) {
+            assertTrue(place.path("lat").isNull());
+            assertTrue(place.path("lon").isNull());
+            assertTrue(place.path("spatial_score").isNull());
+            assertTrue(place.path("closed_on").isNull());
+            assertEquals("The Coffee House", place.path("name").asText());
+            assertEquals("2024-08-08", place.path("article_date").asText());
+            assertTrue(place.path("source_url").asText().startsWith("https://vnexpress.net/"));
+            assertTrue(place.path("reason_unscored").asText().contains("số nhà"));
+            if ("phố Nguyễn Tuân".equals(place.path("address").asText())) {
+                namedInStudy++;
+                assertTrue(place.path("inside_study").asBoolean());
+                assertEquals("Thanh Xuân", place.path("district").asText());
+            } else {
+                namedOutside++;
+                assertFalse(place.path("inside_study").asBoolean());
+            }
+        }
+        assertEquals(1, namedInStudy);
+        assertEquals(3, namedOutside);
         assertEquals(11, body.path("sourced_panel_count").asInt());
         assertEquals(6, body.path("closed_group_count").asInt());
         assertTrue(body.path("panel_finding").asText().contains("ngưỡng"));

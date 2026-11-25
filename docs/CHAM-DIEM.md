@@ -175,6 +175,8 @@ Mốc so sánh có thông số là 154 cơ sở đối thủ có đủ `brand`, 
 
 Trong 12 Circle K có số nhà, 5 có trong danh sách hãng cả ngày 05/08/2024 và 10/07/2026, 4 chỉ có ở bản 10/07/2026, 3 không khớp danh sách đã lưu. Số 74 Nguyễn Khang không có node riêng. Số 78 là node `11458943616`, số 80 là node `11458943617`. Cửa hàng 74–76 được đặt bằng cách lùi đúng một khoảng từ số 78 về phía ngược với số 80, ra `21,021910` và `105,799888`, cách tim đường way `1287978626` khoảng 4 m. Báo Sức khỏe và Đời sống ngày 20/6/2024 ghi cửa hàng thông báo ngừng hoạt động từ 19/6/2024. Đây là nội suy số nhà, không phải điểm GPS đo tại cửa.
 
+VnExpress ngày 8/8/2024 ghi The Coffee House đã đóng các chi nhánh Kim Mã, Nguyễn Tuân, Bùi Thị Xuân và Văn Quán trước thời điểm bài báo, và dẫn lời CEO Ngô Nguyên Kha xác nhận việc đóng cửa. Bài không ghi số nhà và không ghi ngày đóng. Nguyễn Tuân thuộc Thanh Xuân, nằm trong bốn quận. Kim Mã thuộc Ba Đình, Bùi Thị Xuân thuộc Hai Bà Trưng, Văn Quán thuộc Hà Đông. Bốn dòng này nằm trong `unlocated_closures`, `lat` và `spatial_score` đều null. Không gắn phố Nguyễn Tuân vào một node vì bài báo không cho số nhà.
+
 ## Việc chưa làm
 
-Chưa có phiếu chuyên gia, chưa có doanh thu để thành ROI, và chưa có tài khoản người duyệt riêng từng người. Mã duyệt dùng chung đã có. Chưa có nhãn tầm nhìn hay ảnh mặt tiền Hà Nội đã gán mức. Mẫu kiểm chứng có nguồn là 11 điểm, trong đó 6 điểm không còn. Đây không phải khảo sát 15 cửa hàng đã đóng tại chỗ.
+Chưa có phiếu chuyên gia, chưa có doanh thu để thành ROI, và chưa có tài khoản người duyệt riêng từng người. Mã duyệt dùng chung đã có. Chưa có nhãn tầm nhìn hay ảnh mặt tiền Hà Nội đã gán mức. Mẫu kiểm chứng có nguồn là 11 điểm đã chấm, trong đó 6 điểm không còn. Thêm 4 chi nhánh The Coffee House được bài báo gọi tên theo phố nhưng không có số nhà, nên chưa chấm. Đây không phải khảo sát 15 cửa hàng đã đóng tại chỗ.

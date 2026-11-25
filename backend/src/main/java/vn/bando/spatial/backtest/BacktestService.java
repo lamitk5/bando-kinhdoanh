@@ -238,7 +238,9 @@ public class BacktestService {
             row.put("district", place.path("district").asText());
             row.put("address", place.path("address").asText());
             row.put("outcome", place.path("outcome").asText());
-            row.put("closed_on", place.path("closed_on").asText());
+            row.put("inside_study", place.path("inside_study").asBoolean(false));
+            putOptional(row, "closed_on", place.path("closed_on").asText());
+            putOptional(row, "article_date", place.path("article_date").asText());
             row.put("basis", place.path("basis").asText());
             row.put("source_url", place.path("source_url").asText());
             row.put("reason_unscored", place.path("reason_unscored").asText());
@@ -246,7 +248,8 @@ public class BacktestService {
             row.putNull("lon");
             row.putNull("spatial_score");
         }
-        body.put("unlocated_note", "Không còn cửa hàng có bài báo mà thiếu mốc số nhà. Circle K 74 Nguyễn Khang đã được đặt bằng nội suy giữa số 78 và số 80.");
+        body.put("unlocated_note", "VnExpress ngày 8/8/2024 gọi tên bốn chi nhánh The Coffee House theo phố, không có số nhà và không có ngày đóng, nên không chấm điểm. Chỉ phố Nguyễn Tuân nằm trong bốn quận. Circle K 74 Nguyễn Khang đã được đặt bằng nội suy giữa số 78 và số 80.");
+        body.put("unlocated_in_study_count", countInStudy(catalog));
     }
 
     private void benchmarks(ObjectNode body) {
@@ -296,6 +299,16 @@ public class BacktestService {
                 });
         body.put("benchmark_count", places.size());
         body.put("benchmark_note", "Mỗi dòng là một cơ sở đối thủ có brand, số nhà và tên đường trên OpenStreetMap. Giờ mở cửa, điện thoại, website, check_date và start_date chỉ xuất hiện khi thẻ đó có trong dữ liệu; không có thì để null. circle_k_list đối chiếu số nhà và tên đường với trang Circle K lưu ngày 2024-08-05 và 2026-07-10. Không bịa thông số còn thiếu.");
+    }
+
+    private static int countInStudy(JsonNode catalog) {
+        int count = 0;
+        for (JsonNode place : catalog) {
+            if (place.path("inside_study").asBoolean(false)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private static void putOptional(ObjectNode row, String field, String value) {

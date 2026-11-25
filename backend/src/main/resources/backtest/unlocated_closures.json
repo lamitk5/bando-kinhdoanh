@@ -1,1 +1,50 @@
-[]
+[
+  {
+    "name": "The Coffee House",
+    "business_type": "cafe_drink",
+    "district": "Thanh Xuân",
+    "address": "phố Nguyễn Tuân",
+    "outcome": "reported_closed",
+    "inside_study": true,
+    "article_date": "2024-08-08",
+    "basis": "VnExpress ngày 8/8/2024 dẫn lời CEO Ngô Nguyên Kha và ghi chi nhánh Nguyễn Tuân đã đóng trước đó. Bài không ghi số nhà và không ghi ngày đóng.",
+    "source_url": "https://vnexpress.net/the-coffee-house-dung-kinh-doanh-tai-da-nang-va-can-tho-4779226.html",
+    "reason_unscored": "Bài báo chỉ ghi tên phố Nguyễn Tuân, không ghi số nhà. Không gắn vào một node OpenStreetMap."
+  },
+  {
+    "name": "The Coffee House",
+    "business_type": "cafe_drink",
+    "district": "Ba Đình",
+    "address": "phố Kim Mã",
+    "outcome": "reported_closed",
+    "inside_study": false,
+    "article_date": "2024-08-08",
+    "basis": "Cùng bài VnExpress ngày 8/8/2024 ghi chi nhánh Kim Mã đã đóng trước đó. Kim Mã thuộc Ba Đình, ngoài bốn quận thực nghiệm. Bài không ghi số nhà và không ghi ngày đóng.",
+    "source_url": "https://vnexpress.net/the-coffee-house-dung-kinh-doanh-tai-da-nang-va-can-tho-4779226.html",
+    "reason_unscored": "Phố Kim Mã nằm ngoài bốn quận thực nghiệm. Bài báo không ghi số nhà."
+  },
+  {
+    "name": "The Coffee House",
+    "business_type": "cafe_drink",
+    "district": "Hai Bà Trưng",
+    "address": "phố Bùi Thị Xuân",
+    "outcome": "reported_closed",
+    "inside_study": false,
+    "article_date": "2024-08-08",
+    "basis": "Cùng bài VnExpress ngày 8/8/2024 ghi chi nhánh Bùi Thị Xuân đã đóng trước đó. Bùi Thị Xuân thuộc Hai Bà Trưng, ngoài bốn quận thực nghiệm. Bài không ghi số nhà và không ghi ngày đóng.",
+    "source_url": "https://vnexpress.net/the-coffee-house-dung-kinh-doanh-tai-da-nang-va-can-tho-4779226.html",
+    "reason_unscored": "Phố Bùi Thị Xuân nằm ngoài bốn quận thực nghiệm. Bài báo không ghi số nhà."
+  },
+  {
+    "name": "The Coffee House",
+    "business_type": "cafe_drink",
+    "district": "Hà Đông",
+    "address": "khu Văn Quán",
+    "outcome": "reported_closed",
+    "inside_study": false,
+    "article_date": "2024-08-08",
+    "basis": "Cùng bài VnExpress ngày 8/8/2024 ghi chi nhánh Văn Quán đã đóng trước đó. Văn Quán thuộc Hà Đông, ngoài bốn quận thực nghiệm. Bài không ghi số nhà và không ghi ngày đóng.",
+    "source_url": "https://vnexpress.net/the-coffee-house-dung-kinh-doanh-tai-da-nang-va-can-tho-4779226.html",
+    "reason_unscored": "Khu Văn Quán nằm ngoài bốn quận thực nghiệm. Bài báo không ghi số nhà."
+  }
+]
