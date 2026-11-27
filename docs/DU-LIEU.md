@@ -104,7 +104,7 @@ Dòng mới có `status = pending` và `counted_in_buffer = false`. `POST /api/s
 
 `GET /api/spatial/contributions?status=pending` liệt kê tối đa 100 dòng. `health` và `summary` vẫn chỉ đếm POI OpenStreetMap.
 
-Duyệt và từ chối cần header `X-Reviewer-Token`. Tên người duyệt lấy từ `BANDO_REVIEWER_NAME`, không lấy từ thân yêu cầu. Mã lấy từ `BANDO_REVIEWER_TOKEN`. Kho mã không ghi sẵn hai giá trị này. Khi một trong hai trống, lời gọi trả 503. Mã sai hoặc thiếu trả 401 và dòng vẫn `pending`. Tên người duyệt trùng người gửi, sau khi cắt khoảng trắng và không phân biệt hoa thường, trả 400 và dòng vẫn `pending`. Đây là một danh tính duyệt dùng chung cho môi trường, chưa phải tài khoản từng người.
+Duyệt và từ chối cần header `X-Reviewer-Token`. Tên người duyệt lấy từ tài khoản khớp mã, không lấy từ thân yêu cầu. Tài khoản thứ nhất là `BANDO_REVIEWER_NAME` và `BANDO_REVIEWER_TOKEN`. Các tài khoản tiếp theo nằm ở `BANDO_REVIEWERS`, dạng `tên|mã` và cách nhau bởi dấu chấm phẩy. Hai người không được dùng chung một mã. Kho mã không ghi sẵn các giá trị này. Khi chưa có tài khoản nào, lời gọi trả 503. Mã sai hoặc thiếu trả 401 và dòng vẫn `pending`. Tên người duyệt trùng người gửi, sau khi cắt khoảng trắng và không phân biệt hoa thường, trả 400 và dòng vẫn `pending`. `GET /api/spatial/reviewers` trả tên, không trả mã. Chưa có đăng nhập bằng mật khẩu.
 
 ## Kiểm tra
 

@@ -55,7 +55,12 @@ class MapCompareBacktestTest {
         assertEquals(4, districts.path("features").size());
         ResponseEntity<String> home = rest.getForEntity("/", String.class);
         assertEquals(200, home.getStatusCode().value());
-        assertTrue(home.getBody().contains("Còn mặt bằng trên bản đồ"));
+        assertTrue(home.getBody().contains("/assets/"));
+        java.util.regex.Matcher script = java.util.regex.Pattern.compile("src=\"(/assets/[^\"]+\\.js)\"").matcher(home.getBody());
+        assertTrue(script.find());
+        String bundle = rest.getForObject(script.group(1), String.class);
+        assertTrue(bundle.contains("Còn mặt bằng trên bản đồ"));
+        assertTrue(bundle.contains("Giới hạn còn thiếu số thật"));
     }
 
     @Test

@@ -28,3 +28,4 @@ bando:
   reviewer:
     name: ${BANDO_REVIEWER_NAME:}
     token: ${BANDO_REVIEWER_TOKEN:}
+  reviewers: ${BANDO_REVIEWERS:}

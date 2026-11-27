@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
         properties = {
             "bando.reviewer.name=ban-kiem-tra",
             "bando.reviewer.token=kiem-tra-noi-bo",
+            "bando.reviewers=nguoi-duyet-khac|ma-rieng",
             "vision.worker.enabled=false"
         })
 class ContributionReviewTest {
@@ -86,6 +87,19 @@ class ContributionReviewTest {
         assertEquals("rejected", rejected.path("status").asText());
         assertEquals("ban-kiem-tra", rejected.path("reviewer").asText());
         assertFalse(rejected.path("counted_in_buffer").asBoolean());
+
+        JsonNode directory = mapper.readTree(rest.getForObject("/api/spatial/reviewers", String.class));
+        assertEquals(2, directory.path("account_count").asInt());
+        assertTrue(directory.toString().contains("nguoi-duyet-khac"));
+        assertFalse(directory.toString().contains("ma-rieng"));
+        JsonNode byOther = post("/api/spatial/contributions", """
+                {"name":"KIEM TRA DUYET NGUOI KHAC","category":"convenience","lat":21.039,"lon":105.802,"submitter":"ban-kiem-tra"}
+                """, null);
+        JsonNode decided = post(
+                "/api/spatial/contributions/" + byOther.path("id").asLong() + "/approve",
+                "{}",
+                "ma-rieng");
+        assertEquals("nguoi-duyet-khac", decided.path("reviewer").asText());
     }
 
     private String statusOf(long id) {

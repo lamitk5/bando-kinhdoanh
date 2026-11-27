@@ -24,18 +24,18 @@ Câu xác nhận hợp lệ gồm các ý như: "ok", "duyệt", "chức năng n
 
 ## Hạng mục
 
-Chín hạng mục dưới đây bám bốn phân hệ của đề tài. Tám mục đã `thành công` vì người phụ trách yêu cầu ba giám khảo chấm thang 100 và tự gán khi điểm trung bình đạt mức đã yêu cầu. Mức của mục 6 là 93. Các mục sau dùng mức trên 90.
+Chín hạng mục dưới đây bám bốn phân hệ của đề tài. Năm mục còn `thành công` vì người phụ trách yêu cầu ba giám khảo chấm thang 100 và tự gán khi điểm trung bình đạt mức đã yêu cầu. Mức của mục 6 là 93. Các mục sau dùng mức trên 90. Mục 3, 7 và 8 đang chờ duyệt lại sau lần bổ sung tài khoản duyệt và trang React.
 
 | # | Phân hệ | Hạng mục | Trạng thái |
 | --- | --- | --- | --- |
 | 1 | Spatial Engine | Nạp OSM vào PostGIS, chỉ mục GIST, cache Redis | `thành công` |
 | 2 | Spatial Engine | Truy vấn vùng đệm 200 / 500 / 1000 m (điểm hút khách, đối thủ, trục đường) | `thành công` |
-| 3 | Spatial Engine | Đóng góp POI có kiểm duyệt | `thành công` |
+| 3 | Spatial Engine | Đóng góp POI có kiểm duyệt | `chờ duyệt` |
 | 4 | AHP Scoring Core | Ma trận AHP theo từng ngành, CR dưới 0.1, thang điểm 0–100, chỉ số hiệu quả theo giá thuê | `thành công` |
 | 5 | Multimodal AI | Hàng đợi Redis và WebSocket cho pipeline ảnh | `thành công` |
 | 6 | Multimodal AI | Vision AI: vỉa hè, tầm nhìn, cảnh báo ảnh kém, báo cáo khuyến nghị dạng JSON | `thành công` |
-| 7 | Web GIS | Bản đồ OpenLayers: bán kính, phân loại đối thủ / khách tiềm năng, heatmap | `thành công` |
-| 8 | Web GIS | So sánh 2–3 mặt bằng (radar) và xuất PDF | `thành công` |
+| 7 | Web GIS | Bản đồ OpenLayers: bán kính, phân loại đối thủ / khách tiềm năng, heatmap | `chờ duyệt` |
+| 8 | Web GIS | So sánh 2–3 mặt bằng (radar) và xuất PDF | `chờ duyệt` |
 | 9 | Kiểm chứng | Back-test 10–15 địa điểm thực tế tại Hà Nội | `chờ duyệt` |
 
 ## Nhật ký
@@ -44,6 +44,7 @@ Ghi từ trên xuống dưới, mục mới nhất ở đầu. Tài liệu tổn
 
 | Thời điểm (UTC+7) | Hạng mục | Trạng thái | Cách kiểm tra |
 | --- | --- | --- | --- |
+| 2026-11-27 12:05 | Tài khoản duyệt từng người và trang React | `chờ duyệt` | `GET /api/spatial/reviewers` trả tên, không trả mã. Hai cấu hình `BANDO_REVIEWER_NAME` và `BANDO_REVIEWERS` có hai mã khác nhau thì hai lần duyệt ghi hai tên khác nhau. Cùng một mã cho hai tên thì ứng dụng không khởi động. Mở `/`: trang là React, radar Chart.js, có mục “Giới hạn còn thiếu số thật”. Ma trận vẫn ghi là ma trận làm việc. Bấm So sánh vẫn ra radar ba cánh. Bấm “Chạy trên dữ liệu đã nạp” vẫn có bảng “Còn mặt bằng trên bản đồ”. Mục 9 vẫn chưa đủ 10–15 cửa đã đóng có tọa độ. `mvn -Dtest=ReviewerGateTest test` trong `backend`. |
 | 2026-11-25 21:22 | Chấm từng mặt bằng còn số nhà trên bản đồ bốn quận | `chờ duyệt` | Mở `/`, bấm “Chạy trên dữ liệu đã nạp”. Bảng “Còn mặt bằng trên bản đồ” có một dòng cho mỗi cơ sở đối thủ còn số nhà và tên đường. `GET /api/backtest`: `open_premises_count` bằng số phần tử `open_premises`. Mỗi dòng có `housenumber`, `street`, `spatial_score_without_self` và `osm_url`. `open_premises_by_type` có trung vị cà phê, nhà thuốc và tiện lợi. Circle K số 370 Nguyễn Trãi, node `6688293360`, có `circle_k_list` là `listed_both` và `still_on_brand_list` true. Cơ sở không phải Circle K có `still_on_brand_list` null. `sourced_panel_count` vẫn 11. Đây là mặt bằng còn được vẽ, không phải khảo sát cửa còn mở tại chỗ. |
 | 2026-11-25 21:11 | Thay The Coffee House bằng Nhà thuốc An Khang, chưa có số nhà nên không chấm | `chờ duyệt` | `GET /api/backtest` không còn dòng The Coffee House. `unlocated_closures` có một dòng Nhà thuốc An Khang, `article_date` 2025-05-19, `lat` và `spatial_score` null, nguồn CafeBiz. `sourced_panel_count` lại là 11, `closed_group_count` là 6. Đây không phải khảo sát 15 cửa hàng đã đóng tại chỗ. |
 | 2026-11-25 20:56 | Chấm The Coffee House Nguyễn Tuân bằng node duy nhất khớp tên phố | `chờ duyệt` | `GET /api/backtest` có `sourced_panel_count` 12 và `closed_group_count` 7. Dòng The Coffee House trỏ tới node `7056055192`, tọa độ `20,995039` và `105,805734`, quận Thanh Xuân, `outcome` là `reported_closed`. `coordinate_method` nói bài báo không ghi số nhà và node vẫn mang thẻ quán cà phê từ 2020-07-09. Ba chi nhánh Kim Mã, Bùi Thị Xuân và Văn Quán nằm trong `unlocated_closures`, có `osm_url`, `lat` null. Đây không phải khảo sát 15 cửa hàng đã đóng tại chỗ. |

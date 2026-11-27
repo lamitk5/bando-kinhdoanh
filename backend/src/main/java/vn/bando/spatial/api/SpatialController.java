@@ -1,6 +1,7 @@
 package vn.bando.spatial.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.springframework.http.ResponseEntity;
@@ -22,9 +23,18 @@ import vn.bando.spatial.api.SpatialService.ListOfSamples;
 public class SpatialController {
 
     private final SpatialService service;
+    private final ReviewerGate reviewers;
+    private final ObjectMapper mapper;
 
-    public SpatialController(SpatialService service) {
+    public SpatialController(SpatialService service, ReviewerGate reviewers, ObjectMapper mapper) {
         this.service = service;
+        this.reviewers = reviewers;
+        this.mapper = mapper;
+    }
+
+    @GetMapping("/reviewers")
+    public ObjectNode reviewers() {
+        return reviewers.directory(mapper);
     }
 
     @GetMapping("/health")
